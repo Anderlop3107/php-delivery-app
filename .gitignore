@@ -1,0 +1,6 @@
+/tool-outputs/
+/chats/*.json
+/chats/*.jsonl
+logs.json
+.DS_Store
+Thumbs.db
