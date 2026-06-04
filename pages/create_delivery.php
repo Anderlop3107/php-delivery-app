@@ -85,9 +85,23 @@ require __DIR__ . '/_header.php';
     .op-card input { padding: 10px 14px; font-size: 13px; border-radius: 12px; background: #fff; }
 
     /* Step 2 Verification */
-    .summary-card { background: #fff; border-radius: 16px; padding: 16px; border: 1px solid var(--border); margin-bottom: 15px; }
+    .summary-card { background: #fff; border-radius: 16px; padding: 16px; border: 1px solid var(--border); margin-bottom: 15px; position: relative; }
     .contact-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-    .wa-btn { background: #25d366; color: #fff; padding: 6px 12px; border-radius: 999px; text-decoration: none; font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+    .wa-btn { 
+        background: #25d366; 
+        color: #fff; 
+        width: 44px; 
+        height: 44px; 
+        border-radius: 50%; 
+        text-decoration: none; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        position: absolute; 
+        bottom: 15px; 
+        right: 15px; 
+        box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3);
+    }
 
     .route-map { height: 150px; border-radius: 16px; margin-bottom: 15px; border: 1px solid var(--border); }
     
@@ -171,41 +185,31 @@ require __DIR__ . '/_header.php';
     <!-- PASO 2: VERIFICACIÓN -->
     <div class="form-step" id="step-2">
         <div class="summary-card">
-            <!-- 1. Cliente -->
-            <div style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
-                <span style="font-size: 20px;">👤</span>
-                <p id="v-customer-name" style="margin:0; font-size:18px; font-weight:800; color:var(--text);">-</p>
-            </div>
+            <!-- 1. Nombre -->
+            <p id="v-customer-name" style="margin:0; font-size:18px; font-weight:800; color:var(--text);">-</p>
             
-            <!-- 2. Contacto -->
-            <div class="contact-row" style="margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
-                <div class="wa-btn">
-                    <span style="font-size: 14px;">💬</span>
-                    WhatsApp
-                </div>
-                <div style="display: flex; align-items: center; gap: 5px; color: #64748b; font-size: 14px; font-weight: 700;">
-                    <span>📞</span>
-                    <span id="v-customer-phone">-</span>
-                </div>
+            <!-- 2. Teléfono -->
+            <div style="margin-top: 5px; display: flex; align-items: center; gap: 8px; color: #64748b; font-size: 14px; font-weight: 700;">
+                <span>📞</span>
+                <span id="v-customer-phone">-</span>
             </div>
 
             <!-- 3. Dirección -->
-            <div style="margin-bottom: 15px;">
-                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-                    <span style="font-size: 14px;">🏠</span>
-                    <span style="font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase;">Dirección</span>
-                </div>
+            <div style="margin-top: 10px; display: flex; align-items: flex-start; gap: 8px;">
+                <span style="font-size: 16px;">🏠</span>
                 <p id="v-address" style="margin:0; font-size:14px; color:var(--text); font-weight:600;">-</p>
             </div>
 
             <!-- 4. Referencia -->
-            <div>
-                <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 4px;">
-                    <span style="font-size: 14px;">📝</span>
-                    <span style="font-size:11px; font-weight:800; color:#94a3b8; text-transform:uppercase;">Referencia</span>
-                </div>
-                <p id="v-ref" style="margin:0; font-size:14px; color:var(--text); font-weight:600;">-</p>
+            <div style="margin-top: 10px; display: flex; align-items: flex-start; gap: 8px;">
+                <span style="font-size: 16px;">📝</span>
+                <p id="v-ref" style="margin:0; font-size:13px; color:#64748b; font-weight:500;">-</p>
             </div>
+
+            <!-- 5. Botón WhatsApp Circular -->
+            <a href="#" id="v-wa-link" target="_blank" class="wa-btn">
+                <svg style="width:24px; height:24px;" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.353-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.191-1.622a11.84 11.84 0 005.854 1.535h.004c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+            </a>
         </div>
 
         <div id="route-map" class="route-map"></div>
@@ -322,6 +326,16 @@ require __DIR__ . '/_header.php';
         document.getElementById('v-customer-phone').innerText = cPhone.value || 'No proveído';
         document.getElementById('v-address').innerText = cAddress.value;
         document.getElementById('v-ref').innerText = cRef.value || 'Sin referencia';
+        
+        // Configurar enlace de WhatsApp
+        const cleanPhone = cPhone.value.replace(/\D/g, '');
+        const waLink = document.getElementById('v-wa-link');
+        if (cleanPhone) {
+            waLink.href = `https://wa.me/${cleanPhone}`;
+            waLink.style.display = 'flex';
+        } else {
+            waLink.style.display = 'none';
+        }
         
         document.getElementById('v-total-trip').innerText = parseInt(cCost.value).toLocaleString('de-DE');
 
