@@ -85,11 +85,11 @@ require __DIR__ . '/_header.php';
     .op-card input { padding: 10px 14px; font-size: 13px; border-radius: 12px; background: #fff; }
 
     /* Step 2 Verification */
-    .summary-card { background: #fff; border-radius: 16px; padding: 16px; border: 1px solid var(--border); margin-bottom: 15px; position: relative; }
-    .summary-actions { position: absolute; bottom: 15px; right: 15px; display: flex; gap: 10px; }
+    .summary-card { background: #fff; border-radius: 16px; padding: 16px 16px 60px; border: 1px solid var(--border); margin-bottom: 15px; position: relative; min-height: 140px; }
+    .summary-actions { position: absolute; bottom: 12px; left: 15px; display: flex; gap: 10px; }
     .action-circle { 
-        width: 40px; 
-        height: 40px; 
+        width: 38px; 
+        height: 38px; 
         border-radius: 50%; 
         text-decoration: none; 
         display: flex; 
@@ -98,10 +98,11 @@ require __DIR__ . '/_header.php';
         color: #fff; 
         box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
         transition: transform 0.2s;
+        font-size: 18px;
     }
     .action-circle:active { transform: scale(0.9); }
     .wa-btn { background: #25d366; }
-    .call-btn { background: #3b82f6; } /* Azul para llamadas */
+    .call-btn { background: #3b82f6; } 
 
     .route-map { height: 150px; border-radius: 16px; margin-bottom: 15px; border: 1px solid var(--border); }
     
@@ -205,6 +206,9 @@ require __DIR__ . '/_header.php';
                 <a href="#" id="v-wa-link" target="_blank" class="action-circle wa-btn">💬</a>
                 <a href="#" id="v-call-link" class="action-circle call-btn">📞</a>
             </div>
+
+            <!-- Invisible helper para no romper JS -->
+            <span id="v-customer-phone" style="display:none;"></span>
         </div>
 
         <div id="route-map" class="route-map"></div>
@@ -318,7 +322,6 @@ require __DIR__ . '/_header.php';
         }
 
         document.getElementById('v-customer-name').innerText = cName.value;
-        document.getElementById('v-customer-phone').innerText = cPhone.value || 'No proveído';
         document.getElementById('v-address').innerText = cAddress.value;
         document.getElementById('v-ref').innerText = cRef.value || 'Sin referencia';
         
