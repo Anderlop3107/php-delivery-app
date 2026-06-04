@@ -86,7 +86,7 @@ require __DIR__ . '/_header.php';
 
     /* Step 2 Verification */
     .summary-card { background: #fff; border-radius: 16px; padding: 16px 16px 60px; border: 1px solid var(--border); margin-bottom: 15px; position: relative; min-height: 140px; }
-    .summary-actions { position: absolute; bottom: 12px; left: 15px; display: flex; gap: 10px; }
+    .summary-actions { position: absolute; bottom: 12px; right: 15px; display: flex; gap: 10px; }
     .action-circle { 
         width: 38px; 
         height: 38px; 
