@@ -86,22 +86,22 @@ require __DIR__ . '/_header.php';
 
     /* Step 2 Verification */
     .summary-card { background: #fff; border-radius: 16px; padding: 16px; border: 1px solid var(--border); margin-bottom: 15px; position: relative; }
-    .contact-row { display: flex; align-items: center; gap: 8px; margin-top: 10px; }
-    .wa-btn { 
-        background: #25d366; 
-        color: #fff; 
-        width: 44px; 
-        height: 44px; 
+    .summary-actions { position: absolute; bottom: 15px; right: 15px; display: flex; gap: 10px; }
+    .action-circle { 
+        width: 40px; 
+        height: 40px; 
         border-radius: 50%; 
         text-decoration: none; 
         display: flex; 
         align-items: center; 
         justify-content: center; 
-        position: absolute; 
-        bottom: 15px; 
-        right: 15px; 
-        box-shadow: 0 4px 10px rgba(37, 211, 102, 0.3);
+        color: #fff; 
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1); 
+        transition: transform 0.2s;
     }
+    .action-circle:active { transform: scale(0.9); }
+    .wa-btn { background: #25d366; }
+    .call-btn { background: #3b82f6; } /* Azul para llamadas */
 
     .route-map { height: 150px; border-radius: 16px; margin-bottom: 15px; border: 1px solid var(--border); }
     
