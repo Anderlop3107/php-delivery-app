@@ -191,7 +191,9 @@ require __DIR__ . '/_header.php';
             <!-- 2. Teléfono -->
             <div style="margin-top: 5px; display: flex; align-items: center; gap: 8px; color: #64748b; font-size: 14px; font-weight: 700;">
                 <span>📞</span>
-                <span id="v-customer-phone">-</span>
+                <a href="#" id="v-phone-link" style="text-decoration:none; color:inherit;">
+                    <span id="v-customer-phone">-</span>
+                </a>
             </div>
 
             <!-- 3. Dirección -->
