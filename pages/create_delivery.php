@@ -190,18 +190,24 @@ require __DIR__ . '/_header.php';
             <p id="v-customer-name" style="margin:0; font-size:18px; font-weight:800; color:var(--text);">-</p>
             
             <!-- 2. Dirección -->
-            <div style="margin-top: 10px; display: flex; align-items: flex-start; gap: 8px;">
+            <div style="margin-top: 12px; display: flex; align-items: flex-start; gap: 8px;">
                 <span style="font-size: 16px;">🏠</span>
-                <p id="v-address" style="margin:0; font-size:14px; color:var(--text); font-weight:600;">-</p>
+                <div>
+                    <span style="font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase; display:block;">Dirección</span>
+                    <p id="v-address" style="margin:2px 0 0; font-size:14px; color:var(--text); font-weight:600;">-</p>
+                </div>
             </div>
 
             <!-- 3. Referencia -->
-            <div style="margin-top: 8px; display: flex; align-items: flex-start; gap: 8px;">
+            <div style="margin-top: 10px; display: flex; align-items: flex-start; gap: 8px;">
                 <span style="font-size: 16px;">📝</span>
-                <p id="v-ref" style="margin:0; font-size:13px; color:#64748b; font-weight:500;">-</p>
+                <div>
+                    <span style="font-size:10px; font-weight:800; color:#94a3b8; text-transform:uppercase; display:block;">Referencia</span>
+                    <p id="v-ref" style="margin:2px 0 0; font-size:13px; color:#64748b; font-weight:500;">-</p>
+                </div>
             </div>
 
-            <!-- 4. Botones Comunicación (Inferior Izquierda) -->
+            <!-- 4. Botones Comunicación (Inferior Derecha) -->
             <div class="summary-actions">
                 <a href="#" id="v-wa-link" target="_blank" class="action-circle wa-btn">💬</a>
                 <a href="#" id="v-call-link" class="action-circle call-btn">📞</a>
