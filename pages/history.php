@@ -54,28 +54,29 @@ require __DIR__ . '/_header.php';
 ?>
 
 <style>
-    .history-header { background: #fff; padding: 20px 16px; border-radius: 0 0 30px 30px; box-shadow: 0 4px 15px rgba(0,0,0,0.03); margin: -20px -16px 20px; }
-    .calendar-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
-    .month-selector { border: none; font-size: 1.5rem; font-weight: 800; color: #1e293b; background: transparent; outline: none; cursor: pointer; }
+    .history-header { background: #fff; padding: 15px; border-radius: 0 0 24px 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin: -25px -20px 20px; border-bottom: 1px solid var(--border); }
+    .calendar-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+    .month-selector { border: none; font-size: 1.1rem; font-weight: 800; color: var(--text); background: transparent; outline: none; cursor: pointer; }
     
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center; }
-    .calendar-day-label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; margin-bottom: 8px; }
-    .calendar-day { aspect-ratio: 1; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; color: #475569; border-radius: 12px; cursor: pointer; text-decoration: none; transition: all 0.2s; }
-    .calendar-day.active { background: #0C3A5B; color: #fff; box-shadow: 0 4px 10px rgba(12, 58, 91, 0.3); }
-    .calendar-day.today { color: #0C3A5B; border: 2px solid #0C3A5B; }
+    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+    .calendar-day-label { font-size: 9px; font-weight: 800; color: #cbd5e1; text-transform: uppercase; margin-bottom: 5px; }
+    .calendar-day { height: 32px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: #64748b; border-radius: 10px; cursor: pointer; text-decoration: none; transition: all 0.2s; }
+    .calendar-day.active { background: var(--primary) !important; color: #ffffff !important; box-shadow: 0 4px 10px rgba(255, 140, 66, 0.3); }
+    .calendar-day.today { color: var(--primary); border: 1.5px solid var(--primary); }
 
-    .day-summary-card { background: #0C3A5B; color: #fff; border-radius: 20px; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; margin-top: 10px; }
-    .summary-item span { display: block; font-size: 10px; opacity: 0.8; text-transform: uppercase; font-weight: 700; }
-    .summary-item b { font-size: 18px; }
+    .day-summary-row { display: flex; gap: 10px; margin-top: 15px; }
+    .summary-mini-card { flex: 1; background: var(--primary-soft); padding: 10px 15px; border-radius: 14px; border: 1px solid rgba(255, 140, 66, 0.1); }
+    .summary-mini-card span { display: block; font-size: 9px; font-weight: 800; color: var(--primary); text-transform: uppercase; opacity: 0.8; }
+    .summary-mini-card b { font-size: 15px; color: var(--text); }
 
-    .order-card { background: #fff; border-radius: 20px; padding: 15px; margin-bottom: 12px; border: 1px solid #f1f5f9; display: flex; align-items: center; gap: 15px; cursor: pointer; }
-    .order-icon { width: 45px; height: 45px; border-radius: 12px; background: #f1f5f9; display: flex; align-items: center; justify-content: center; color: #0C3A5B; }
+    .order-card { background: #fff; border-radius: 20px; padding: 15px; margin-bottom: 12px; border: 1px solid var(--border); display: flex; align-items: center; gap: 15px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
+    .order-icon { width: 42px; height: 42px; border-radius: 12px; background: var(--primary-soft); display: flex; align-items: center; justify-content: center; color: var(--primary); }
     .order-info { flex: 1; }
-    .order-info h4 { margin: 0; font-size: 14px; color: #1e293b; }
-    .order-info p { margin: 2px 0 0; font-size: 12px; color: #64748b; }
+    .order-info h4 { margin: 0; font-size: 14px; color: var(--text); }
+    .order-info p { margin: 2px 0 0; font-size: 12px; color: #64748b; font-weight: 500; }
     .order-amount { text-align: right; }
-    .order-amount b { display: block; color: #1e293b; font-size: 14px; }
-    .order-amount span { font-size: 10px; color: #10b981; font-weight: 700; }
+    .order-amount b { display: block; color: var(--text); font-size: 14px; }
+    .order-amount span { font-size: 9px; color: #10b981; font-weight: 800; text-transform: uppercase; }
 
     /* Modal Styles */
     .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 2000; display: none; align-items: flex-end; }
@@ -88,7 +89,7 @@ require __DIR__ . '/_header.php';
     
     .detail-row { display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #f1f5f9; }
     .detail-row span { color: #64748b; font-size: 13px; }
-    .detail-row b { color: #1e293b; font-size: 13px; text-align: right; }
+    .detail-row b { color: var(--text); font-size: 13px; text-align: right; }
 </style>
 
 <div class="history-header">
@@ -98,14 +99,14 @@ require __DIR__ . '/_header.php';
                 <option value="<?= $num ?>" <?= $month == $num ? 'selected' : '' ?>><?= $name ?></option>
             <?php endforeach; ?>
         </select>
-        <span style="font-weight: 700; color: #94a3b8;"><?= $year ?></span>
+        <span style="font-weight: 800; color: #94a3b8; font-size: 14px;"><?= $year ?></span>
     </div>
 
     <div class="calendar-grid">
         <div class="calendar-day-label">D</div>
         <div class="calendar-day-label">L</div>
         <div class="calendar-day-label">M</div>
-        <div class="calendar-day-label">M</div>
+        <div class="calendar-day-label">X</div>
         <div class="calendar-day-label">J</div>
         <div class="calendar-day-label">V</div>
         <div class="calendar-day-label">S</div>
@@ -124,13 +125,13 @@ require __DIR__ . '/_header.php';
         <?php endfor; ?>
     </div>
 
-    <div class="day-summary-card">
-        <div class="summary-item">
+    <div class="day-summary-row">
+        <div class="summary-mini-card">
             <span>Entregas</span>
             <b><?= $daySummary['count'] ?></b>
         </div>
-        <div class="summary-item" style="text-align: right;">
-            <span>Total Recaudado</span>
+        <div class="summary-mini-card">
+            <span>Recaudado</span>
             <b><?= number_format($daySummary['total_amount'], 0, ',', '.') ?> Gs.</b>
         </div>
     </div>
