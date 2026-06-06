@@ -42,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $originLat, $originLng, $destLat, $destLng
             ]
         );
-        header('Location: my_deliveries.php?toast=created'); exit;
+        header('Location: create_delivery.php?success=1'); exit;
     }
 }
 
@@ -117,7 +117,38 @@ require __DIR__ . '/_header.php';
     .actions { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; align-items: center; width: 100%; }
     .btn-continue { width: auto; min-width: 220px; padding: 14px 30px; font-size: 15px; }
     .btn-back { font-size: 14px; font-weight: 700; color: #94a3b8; cursor: pointer; }
+
+    /* Success Modal */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 20px; }
+    .modal-card { background: #fff; width: 100%; max-width: 320px; border-radius: 30px; padding: 40px 20px 30px; text-align: center; position: relative; animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+    @keyframes modalPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    
+    .modal-close-top { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 32px; height: 32px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; border: none; font-weight: 800; color: #94a3b8; }
+    
+    .status-icon-container { width: 80px; height: 80px; border-radius: 50%; background: #fff7ed; margin: 0 auto 25px; display: flex; align-items: center; justify-content: center; position: relative; }
+    .status-icon-waves { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 2px solid #ffedd5; animation: waveRipple 2s infinite; }
+    @keyframes waveRipple { from { transform: scale(1); opacity: 1; } to { transform: scale(1.5); opacity: 0; } }
+    .check-mark { font-size: 32px; color: #000; z-index: 2; }
+
+    .modal-card h2 { font-size: 22px; font-weight: 800; margin: 0 0 8px; color: var(--text); }
+    .modal-card p { font-size: 14px; color: #64748b; margin: 0 0 30px; font-weight: 500; }
+    
+    .btn-listo { background: #1e293b; color: #fff; width: 100%; padding: 16px; border-radius: 16px; font-weight: 700; border: none; cursor: pointer; transition: background 0.2s; }
+    .btn-listo:active { background: #0f172a; }
 </style>
+
+<div id="success-modal" class="modal-overlay">
+    <div class="modal-card">
+        <button class="modal-close-top" onclick="closeSuccessModal()">✕</button>
+        <div class="status-icon-container">
+            <div class="status-icon-waves"></div>
+            <span class="check-mark">✓</span>
+        </div>
+        <h2>Pedido enviado</h2>
+        <p>Buscando delivery disponible</p>
+        <button class="btn-listo" onclick="closeSuccessModal()">Listo</button>
+    </div>
+</div>
 
 <div class="stepper">
     <div class="step active" id="step-1-indicator"><div class="step-circle">1</div><div class="step-label">Información</div></div>
@@ -390,6 +421,27 @@ require __DIR__ . '/_header.php';
     function openGoogleMaps() {
         const dest = marker.getLngLat();
         window.open(`https://www.google.com/maps/search/?api=1&query=${dest.lat},${dest.lng}`, '_blank');
+    }
+
+    // Lógica del Modal de Éxito
+    function showSuccessModal() {
+        const modal = document.getElementById('success-modal');
+        modal.style.display = 'flex';
+        
+        // Redirección automática en 3 segundos
+        setTimeout(() => {
+            window.location.href = '../dashboard.php';
+        }, 3000);
+    }
+
+    function closeSuccessModal() {
+        window.location.href = '../dashboard.php';
+    }
+
+    // Detectar éxito en la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('success') === '1') {
+        showSuccessModal();
     }
 </script>
 
