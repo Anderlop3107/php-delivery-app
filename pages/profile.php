@@ -54,6 +54,10 @@ $title = 'Perfil';
 require __DIR__ . '/_header.php';
 ?>
 
+<!-- Mapbox GL JS -->
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
+
 <style>
     .profile-container { max-width: 500px; margin: 0 auto; }
     
@@ -283,6 +287,43 @@ require __DIR__ . '/_header.php';
 <div id="toast" class="toast">¡Perfil actualizado!</div>
 
 <script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYW5kZXJsb3AiLCJhIjoiY21uMGJ1ZXhzMGkxMDJycHRuYzEwcmp4NCJ9.Jn4uXN5yX4DFIImQjw_R4w';
+    
+    let map, marker;
+    const initialCoords = [<?= (float)($userData['longitude'] ?? -57.6359) ?>, <?= (float)($userData['latitude'] ?? -25.2637) ?>];
+
+    function initMap() {
+        if (map) return;
+        
+        map = new mapboxgl.Map({
+            container: 'map',
+            style: 'mapbox://styles/mapbox/streets-v12',
+            center: initialCoords,
+            zoom: 13
+        });
+
+        map.on('load', () => {
+            const el = document.createElement('div');
+            el.innerHTML = '📍'; el.style.fontSize = '32px'; el.style.cursor = 'pointer';
+            
+            marker = new mapboxgl.Marker({ draggable: true, element: el })
+                .setLngLat(initialCoords)
+                .addTo(map);
+
+            function updateCoords() {
+                const lngLat = marker.getLngLat();
+                document.getElementById('lat').value = lngLat.lat.toFixed(6);
+                document.getElementById('lng').value = lngLat.lng.toFixed(6);
+            }
+
+            marker.on('dragend', updateCoords);
+            map.on('click', (e) => {
+                marker.setLngLat(e.lngLat);
+                updateCoords();
+            });
+        });
+    }
+
     function switchTab(tab) {
         document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -292,7 +333,8 @@ require __DIR__ . '/_header.php';
 
         if (tab === 'local') {
             setTimeout(() => {
-                // Forzar refresco de mapa si es necesario
+                initMap();
+                if (map) map.resize();
             }, 100);
         }
     }
