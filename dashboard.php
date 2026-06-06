@@ -19,23 +19,38 @@ if ($userData['role'] === 'repartidor') {
 // Lógica de datos reales para los gráficos
 $stats = app_one("
     SELECT 
-        COUNT(CASE WHEN status='entregado' THEN 1 END) as completados,
-        COUNT(CASE WHEN status='cancelado' THEN 1 END) as cancelados,
-        SUM(amount) as total_recaudado
+        COUNT(*) as total_pedidos,
+        COUNT(CASE WHEN status NOT IN ('cancelado', 'rechazado') THEN 1 END) as completados,
+        COUNT(CASE WHEN status='cancelado' THEN 1 END) as cancelados
     FROM deliveries 
-    WHERE local_user_id = ? AND DATE(created_at) = CURDATE()
+    WHERE local_user_id = ? AND DATE(created_at) = DATE(NOW())
 ", "i", [(int)$userData['id']]);
 
+$total_pedidos = (int)($stats['total_pedidos'] ?? 0);
 $completados = (int)($stats['completados'] ?? 0);
 $cancelados = (int)($stats['cancelados'] ?? 0);
-$total_dia = number_format((float)($stats['total_recaudado'] ?? 0), 0, ',', '.');
 
-// Mock data for weekly chart
-$weekly_data = [
-    'L' => 12, 'M' => 18, 'X' => 35, 'J' => 22, 'V' => 28, 'S' => 45, 'D' => 30
-];
-$max_week = max($weekly_data);
-$today_key = ['L','M','X','J','V','S','D'][date('N')-1];
+// Data para el gráfico semanal real (últimos 7 días)
+$weekly_raw = app_all("
+    SELECT 
+        DAYOFWEEK(created_at) as dow,
+        COUNT(*) as cnt
+    FROM deliveries
+    WHERE local_user_id = ? AND created_at >= DATE_SUB(DATE(NOW()), INTERVAL 6 DAY)
+    GROUP BY DATE(created_at)
+    ORDER BY created_at ASC
+", "i", [(int)$userData['id']]);
+
+$map_dow = [1 => 'D', 2 => 'L', 3 => 'M', 4 => 'X', 5 => 'J', 6 => 'V', 7 => 'S'];
+$weekly_data = ['L' => 0, 'M' => 0, 'X' => 0, 'J' => 0, 'V' => 0, 'S' => 0, 'D' => 0];
+
+foreach ($weekly_raw as $row) {
+    $key = $map_dow[(int)$row['dow']];
+    $weekly_data[$key] = (int)$row['cnt'];
+}
+
+$max_week = max($weekly_data) ?: 1; 
+$today_key = $map_dow[date('w') + 1]; 
 
 $title = 'Inicio';
 require __DIR__ . '/pages/_header.php';
@@ -92,7 +107,7 @@ require __DIR__ . '/pages/_header.php';
     
     .stat-info { display: flex; flex-direction: column; }
     .stat-label { color: #666; font-size: 12px; font-weight: 500; }
-    .stat-value { color: var(--text); font-size: 18px; font-weight: 800; }
+    .stat-value { color: var(--text); font-size: 18px; font-weight: 800; min-width: 20px; }
     
     /* Donut Chart */
     .chart-container {
@@ -143,19 +158,22 @@ require __DIR__ . '/pages/_header.php';
     }
     
     .bar {
-        width: 12px;
-        background: var(--border);
-        border-radius: 6px;
-        transition: all 0.5s ease;
+        display: block;
+        width: 18px;
+        background: #d1d5db; /* Gris más sólido */
+        border-radius: 6px 6px 2px 2px;
+        transition: height 0.5s ease;
         position: relative;
+        min-height: 4px; /* Forzar visibilidad incluso con 0 pedidos */
     }
     .bar.active { 
         background: var(--primary); 
-        box-shadow: 0 0 15px rgba(255, 140, 66, 0.5); 
+        box-shadow: 0 0 15px rgba(255, 140, 66, 0.4); 
+        min-height: 8px;
     }
     
     .day-label { 
-        color: var(--muted); font-size: 11px; font-weight: 800; 
+        color: #94a3b8; font-size: 11px; font-weight: 800; 
         text-transform: uppercase;
     }
     .bar.active + .day-label { color: var(--primary); }
@@ -206,15 +224,16 @@ require __DIR__ . '/pages/_header.php';
             <svg viewBox="0 0 100 100" class="donut-svg">
                 <circle cx="50" cy="50" r="40" class="donut-bg"></circle>
                 <?php 
-                    $total = $completados + $cancelados;
-                    $dash = $total > 0 ? ($completados / $total) * 251.2 : 0;
+                    // El anillo muestra el ratio de éxito (No Cancelados / Total)
+                    $exito = $total_pedidos - $cancelados;
+                    $dash = $total_pedidos > 0 ? ($exito / $total_pedidos) * 251.2 : 0;
                 ?>
                 <circle cx="50" cy="50" r="40" class="donut-ring" 
                         style="stroke-dasharray: <?= $dash ?> 251.2;"></circle>
             </svg>
             <div class="chart-center">
                 <span style="color:#666; font-size:10px; font-weight:700;">TOTAL</span>
-                <span class="chart-total"><?= $total_dia ?></span>
+                <span class="chart-total"><?= $total_pedidos ?></span>
             </div>
         </div>
     </div>
