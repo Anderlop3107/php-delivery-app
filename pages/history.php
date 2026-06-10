@@ -54,62 +54,177 @@ require __DIR__ . '/_header.php';
 ?>
 
 <style>
-    .history-header { background: #fff; padding: 15px; border-radius: 0 0 24px 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.04); margin: -25px -20px 20px; border-bottom: 1px solid var(--border); }
-    .calendar-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-    .month-selector { border: none; font-size: 1.1rem; font-weight: 800; color: var(--text); background: transparent; outline: none; cursor: pointer; }
+    .history-header-bento { 
+        background: #fff; 
+        padding: 24px; 
+        border-radius: 0 0 32px 32px; 
+        box-shadow: var(--shadow); 
+        margin: -25px -20px 25px; 
+        border-bottom: 1px solid rgba(0,0,0,0.02);
+    }
     
-    .calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
-    .calendar-day-label { font-size: 9px; font-weight: 800; color: #cbd5e1; text-transform: uppercase; margin-bottom: 5px; }
-    .calendar-day { height: 32px; display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 800; color: #64748b; border-radius: 10px; cursor: pointer; text-decoration: none; transition: all 0.2s; }
-    .calendar-day.active { background: var(--primary) !important; color: #ffffff !important; box-shadow: 0 4px 10px rgba(255, 140, 66, 0.3); }
-    .calendar-day.today { color: var(--primary); border: 1.5px solid var(--primary); }
-
-    .day-summary-row { display: flex; gap: 10px; margin-top: 15px; }
-    .summary-mini-card { flex: 1; background: var(--primary-soft); padding: 10px 15px; border-radius: 14px; border: 1px solid rgba(255, 140, 66, 0.1); }
-    .summary-mini-card span { display: block; font-size: 9px; font-weight: 800; color: var(--primary); text-transform: uppercase; opacity: 0.8; }
-    .summary-mini-card b { font-size: 15px; color: var(--text); }
-
-    .order-card { background: #fff; border-radius: 20px; padding: 15px; margin-bottom: 12px; border: 1px solid var(--border); display: flex; align-items: center; gap: 15px; cursor: pointer; box-shadow: 0 2px 8px rgba(0,0,0,0.02); }
-    .order-icon { width: 42px; height: 42px; border-radius: 12px; background: var(--primary-soft); display: flex; align-items: center; justify-content: center; color: var(--primary); }
-    .order-info { flex: 1; }
-    .order-info h4 { margin: 0; font-size: 14px; color: var(--text); }
-    .order-info p { margin: 2px 0 0; font-size: 12px; color: #64748b; font-weight: 500; }
-    .order-amount { text-align: right; }
-    .order-amount b { display: block; color: var(--text); font-size: 14px; }
-    .order-amount span { font-size: 9px; color: #10b981; font-weight: 800; text-transform: uppercase; }
-
-    /* Modal Styles */
-    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); z-index: 2000; display: none; align-items: flex-end; }
-    .modal-content { background: #fff; width: 100%; border-radius: 30px 30px 0 0; padding: 30px 20px 50px; transform: translateY(100%); transition: transform 0.3s ease-out; }
-    .modal-overlay.active { display: flex; }
-    .modal-overlay.active .modal-content { transform: translateY(0); }
+    .calendar-top-bento { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+    .month-selector-bento { 
+        border: none; 
+        font-size: 1.25rem; 
+        font-weight: 800; 
+        color: var(--text); 
+        background: transparent; 
+        outline: none; 
+        cursor: pointer;
+        padding: 0;
+    }
     
-    .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
-    .modal-close { background: #f1f5f9; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .calendar-grid-bento { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; text-align: center; }
+    .calendar-day-label-bento { font-size: 10px; font-weight: 800; color: #cbd5e1; text-transform: uppercase; margin-bottom: 8px; }
     
-    .detail-row { display: flex; justify-content: space-between; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid #f1f5f9; }
-    .detail-row span { color: #64748b; font-size: 13px; }
-    .detail-row b { color: var(--text); font-size: 13px; text-align: right; }
+    .calendar-day-bento { 
+        height: 38px; 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        font-size: 14px; 
+        font-weight: 700; 
+        color: #475569; 
+        border-radius: 12px; 
+        cursor: pointer; 
+        text-decoration: none; 
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+    }
+    .calendar-day-bento.active { 
+        background: var(--primary) !important; 
+        color: #ffffff !important; 
+        box-shadow: 0 8px 15px rgba(37, 99, 235, 0.2); 
+        transform: scale(1.05);
+    }
+    .calendar-day-bento.today { color: var(--primary); border: 2px solid var(--primary-soft); }
+
+    .summary-bento-row { display: grid; grid-template-columns: 1fr 1.5fr; gap: 12px; margin-top: 24px; }
+    .summary-mini-card-bento { 
+        background: var(--bg); 
+        padding: 16px; 
+        border-radius: 18px; 
+        border: 1px solid rgba(0,0,0,0.01);
+    }
+    .summary-mini-card-bento span { display: block; font-size: 10px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .summary-mini-card-bento b { font-size: 18px; color: var(--text); font-weight: 800; }
+
+    /* History List Items */
+    .order-card-bento { 
+        background: #fff; 
+        border-radius: var(--card-radius); 
+        padding: 20px; 
+        margin-bottom: 12px; 
+        box-shadow: var(--shadow);
+        border: 1px solid rgba(0,0,0,0.01);
+        display: flex; 
+        align-items: center; 
+        gap: 16px; 
+        cursor: pointer; 
+        transition: transform 0.2s ease;
+    }
+    .order-card-bento:active { transform: scale(0.98); }
+    
+    .order-icon-bento { 
+        width: 48px; 
+        height: 48px; 
+        border-radius: 16px; 
+        background: var(--primary-soft); 
+        display: flex; 
+        align-items: center; 
+        justify-content: center; 
+        color: var(--primary); 
+    }
+    .order-info-bento { flex: 1; }
+    .order-info-bento h4 { margin: 0; font-size: 15px; font-weight: 800; color: var(--text); }
+    .order-info-bento p { margin: 4px 0 0; font-size: 12px; color: var(--muted); font-weight: 500; }
+    
+    .order-amount-bento { text-align: right; }
+    .order-amount-bento b { display: block; color: var(--text); font-size: 15px; font-weight: 800; }
+    
+    /* Tech Status Pills */
+    .pill-tech {
+        display: inline-block;
+        padding: 4px 10px;
+        border-radius: 8px;
+        font-size: 9px;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 6px;
+    }
+    .pill-delivered { background: #ecfdf5; color: #10b981; }
+    .pill-pending { background: #fffbeb; color: #f59e0b; }
+    .pill-canceled { background: #fef2f2; color: #ef4444; }
+    .pill-process { background: #eff6ff; color: var(--primary); }
+
+    /* Glass Modal */
+    .modal-overlay-glass { 
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+        background: rgba(15, 23, 42, 0.3); 
+        backdrop-filter: blur(8px); 
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 3000; display: none; align-items: flex-end; 
+    }
+    .modal-content-tech { 
+        background: #fff; width: 100%; border-radius: 32px 32px 0 0; 
+        padding: 32px 24px 60px; 
+        transform: translateY(100%); 
+        transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        box-shadow: 0 -20px 40px rgba(0,0,0,0.1);
+    }
+    .modal-overlay-glass.active { display: flex; }
+    .modal-overlay-glass.active .modal-content-tech { transform: translateY(0); }
+    
+    .modal-header-tech { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+    .modal-close-tech { 
+        background: var(--bg); 
+        width: 36px; height: 36px; 
+        border-radius: 50%; 
+        display: flex; align-items: center; justify-content: center; 
+        cursor: pointer; border: none; 
+    }
+    
+    .detail-row-tech { display: flex; justify-content: space-between; margin-bottom: 18px; padding-bottom: 18px; border-bottom: 1px solid var(--bg); }
+    .detail-row-tech span { color: var(--muted); font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .detail-row-tech b { color: var(--text); font-size: 14px; text-align: right; font-weight: 700; }
+
+    .btn-maps-tech { 
+        width: 100%; 
+        margin-top: 24px; 
+        background: #1e293b; 
+        color: #fff; 
+        border: none; 
+        border-radius: 18px; 
+        padding: 18px; 
+        font-weight: 700; 
+        font-size: 15px; 
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 12px;
+        box-shadow: 0 10px 20px rgba(30, 41, 59, 0.2);
+    }
 </style>
 
-<div class="history-header">
-    <div class="calendar-top">
-        <select class="month-selector" onchange="changeMonth(this.value)">
+<div class="history-header-bento">
+    <div class="calendar-top-bento">
+        <select class="month-selector-bento" onchange="changeMonth(this.value)">
             <?php foreach ($monthsNames as $num => $name): ?>
                 <option value="<?= $num ?>" <?= $month == $num ? 'selected' : '' ?>><?= $name ?></option>
             <?php endforeach; ?>
         </select>
-        <span style="font-weight: 800; color: #94a3b8; font-size: 14px;"><?= $year ?></span>
+        <span style="font-weight: 700; color: #cbd5e1; font-size: 15px;"><?= $year ?></span>
     </div>
 
-    <div class="calendar-grid">
-        <div class="calendar-day-label">D</div>
-        <div class="calendar-day-label">L</div>
-        <div class="calendar-day-label">M</div>
-        <div class="calendar-day-label">X</div>
-        <div class="calendar-day-label">J</div>
-        <div class="calendar-day-label">V</div>
-        <div class="calendar-day-label">S</div>
+    <div class="calendar-grid-bento">
+        <div class="calendar-day-label-bento">D</div>
+        <div class="calendar-day-label-bento">L</div>
+        <div class="calendar-day-label-bento">M</div>
+        <div class="calendar-day-label-bento">X</div>
+        <div class="calendar-day-label-bento">J</div>
+        <div class="calendar-day-label-bento">V</div>
+        <div class="calendar-day-label-bento">S</div>
 
         <?php 
         for ($i = 0; $i < $firstDayOfMonth; $i++) echo '<div></div>';
@@ -119,18 +234,18 @@ require __DIR__ . '/_header.php';
             $isToday = date('Y-m-d') === $dateStr;
         ?>
             <a href="?date=<?= $dateStr ?>&month=<?= $month ?>&year=<?= $year ?>" 
-               class="calendar-day <?= $isActive ? 'active' : '' ?> <?= $isToday ? 'today' : '' ?>">
+               class="calendar-day-bento <?= $isActive ? 'active' : '' ?> <?= $isToday ? 'today' : '' ?>">
                 <?= $day ?>
             </a>
         <?php endfor; ?>
     </div>
 
-    <div class="day-summary-row">
-        <div class="summary-mini-card">
+    <div class="summary-bento-row">
+        <div class="summary-mini-card-bento">
             <span>Entregas</span>
             <b><?= $daySummary['count'] ?></b>
         </div>
-        <div class="summary-mini-card">
+        <div class="summary-mini-card-bento">
             <span>Recaudado</span>
             <b><?= number_format($daySummary['total_amount'], 0, ',', '.') ?> Gs.</b>
         </div>
@@ -139,44 +254,54 @@ require __DIR__ . '/_header.php';
 
 <div class="history-list">
     <?php if (empty($rows)): ?>
-        <div style="text-align: center; padding: 40px 20px;">
-            <p class="muted">No hay pedidos registrados para esta fecha.</p>
+        <div style="text-align: center; padding: 80px 20px;">
+            <div style="background: var(--bg); width: 100px; height: 100px; border-radius: 30px; display: flex; align-items: center; justify-content: center; margin: 0 auto 25px;">
+                <span style="font-size: 44px;">📅</span>
+            </div>
+            <p class="muted" style="font-weight: 600;">No hay actividad registrada.</p>
         </div>
     <?php else: ?>
-        <?php foreach ($rows as $row): ?>
-            <div class="order-card" onclick='showDetails(<?= json_encode($row) ?>)'>
-                <div class="order-icon">
-                    <svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 11-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
+        <?php foreach ($rows as $row): 
+            $s = $row['status'];
+            $pill_class = 'pill-process';
+            if ($s === 'entregado') $pill_class = 'pill-delivered';
+            if ($s === 'pendiente') $pill_class = 'pill-pending';
+            if ($s === 'cancelado' || $s === 'rechazado') $pill_class = 'pill-canceled';
+        ?>
+            <div class="order-card-bento" onclick='showDetails(<?= json_encode($row) ?>)'>
+                <div class="order-icon-bento">
+                    <svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 11-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
                 </div>
-                <div class="order-info">
+                <div class="order-info-bento">
                     <h4>ID #<?= $row['id'] ?></h4>
-                    <p><?= esc($row['customer_name'] ?: 'Cliente Anonimo') ?></p>
+                    <p><?= esc($row['customer_name'] ?: 'Cliente') ?></p>
+                    <span class="pill-tech <?= $pill_class ?>"><?= str_replace('_', ' ', $s) ?></span>
                 </div>
-                <div class="order-amount">
+                <div class="order-amount-bento">
                     <b><?= number_format($row['amount'], 0, ',', '.') ?> Gs.</b>
-                    <span><?= strtoupper($row['status']) ?></span>
                 </div>
             </div>
         <?php endforeach; ?>
     <?php endif; ?>
 </div>
 
-<!-- Modal de Detalles -->
-<div id="modal" class="modal-overlay" onclick="closeModal()">
-    <div class="modal-content" onclick="event.stopPropagation()">
-        <div class="modal-header">
-            <h3 id="modal-title">Detalles del Pedido</h3>
-            <div class="modal-close" onclick="closeModal()">
-                <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
-            </div>
+<!-- Modal de Detalles Tech -->
+<div id="modal" class="modal-overlay-glass" onclick="closeModal()">
+    <div class="modal-content-tech" onclick="event.stopPropagation()">
+        <div class="modal-header-tech">
+            <h3 style="font-size: 20px;">Detalles de Envío</h3>
+            <button class="modal-close-tech" onclick="closeModal()">
+                <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
         </div>
         
         <div id="modal-body">
             <!-- Dinámico -->
         </div>
 
-        <button type="button" id="modal-gps-btn" style="width: 100%; margin-top: 20px; background: #fff; color: #0C3A5B; border: 2px solid #0C3A5B;">
-            📍 Ver en Google Maps
+        <button type="button" id="modal-gps-btn" class="btn-maps-tech">
+            <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+            Localizar en Maps
         </button>
     </div>
 </div>
@@ -191,17 +316,17 @@ require __DIR__ . '/_header.php';
         const total = parseInt(order.amount) + parseInt(order.delivery_cost);
         
         body.innerHTML = `
-            <div class="detail-row"><span>Cliente</span><b>${order.customer_name || 'Sin nombre'}</b></div>
-            <div class="detail-row"><span>Dirección</span><b>${order.delivery_address}</b></div>
-            <div class="detail-row"><span>Producto</span><b>${order.amount.toLocaleString()} Gs.</b></div>
-            <div class="detail-row"><span>Delivery</span><b>${order.delivery_cost.toLocaleString()} Gs.</b></div>
-            <div class="detail-row" style="border:none; margin-top:10px;"><span style="color:#0C3A5B; font-weight:800;">TOTAL FINAL</span><b style="color:#0C3A5B; font-size:18px;">${total.toLocaleString()} Gs.</b></div>
-            <div class="detail-row"><span>Repartidor</span><b>${order.repartidor_name || 'Sin asignar'}</b></div>
+            <div class="detail-row-tech"><span>Cliente</span><b>${order.customer_name || 'Sin nombre'}</b></div>
+            <div class="detail-row-tech"><span>Dirección</span><b>${order.delivery_address}</b></div>
+            <div class="detail-row-tech"><span>Producto</span><b>${parseInt(order.amount).toLocaleString('de-DE')} Gs.</b></div>
+            <div class="detail-row-tech"><span>Envío</span><b>${parseInt(order.delivery_cost).toLocaleString('de-DE')} Gs.</b></div>
+            <div class="detail-row-tech" style="border:none; margin-top:10px;"><span style="color:var(--primary); font-weight:800;">TOTAL</span><b style="color:var(--primary); font-size:18px;">${total.toLocaleString('de-DE')} Gs.</b></div>
+            <div class="detail-row-tech"><span>Repartidor</span><b>${order.repartidor_name || 'Sin asignar'}</b></div>
         `;
 
         const gpsBtn = document.getElementById('modal-gps-btn');
         if (order.delivery_latitude && order.delivery_longitude) {
-            gpsBtn.style.display = 'block';
+            gpsBtn.style.display = 'flex';
             gpsBtn.onclick = () => window.open(`https://www.google.com/maps/search/?api=1&query=${order.delivery_latitude},${order.delivery_longitude}`);
         } else {
             gpsBtn.style.display = 'none';
