@@ -9,45 +9,53 @@ $user = current_user();
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title><?= esc($title) ?></title>
+    <!-- Modern Sans Serif: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {
-            --bg: #ffffff;
-            --card: #f8fafc;
-            --text: #0f172a;
+            --bg: #f8fafc;
+            --card: #ffffff;
+            --text: #111827;
             --muted: #64748b;
-            --primary: #FF8C42;
-            --primary-soft: rgba(255, 140, 66, 0.1);
-            --danger: #e11d48;
+            --primary: #2563eb; /* Azul Eléctrico */
+            --primary-soft: rgba(37, 99, 235, 0.08);
+            --danger: #ef4444;
             --border: #e2e8f0;
+            --card-radius: 24px;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.01);
+            --glass: rgba(255, 255, 255, 0.8);
         }
-        * { box-sizing: border-box; }
+        * { 
+            box-sizing: border-box; 
+            -webkit-font-smoothing: antialiased; 
+            -moz-osx-font-smoothing: grayscale;
+        }
         body { 
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
+            font-family: 'Inter', sans-serif; 
             margin: 0; 
             background: var(--bg); 
             color: var(--text); 
             line-height: 1.5; 
-            -webkit-font-smoothing: antialiased;
         }
         
-        /* Floating Capsule Navigation */
+        /* High-Fidelity iOS Hybrid Navigation */
         .bottom-nav {
             position: fixed;
-            bottom: 25px;
-            left: 20px;
-            right: 20px;
-            background: #ffffff;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
             display: flex;
             justify-content: space-around;
             align-items: center;
-            height: 65px;
-            border-radius: 40px;
-            z-index: 1000;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.08);
-            padding: 0 10px;
-            border: 1px solid var(--border);
+            height: 85px;
+            padding-bottom: env(safe-area-inset-bottom);
+            border-top: 1px solid rgba(0,0,0,0.05);
+            z-index: 2000;
         }
         .nav-item {
             display: flex;
@@ -56,68 +64,74 @@ $user = current_user();
             text-decoration: none;
             color: #94a3b8;
             flex: 1;
-            padding: 5px 0;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            padding: 8px 0;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .nav-item.active {
             color: var(--primary);
         }
         .nav-item svg {
-            width: 22px;
-            height: 22px;
+            width: 24px;
+            height: 24px;
+            stroke-width: 2.2;
         }
         .nav-item span {
             font-size: 10px;
-            font-weight: 500;
+            font-weight: 600;
             margin-top: 4px;
-            display: none; /* Minimalist line icons style */
+            letter-spacing: 0.2px;
         }
+        
+        /* Material 3 Floating Action Button */
         .nav-item.add-btn {
             position: relative;
+            top: -15px;
             background: var(--primary);
             color: white;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
+            border-radius: 20px;
+            width: 58px;
+            height: 58px;
             flex: none;
-            opacity: 1;
-            box-shadow: 0 4px 15px rgba(255, 140, 66, 0.3);
+            box-shadow: 0 10px 25px rgba(37, 99, 235, 0.3);
             justify-content: center;
-            transform: translateY(-5px);
         }
-        .nav-item.add-btn svg {
-            width: 28px;
-            height: 28px;
-        }
+        .nav-item.add-btn svg { width: 28px; height: 28px; color: #fff; }
         
-        .wrap { max-width: 500px; margin: 0 auto; padding: 25px 20px 120px; }
+        /* Bento Grid Wrapper */
+        .wrap { max-width: 500px; margin: 0 auto; padding: 20px 20px 110px; }
+        
+        /* Modular Card System */
         .card { 
-            background: #ffffff; 
-            border-radius: 28px; 
-            border: 1px solid var(--border); 
+            background: var(--card); 
+            border-radius: var(--card-radius); 
             padding: 24px; 
-            margin-bottom: 20px; 
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05); 
+            margin-bottom: 16px; 
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(0,0,0,0.02);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
         }
         
-        h1, h2, h3 { margin-top: 0; color: var(--text); }
-        .muted { color: var(--muted); font-size: 14px; }
+        h1, h2, h3 { margin: 0; font-weight: 800; letter-spacing: -0.025em; color: var(--text); }
+        .muted { color: var(--muted); font-size: 14px; font-weight: 500; }
         
+        /* Minimal Tech Inputs */
         input, select, textarea { 
             width: 100%; 
             border: 1px solid var(--border); 
             border-radius: 16px; 
             padding: 14px 18px; 
-            background: #f1f5f9; 
+            background: #ffffff; 
             color: var(--text);
             font-size: 15px; 
+            font-weight: 500;
             transition: all 0.2s; 
         }
-        input:focus { outline: none; border-color: var(--primary); background: #ffffff; }
+        input:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-soft); }
         
+        /* iOS Refined Buttons */
         button, .btn { 
             border: 0; 
-            border-radius: 16px; 
+            border-radius: 18px; 
             padding: 16px 24px; 
             background: var(--primary); 
             color: #fff; 
@@ -127,11 +141,19 @@ $user = current_user();
             display: inline-block; 
             text-align: center; 
             font-size: 16px; 
-            transition: transform 0.2s, opacity 0.2s; 
+            transition: all 0.2s; 
         }
-        button:active, .btn:active { transform: scale(0.98); opacity: 0.9; }
+        button:active, .btn:active { transform: scale(0.97); opacity: 0.9; }
         
-        .status-badge { display: inline-block; padding: 6px 14px; border-radius: 999px; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; }
+        .status-pill { 
+            display: inline-block; 
+            padding: 6px 14px; 
+            border-radius: 12px; 
+            font-size: 11px; 
+            font-weight: 700; 
+            text-transform: uppercase; 
+            letter-spacing: 0.3px; 
+        }
     </style>
 </head>
 <body>

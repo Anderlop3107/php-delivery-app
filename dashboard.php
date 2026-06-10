@@ -57,201 +57,224 @@ require __DIR__ . '/pages/_header.php';
 ?>
 
 <style>
-    /* Dashboard Specific Styles */
-    .dash-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 30px;
-    }
-    
-    .welcome-text {
-        font-size: 24px;
-        font-weight: 900;
-        color: var(--text);
-        letter-spacing: -0.5px;
-    }
-    
-    .profile-trigger {
-        width: 55px;
-        height: 55px;
-        border-radius: 50%;
-        border: 2px solid var(--primary);
-        padding: 2px;
-        cursor: pointer;
+    /* Profile Hero Header */
+    .profile-hero {
         position: relative;
-        transition: transform 0.2s;
-    }
-    .profile-trigger:active { transform: scale(0.95); }
-    .profile-trigger img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
-    
-    /* Main Stats Card */
-    .stats-card {
-        margin-top: 130px; /* Empuja las tarjetas hacia abajo */
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 20px;
-        align-items: center;
+        margin: -20px -20px 30px -20px; /* Overlap wrap padding */
+        padding: 60px 20px 20px;
+        text-align: center;
+        overflow: hidden;
+        background: #fff;
     }
     
-    .stats-left { display: flex; flex-direction: column; gap: 20px; }
-    .stats-title { color: #888; font-size: 14px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; }
-    
-    .stat-item { display: flex; align-items: center; gap: 12px; }
-    .stat-icon { 
-        width: 32px; height: 32px; border-radius: 10px; 
-        display: flex; align-items: center; justify-content: center;
-    }
-    .icon-flame { background: rgba(255, 140, 66, 0.1); color: #FF8C42; }
-    .icon-cancel { background: rgba(255, 68, 68, 0.1); color: #ff4444; }
-    
-    .stat-info { display: flex; flex-direction: column; }
-    .stat-label { color: #666; font-size: 12px; font-weight: 500; }
-    .stat-value { color: var(--text); font-size: 18px; font-weight: 800; min-width: 20px; }
-    
-    /* Donut Chart */
-    .chart-container {
-        position: relative;
-        width: 140px;
-        height: 140px;
-        margin-left: auto;
-    }
-    
-    .donut-svg { transform: rotate(-90deg); }
-    .donut-bg { fill: none; stroke: var(--border); stroke-width: 12; }
-    .donut-ring { 
-        fill: none; stroke: var(--primary); stroke-width: 12; 
-        stroke-linecap: round; transition: stroke-dasharray 1s ease;
-    }
-    
-    .chart-center {
+    .hero-cover {
         position: absolute;
-        top: 0; left: 0; width: 100%; height: 100%;
+        top: 0; left: 0; right: 0; height: 180px;
+        background: url('<?= !empty($userData['logo_path']) ? esc(delivery_app_url($userData['logo_path'])) : 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1000&auto=format&fit=crop' ?>');
+        background-size: cover;
+        background-position: center;
+        filter: blur(25px) brightness(0.8);
+        transform: scale(1.2);
+        z-index: 1;
+    }
+    
+    .hero-cover::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, #ffffff 100%);
+    }
+
+    .hero-content { position: relative; z-index: 2; }
+
+    .profile-avatar-center {
+        width: 105px;
+        height: 105px;
+        border-radius: 50%;
+        border: 4px solid #ffffff;
+        box-shadow: 0 12px 30px rgba(0,0,0,0.12);
+        margin: 0 auto 16px;
+        background: #fff;
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.3s ease;
+    }
+    .profile-avatar-center:active { transform: scale(0.95); }
+    .profile-avatar-center img { width: 100%; height: 100%; object-fit: cover; }
+    .profile-avatar-center .placeholder { font-size: 40px; line-height: 97px; }
+
+    .profile-name-box { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 4px; }
+    .profile-name-box h1 { font-size: 24px; font-weight: 800; color: var(--text); margin: 0; }
+    
+    .verified-badge {
+        background: var(--primary);
+        color: #fff;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        flex-direction: column;
-        background: radial-gradient(circle, rgba(255,140,66,0.1) 0%, transparent 70%);
+        font-size: 10px;
+        font-weight: bold;
+        flex-shrink: 0;
+        box-shadow: 0 2px 10px rgba(37, 99, 235, 0.3);
     }
-    .chart-total { color: #FF8C42; font-size: 20px; font-weight: 900; }
     
-    /* Weekly Card */
-    .weekly-card { 
-        margin-top: 25px; /* Subida un poco para acercarla a la de arriba */
+    .bento-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
     }
-    .weekly-title { color: var(--text); font-size: 16px; font-weight: 800; margin-bottom: 25px; }
+    
+    /* Hero Card (Full Width) */
+    .card-hero {
+        grid-column: span 2;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 28px 32px;
+        background: #fff;
+    }
+    
+    .hero-info h3 { font-size: 22px; color: var(--text); }
+    
+    /* Stats Cards - More Compact */
+    .card-stat {
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    .stat-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 16px;
+    }
+    .stat-data { display: flex; flex-direction: column; }
+    .stat-data b { font-size: 18px; color: var(--text); }
+    .stat-data span { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; }
+
+    /* Modern Donut */
+    .donut-container { position: relative; width: 80px; height: 80px; }
+    .donut-svg { transform: rotate(-90deg); }
+    .donut-bg { fill: none; stroke: #f1f5f9; stroke-width: 10; }
+    .donut-ring { 
+        fill: none; stroke: var(--primary); stroke-width: 10; 
+        stroke-linecap: round; transition: stroke-dasharray 1s ease;
+    }
+    .donut-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; color: var(--primary); }
+
+    /* Weekly Card */
+    .card-weekly { grid-column: span 2; padding: 24px; }
+    .weekly-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
     
     .bar-chart {
         display: flex;
         align-items: flex-end;
         justify-content: space-between;
         height: 120px;
-        padding: 0 10px;
+        padding: 0 4px;
+        gap: 8px;
     }
-    
-    .bar-col {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        gap: 12px;
-        flex: 1;
-    }
-    
+    .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 10px; }
     .bar {
-        display: block;
-        width: 18px;
-        background: #d1d5db; /* Gris más sólido */
-        border-radius: 6px 6px 2px 2px;
-        transition: height 0.5s ease;
-        position: relative;
-        min-height: 4px; /* Forzar visibilidad incluso con 0 pedidos */
+        width: 100%;
+        max-width: 32px;
+        background: #f1f5f9;
+        border-radius: 8px;
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        min-height: 6px;
     }
     .bar.active { 
         background: var(--primary); 
-        box-shadow: 0 0 15px rgba(255, 140, 66, 0.4); 
-        min-height: 8px;
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.2); 
     }
-    
-    .day-label { 
-        color: #94a3b8; font-size: 11px; font-weight: 800; 
-        text-transform: uppercase;
-    }
+    .day-label { font-size: 11px; font-weight: 700; color: #94a3b8; }
     .bar.active + .day-label { color: var(--primary); }
 </style>
 
-<div class="dash-header">
-    <div class="welcome-text">
-        Hola, <?= esc($userData['business_name'] ?: $userData['name']) ?>
-    </div>
-    <div class="profile-trigger" onclick="location.href='pages/profile.php'">
-        <?php if (!empty($userData['logo_path'])): ?>
-            <img src="<?= esc(delivery_app_url($userData['logo_path'])) ?>?v=<?= time() ?>" alt="Logo">
-        <?php else: ?>
-            <div style="width:100%; height:100%; border-radius:50%; background:#f1f5f9; display:flex; align-items:center; justify-content:center;">
-                <svg style="width:24px; height:24px; color:#cbd5e1;" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
-            </div>
-        <?php endif; ?>
+<div class="profile-hero">
+    <div class="hero-cover"></div>
+    <div class="hero-content">
+        <div class="profile-avatar-center" onclick="location.href='pages/profile.php'">
+            <?php if (!empty($userData['logo_path'])): ?>
+                <img src="<?= esc(delivery_app_url($userData['logo_path'])) ?>?v=<?= time() ?>" alt="Logo">
+            <?php else: ?>
+                <div class="placeholder">🏢</div>
+            <?php endif; ?>
+        </div>
+        <div class="profile-name-box">
+            <h1><?= esc($userData['business_name'] ?: $userData['name']) ?></h1>
+            <div class="verified-badge" title="Local Verificado">✓</div>
+        </div>
+        <p class="muted" style="font-weight: 600;">Panel de Gestión</p>
     </div>
 </div>
 
-<div class="card stats-card">
-    <div class="stats-left">
-        <div class="stats-title">Pedidos del día</div>
-        
-        <div class="stat-item">
-            <div class="stat-icon icon-flame">
-                <span style="font-size: 18px;">🔥</span>
-            </div>
-            <div class="stat-info">
-                <span class="stat-label">Completados</span>
-                <span class="stat-value"><?= $completados ?></span>
+<div class="bento-grid">
+    <!-- Hero Activity Card: Pedidos del día -->
+    <div class="card card-hero">
+        <div class="hero-info" style="display: flex; flex-direction: column; gap: 20px;">
+            <h3 style="font-size: 15px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px;">Pedidos del día</h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 15px;">
+                <!-- Completados -->
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 20px;">🔥</span>
+                    <div style="display: flex; flex-direction: column;">
+                        <span class="muted" style="font-size: 11px; font-weight: 700;">COMPLETADOS</span>
+                        <b style="font-size: 18px; color: var(--text);"><?= $completados ?></b>
+                    </div>
+                </div>
+                
+                <!-- Cancelados -->
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 20px;">🚫</span>
+                    <div style="display: flex; flex-direction: column;">
+                        <span class="muted" style="font-size: 11px; font-weight: 700;">CANCELADOS</span>
+                        <b style="font-size: 18px; color: var(--text);"><?= $cancelados ?></b>
+                    </div>
+                </div>
             </div>
         </div>
-        
-        <div class="stat-item">
-            <div class="stat-icon icon-cancel">
-                <span style="font-size: 18px;">🚫</span>
-            </div>
-            <div class="stat-info">
-                <span class="stat-label">Cancelados</span>
-                <span class="stat-value"><?= $cancelados ?></span>
-            </div>
-        </div>
-    </div>
-    
-    <div class="stats-right">
-        <div class="chart-container">
+
+        <div class="donut-container">
             <svg viewBox="0 0 100 100" class="donut-svg">
                 <circle cx="50" cy="50" r="40" class="donut-bg"></circle>
                 <?php 
-                    // El anillo muestra el ratio de éxito (No Cancelados / Total)
                     $exito = $total_pedidos - $cancelados;
                     $dash = $total_pedidos > 0 ? ($exito / $total_pedidos) * 251.2 : 0;
                 ?>
                 <circle cx="50" cy="50" r="40" class="donut-ring" 
                         style="stroke-dasharray: <?= $dash ?> 251.2;"></circle>
             </svg>
-            <div class="chart-center">
-                <span style="color:#666; font-size:10px; font-weight:700;">TOTAL</span>
-                <span class="chart-total"><?= $total_pedidos ?></span>
-            </div>
+            <div class="donut-text"><?= $total_pedidos ?></div>
         </div>
     </div>
-</div>
 
-<div class="card weekly-card">
-    <div class="weekly-title">Pedidos semanal</div>
-    
-    <div class="bar-chart">
-        <?php foreach ($weekly_data as $day => $val): 
-            $h = ($val / $max_week) * 100;
-            $isActive = ($day === $today_key);
-        ?>
-            <div class="bar-col">
-                <div class="bar <?= $isActive ? 'active' : '' ?>" style="height: <?= $h ?>%;"></div>
-                <span class="day-label"><?= $day ?></span>
-            </div>
-        <?php endforeach; ?>
+    <!-- Weekly Bento Card -->
+    <div class="card card-weekly">
+        <div class="weekly-header">
+            <h3>Tendencia semanal</h3>
+            <span class="muted" style="font-size: 12px; font-weight: 700;">Últimos 7 días</span>
+        </div>
+        
+        <div class="bar-chart">
+            <?php foreach ($weekly_data as $day => $val): 
+                $h = ($val / $max_week) * 100;
+                $isActive = ($day === $today_key);
+            ?>
+                <div class="bar-col">
+                    <div class="bar <?= $isActive ? 'active' : '' ?>" style="height: <?= $h ?>%;"></div>
+                    <span class="day-label"><?= $day ?></span>
+                </div>
+            <?php endforeach; ?>
+        </div>
     </div>
 </div>
 
