@@ -55,14 +55,46 @@ require __DIR__ . '/_header.php';
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
 
 <style>
-    /* Stepper */
-    .stepper { display: flex; justify-content: space-between; margin-bottom: 30px; position: relative; padding: 0 10px; }
-    .stepper::before { content: ''; position: absolute; top: 15px; left: 40px; right: 40px; height: 2px; background: #e2e8f0; z-index: 1; }
-    .step { position: relative; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 8px; flex: 1; }
-    .step-circle { width: 32px; height: 32px; border-radius: 50%; background: #fff; border: 2px solid #e2e8f0; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 800; color: #94a3b8; transition: all 0.3s; }
-    .step.active .step-circle { background: var(--primary); border-color: var(--primary); color: #fff; box-shadow: 0 0 0 4px var(--primary-soft); }
-    .step.completed .step-circle { background: #10b981; border-color: #10b981; color: #fff; }
-    .step-label { font-size: 11px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+    /* Chevron Stepper */
+    .chevron-stepper {
+        display: flex;
+        width: 100%;
+        height: 48px;
+        background: #f1f5f9;
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+    .chevron-step {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        position: relative;
+    }
+    
+    /* Step 1: In Step 1 (Active) / In Step 2 (Completed) */
+    #step-1-chevron.active { background: var(--primary); color: #fff; }
+    #step-1-chevron.completed { background: rgba(37, 99, 235, 0.4); color: #fff; }
+    
+    /* Step 2: In Step 1 (Pending) / In Step 2 (Active) */
+    #step-2-chevron.pending { background: #f1f5f9; color: #94a3b8; }
+    #step-2-chevron.active { background: #2563eb; color: #fff; font-weight: 800; }
+
+    /* The Chevron Cut */
+    .chevron-step:first-child {
+        clip-path: polygon(0% 0%, calc(100% - 15px) 0%, 100% 50%, calc(100% - 15px) 100%, 0% 100%);
+        padding-right: 15px;
+    }
+    .chevron-step:last-child {
+        clip-path: polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 15px 50%);
+        padding-left: 15px;
+        margin-left: -15px;
+    }
 
     .form-step { display: none; }
     .form-step.active { display: block; animation: slideIn 0.3s ease-out; }
@@ -111,12 +143,70 @@ require __DIR__ . '/_header.php';
     .detail-info span { display: block; font-size: 10px; color: #64748b; font-weight: 700; text-transform: uppercase; }
     .detail-val { font-size: 14px; font-weight: 800; color: var(--text); }
 
-    .cost-trip-card { background: var(--primary); color: #fff; border-radius: 16px; padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; margin-top: 15px; }
-    .cost-trip-card b { font-size: 16px; font-weight: 800; }
+    /* Action Buttons with Integrated Back/Forward Circles */
+    .main-action-btn { 
+        background: var(--primary); 
+        color: #fff; 
+        border-radius: 20px; 
+        padding: 10px; 
+        display: flex; 
+        justify-content: space-between; 
+        align-items: center; 
+        margin-top: 25px; 
+        position: relative;
+        min-height: 64px;
+        cursor: pointer;
+        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.2);
+        transition: transform 0.2s;
+        border: none;
+        width: 100%;
+    }
+    .main-action-btn:active { transform: scale(0.98); }
+    .main-action-btn b { font-size: 15px; font-weight: 700; text-align: center; flex: 1; }
+    
+    .action-circle-inline {
+        width: 44px;
+        height: 44px;
+        background: rgba(255,255,255,0.2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        flex-shrink: 0;
+        transition: background 0.2s;
+    }
+    .action-circle-inline:active { background: rgba(255,255,255,0.4); }
 
-    .actions { display: flex; flex-direction: column; gap: 15px; margin-top: 20px; align-items: center; width: 100%; }
-    .btn-continue { width: auto; min-width: 220px; padding: 14px 30px; font-size: 15px; }
-    .btn-back { font-size: 14px; font-weight: 700; color: #94a3b8; cursor: pointer; }
+    /* Modern Switch Style */
+    .switch-container { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 44px;
+        height: 24px;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background-color: #e2e8f0;
+        transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 24px;
+    }
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 18px; width: 18px;
+        left: 3px; bottom: 3px;
+        background-color: white;
+        transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 50%;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    input:checked + .slider { background-color: var(--primary); }
+    input:checked + .slider:before { transform: translateX(20px); }
 
     /* Success Modal */
     .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 20px; }
@@ -134,7 +224,6 @@ require __DIR__ . '/_header.php';
     .modal-card p { font-size: 14px; color: #64748b; margin: 0 0 30px; font-weight: 500; }
     
     .btn-listo { background: #1e293b; color: #fff; width: 100%; padding: 16px; border-radius: 16px; font-weight: 700; border: none; cursor: pointer; transition: background 0.2s; }
-    .btn-listo:active { background: #0f172a; }
 </style>
 
 <div id="success-modal" class="modal-overlay">
@@ -150,10 +239,9 @@ require __DIR__ . '/_header.php';
     </div>
 </div>
 
-<div class="stepper">
-    <div class="step active" id="step-1-indicator"><div class="step-circle">1</div><div class="step-label">Información</div></div>
-    <div class="step" id="step-2-indicator"><div class="step-circle">2</div><div class="step-label">Verificación</div></div>
-    <div class="step" id="step-3-indicator"><div class="step-circle">3</div><div class="step-label">Confirmación</div></div>
+<div class="chevron-stepper">
+    <div class="chevron-step active" id="step-1-chevron">1. Información</div>
+    <div class="chevron-step pending" id="step-2-chevron">2. Verificación</div>
 </div>
 
 <form method="post" id="order-form">
@@ -209,8 +297,12 @@ require __DIR__ . '/_header.php';
             </div>
         </div>
 
-        <div class="actions">
-            <button type="button" class="btn btn-continue" onclick="goToStep2()">CONTINUAR</button>
+        <div class="main-action-btn" onclick="goToStep2()">
+            <div class="action-circle-inline" onclick="event.stopPropagation(); window.location.href='../dashboard.php'">
+                <svg style="width:20px; height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+            </div>
+            <b>CONTINUAR</b>
+            <div style="width:44px;"></div> <!-- Symmetrical Spacer -->
         </div>
     </div>
 
@@ -256,10 +348,12 @@ require __DIR__ . '/_header.php';
 
         <!-- Detalles Operativos -->
         <div class="op-card">
-            <span class="op-title">¿PAGA POR EL PRODUCTO?</span>
-            <div class="op-options">
-                <div class="op-btn active" id="btn-pays-no" onclick="setOp('driver_pays', 'no', this)">NO</div>
-                <div class="op-btn" id="btn-pays-yes" onclick="setOp('driver_pays', 'yes', this)">SÍ</div>
+            <div class="switch-container">
+                <span class="op-title" style="margin-bottom:0;">¿PAGA POR EL PRODUCTO?</span>
+                <label class="switch">
+                    <input type="checkbox" id="driver_pays_toggle" onchange="toggleProductPay(this.checked)">
+                    <span class="slider"></span>
+                </label>
             </div>
             <input type="hidden" name="driver_pays" id="driver_pays_val" value="no">
             
@@ -279,14 +373,14 @@ require __DIR__ . '/_header.php';
             <input type="hidden" name="fee_payer" id="fee_payer_val" value="cliente">
         </div>
 
-        <div class="cost-trip-card">
+        <div class="main-action-btn" onclick="document.getElementById('order-form').submit()">
+            <div class="action-circle-inline" onclick="event.stopPropagation(); goToStep1()">
+                <svg style="width:20px; height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+            </div>
             <b>Costo del viaje Gs. <span id="v-total-trip">0</span></b>
-            <svg style="width:24px; height:24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-        </div>
-
-        <div class="actions" style="flex-direction: row; justify-content: center; gap: 40px; margin-top: 30px;">
-            <div class="btn-back" onclick="goToStep1()" style="margin: 0;">VOLVER</div>
-            <button type="submit" class="btn btn-continue" style="min-width: 140px; margin: 0; padding: 12px 20px;">CONFIRMAR</button>
+            <div class="action-circle-inline">
+                <svg style="width:24px; height:24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+            </div>
         </div>
     </div>
 </form>
@@ -351,6 +445,12 @@ require __DIR__ . '/_header.php';
         }
     }
 
+    function toggleProductPay(checked) {
+        const val = checked ? 'yes' : 'no';
+        document.getElementById('driver_pays_val').value = val;
+        document.getElementById('product_amount_box').style.display = checked ? 'block' : 'none';
+    }
+
     function goToStep2() {
         const cName = document.getElementById('c_name');
         const cPhone = document.getElementById('c_phone');
@@ -384,8 +484,10 @@ require __DIR__ . '/_header.php';
 
         document.getElementById('step-1').classList.remove('active');
         document.getElementById('step-2').classList.add('active');
-        document.getElementById('step-1-indicator').className = 'step completed';
-        document.getElementById('step-2-indicator').className = 'step active';
+        
+        // Actualizar Chevron Stepper
+        document.getElementById('step-1-chevron').className = 'chevron-step completed';
+        document.getElementById('step-2-chevron').className = 'chevron-step active';
 
         initRouteMap();
     }
@@ -418,13 +520,24 @@ require __DIR__ . '/_header.php';
     function goToStep1() {
         document.getElementById('step-2').classList.remove('active');
         document.getElementById('step-1').classList.add('active');
-        document.getElementById('step-1-indicator').className = 'step active';
-        document.getElementById('step-2-indicator').className = 'step';
+        
+        // Actualizar Chevron Stepper
+        document.getElementById('step-1-chevron').className = 'chevron-step active';
+        document.getElementById('step-2-chevron').className = 'chevron-step pending';
     }
 
     function openGoogleMaps() {
         const dest = marker.getLngLat();
         window.open(`https://www.google.com/maps/search/?api=1&query=${dest.lat},${dest.lng}`, '_blank');
+    }
+
+    function handleBack() {
+        const step2 = document.getElementById('step-2');
+        if (step2.classList.contains('active')) {
+            goToStep1();
+        } else {
+            window.location.href = '../dashboard.php';
+        }
     }
 
     // Lógica del Modal de Éxito
