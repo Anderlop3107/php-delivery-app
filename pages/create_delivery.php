@@ -59,11 +59,11 @@ require __DIR__ . '/_header.php';
     .chevron-stepper {
         display: flex;
         width: 100%;
-        height: 48px;
+        height: 42px;
         background: #f1f5f9;
         border-radius: 12px;
         overflow: hidden;
-        margin-bottom: 30px;
+        margin-bottom: 15px;
     }
     .chevron-step {
         flex: 1;
@@ -162,6 +162,7 @@ require __DIR__ . '/_header.php';
         width: 100%;
     }
     .main-action-btn:active { transform: scale(0.98); }
+    .main-action-btn.btn-slim { min-height: 50px; }
     .main-action-btn b { font-size: 15px; font-weight: 700; text-align: center; flex: 1; }
     
     .action-circle-inline {
@@ -298,11 +299,7 @@ require __DIR__ . '/_header.php';
         </div>
 
         <div class="main-action-btn" onclick="goToStep2()">
-            <div class="action-circle-inline" onclick="event.stopPropagation(); window.location.href='../dashboard.php'">
-                <svg style="width:20px; height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
-            </div>
             <b>CONTINUAR</b>
-            <div style="width:44px;"></div> <!-- Symmetrical Spacer -->
         </div>
     </div>
 
