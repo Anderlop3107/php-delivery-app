@@ -59,57 +59,53 @@ require __DIR__ . '/_header.php';
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
 
 <style>
-    .profile-container { max-width: 500px; margin: 0 auto; }
-    
-    /* Segmented Control */
-    .segmented-control {
-        display: flex;
-        background: #f1f5f9;
-        padding: 4px;
-        border-radius: 14px;
-        margin-bottom: 30px;
-    }
-    .segment-btn {
-        flex: 1;
-        padding: 12px;
-        border: 0;
-        background: transparent;
-        font-weight: 700;
-        font-size: 14px;
-        color: #64748b;
-        cursor: pointer;
-        border-radius: 10px;
-        transition: all 0.2s;
-    }
-    .segment-btn.active {
+    /* Profile Hero Header */
+    .profile-hero {
+        position: relative;
+        margin: -25px -20px 30px -20px;
+        padding: 50px 20px 20px;
+        text-align: center;
+        overflow: hidden;
         background: #fff;
-        color: var(--primary);
-        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+    
+    .hero-cover {
+        position: absolute;
+        top: 0; left: 0; right: 0; height: 160px;
+        background: url('<?= !empty($userData['logo_path']) ? esc(delivery_app_url($userData['logo_path'])) : 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1000&auto=format&fit=crop' ?>');
+        background-size: cover;
+        background-position: center;
+        filter: blur(25px) brightness(0.85);
+        transform: scale(1.2);
+        z-index: 1;
+    }
+    
+    .hero-cover::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, var(--bg) 100%);
     }
 
-    .tab-content { display: none; }
-    .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .hero-content { position: relative; z-index: 2; }
 
-    /* Forms */
-    .profile-id-section { text-align: center; margin-bottom: 30px; position: relative; }
-    .avatar-container {
+    .profile-avatar-center {
         width: 100px;
         height: 100px;
-        margin: 0 auto 15px;
+        border-radius: 50%;
+        border: 4px solid #ffffff;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+        margin: 0 auto 16px;
+        background: #fff;
+        overflow: hidden;
         position: relative;
     }
-    .profile-avatar {
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        object-fit: cover;
-        border: 3px solid var(--primary);
-        background: #fff;
-    }
-    .edit-badge {
+    .profile-avatar-center img { width: 100%; height: 100%; object-fit: cover; }
+    .profile-avatar-center .placeholder { font-size: 40px; line-height: 92px; }
+
+    .edit-badge-overlay {
         position: absolute;
-        bottom: 0;
+        bottom: 5px;
         right: 0;
         background: var(--primary);
         color: #fff;
@@ -121,170 +117,234 @@ require __DIR__ . '/_header.php';
         justify-content: center;
         border: 3px solid #fff;
         cursor: pointer;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        z-index: 3;
     }
 
-    .form-group { margin-bottom: 20px; }
+    .profile-name-box { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 4px; }
+    .profile-name-box h2 { font-size: 24px; font-weight: 800; color: var(--text); margin: 0; }
+    
+    .verified-badge {
+        background: var(--primary);
+        color: #fff;
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 10px;
+        font-weight: bold;
+        flex-shrink: 0;
+        box-shadow: 0 2px 10px rgba(37, 99, 235, 0.3);
+    }
+
+    /* Segmented Control Bento Style */
+    .segmented-control-tech {
+        display: flex;
+        background: #f1f5f9;
+        padding: 6px;
+        border-radius: 18px;
+        margin-bottom: 30px;
+        border: 1px solid rgba(0,0,0,0.02);
+    }
+    .segment-btn {
+        flex: 1;
+        padding: 12px;
+        border: 0;
+        background: transparent;
+        font-weight: 800;
+        font-size: 13px;
+        color: #94a3b8;
+        cursor: pointer;
+        border-radius: 14px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .segment-btn.active {
+        background: #fff;
+        color: var(--primary);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: slideIn 0.3s ease-out; }
+    @keyframes slideIn { from { opacity: 0; transform: translateX(15px); } to { opacity: 1; transform: translateX(0); } }
+
+    /* Minimal Tech Form */
+    .form-group { margin-bottom: 18px; }
     .input-wrapper { position: relative; }
-    .input-wrapper input { padding-left: 45px; }
+    .input-wrapper input { padding-left: 48px; border-radius: 16px; font-weight: 600; }
     .field-icon {
         position: absolute;
-        left: 14px;
+        left: 16px;
         top: 50%;
         transform: translateY(-50%);
-        width: 20px;
-        height: 20px;
+        width: 18px;
+        height: 18px;
         color: var(--primary);
+        opacity: 0.8;
     }
     .toggle-pass {
         position: absolute;
-        right: 14px;
+        right: 16px;
         top: 50%;
         transform: translateY(-50%);
         color: #94a3b8;
         cursor: pointer;
     }
 
-    /* Toast Notification */
-    .toast {
+    /* Toast Notification Bento Style */
+    .toast-tech {
         position: fixed;
-        top: 20px;
+        bottom: 100px;
         left: 50%;
         transform: translateX(-50%);
-        background: var(--primary);
+        background: #1e293b;
         color: #fff;
-        padding: 12px 24px;
-        border-radius: 12px;
+        padding: 14px 28px;
+        border-radius: 20px;
         font-weight: 700;
-        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2);
-        z-index: 2000;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        z-index: 3000;
         display: none;
+        animation: toastPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
     }
+    @keyframes toastPop { from { bottom: 70px; opacity: 0; } to { bottom: 100px; opacity: 1; } }
 
-    /* Mapbox Placeholder */
-    #map { height: 200px; border-radius: 16px; margin-bottom: 15px; border: 1px solid var(--border); }
+    #map { height: 220px; border-radius: 24px; margin-bottom: 15px; border: 1px solid var(--border); box-shadow: var(--shadow); }
+    
+    .btn-save-tech { width: 100%; margin-top: 15px; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25); }
+    .btn-logout-tech { 
+        background: #ffffff; 
+        color: var(--danger); 
+        border: 1px solid rgba(239, 68, 68, 0.2); 
+        box-shadow: none; 
+        margin-top: 30px; 
+        width: 100%; 
+        padding: 14px;
+        font-size: 15px;
+        font-weight: 700;
+    }
+    .btn-logout-tech:active { background: #fef2f2; }
 </style>
 
-<div class="profile-container">
-    <div class="profile-id-section">
-        <div class="avatar-container">
+<div class="profile-hero">
+    <div class="hero-cover"></div>
+    <div class="hero-content">
+        <div class="profile-avatar-center">
             <?php if (!empty($userData['logo_path'])): ?>
-                <img src="<?= esc(delivery_app_url($userData['logo_path'])) ?>?v=<?= time() ?>" class="profile-avatar" id="avatar-preview">
+                <img src="<?= esc(delivery_app_url($userData['logo_path'])) ?>?v=<?= time() ?>" id="avatar-preview">
             <?php else: ?>
-                <div class="profile-avatar" style="display:flex; align-items:center; justify-content:center; background:#f1f5f9;">
-                    <svg style="width: 40px; height: 40px; color: #cbd5e1;" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"></path></svg>
-                </div>
+                <div class="placeholder">🏢</div>
             <?php endif; ?>
-            <label for="logo-input" class="edit-badge">
-                <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
+            <label for="logo-input" class="edit-badge-overlay">
+                <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
             </label>
         </div>
         <form id="logo-form" method="post" enctype="multipart/form-data" style="display:none;">
             <input type="file" id="logo-input" name="logo" onchange="document.getElementById('logo-form').submit()">
             <input type="hidden" name="action" value="update_logo">
         </form>
-        <h3><?= esc($userData['name']) ?></h3>
-        <p class="muted" style="margin-top: -10px;"><?= strtoupper($userData['role']) ?></p>
+        <div class="profile-name-box">
+            <h2><?= esc($userData['name']) ?></h2>
+            <div class="verified-badge" title="Cuenta Verificada">✓</div>
+        </div>
+        <p class="muted" style="font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 1px;"><?= strtoupper($userData['role']) ?></p>
     </div>
+</div>
 
-    <div class="segmented-control">
-        <button type="button" class="segment-btn active" onclick="switchTab('cuenta')">Cuenta</button>
-        <button type="button" class="segment-btn" onclick="switchTab('local')">Local</button>
-    </div>
+<div class="segmented-control-tech">
+    <button type="button" class="segment-btn active" onclick="switchTab('cuenta')">Mi Cuenta</button>
+    <button type="button" class="segment-btn" onclick="switchTab('local')">Mi Negocio</button>
+</div>
 
-    <form method="post">
-        <!-- Tab 1: Cuenta -->
-        <div id="tab-cuenta" class="tab-content active">
+<form method="post">
+    <!-- Tab 1: Cuenta -->
+    <div id="tab-cuenta" class="tab-content active">
+        <div class="card" style="border:none; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
             <div class="form-group">
-                <label>Nombre de Usuario</label>
                 <div class="input-wrapper">
-                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
-                    <input name="name" value="<?= esc($userData['name']) ?>" placeholder="Tu nombre completo" required>
+                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    <input name="name" value="<?= esc($userData['name']) ?>" placeholder="Nombre completo" required>
                 </div>
             </div>
 
             <div class="form-group">
-                <label>Email (No editable)</label>
                 <div class="input-wrapper">
-                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                    <input value="<?= esc($userData['email']) ?>" readonly style="background:#f8fafc; color:#94a3b8;">
+                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    <input value="<?= esc($userData['email']) ?>" readonly style="background:var(--bg); color:#94a3b8; border:none;" title="El email no puede ser modificado">
                 </div>
             </div>
 
             <div class="form-group">
-                <label>Nueva Contraseña</label>
                 <div class="input-wrapper">
-                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
-                    <input type="password" name="password" id="pass-field" placeholder="Dejar en blanco para no cambiar">
+                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+                    <input type="password" name="password" id="pass-field" placeholder="Nueva contraseña (opcional)">
                     <div class="toggle-pass" onclick="togglePass()">
-                        <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" id="eye-icon"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                        <svg style="width: 20px; height: 20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
                     </div>
                 </div>
             </div>
 
             <div class="form-group">
-                <label>Móvil Personal</label>
                 <div class="input-wrapper">
-                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                    <input name="phone" value="<?= esc($userData['phone']) ?>" placeholder="Ej: +595981...">
+                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
+                    <input name="phone" value="<?= esc($userData['phone']) ?>" placeholder="Teléfono móvil">
                 </div>
             </div>
 
-            <div style="margin-top: 40px; padding-top: 20px; border-top: 1px solid var(--border); text-align: center;">
-                <p class="muted" style="margin-bottom: 15px;">¿Deseas salir de tu cuenta?</p>
-                <a href="<?= esc(delivery_app_url('logout.php')) ?>" class="btn btn-danger" style="width: 100%; padding: 15px; font-size: 16px; background: #be123c;">
-                    🚪 Cerrar Sesión
-                </a>
-            </div>
+            <button type="submit" class="btn btn-save-tech">💾 Guardar Perfil</button>
+
+            <a href="<?= esc(delivery_app_url('logout.php')) ?>" class="btn btn-logout-tech">
+                🚪 Cerrar Sesión
+            </a>
         </div>
+    </div>
 
-        <!-- Tab 2: Local -->
-        <div id="tab-local" class="tab-content">
+    <!-- Tab 2: Local -->
+    <div id="tab-local" class="tab-content">
+        <div class="card" style="border:none; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
             <div class="form-group">
-                <label>Nombre Comercial / Tienda</label>
                 <div class="input-wrapper">
-                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                    <input name="business_name" value="<?= esc($userData['business_name']) ?>" placeholder="Nombre de tu negocio">
+                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
+                    <input name="business_name" value="<?= esc($userData['business_name']) ?>" placeholder="Nombre del negocio">
                 </div>
             </div>
 
             <div class="form-group">
-                <label>WhatsApp del Negocio</label>
                 <div class="input-wrapper">
-                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
-                    <input name="whatsapp" value="<?= esc($userData['whatsapp']) ?>" placeholder="Ej: +595981...">
+                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
+                    <input name="whatsapp" value="<?= esc($userData['whatsapp']) ?>" placeholder="WhatsApp de contacto">
+                </div>
+            </div>
+
+            <div id="map"></div>
+            <input type="hidden" name="latitude" id="lat" value="<?= esc($userData['latitude']) ?>">
+            <input type="hidden" name="longitude" id="lng" value="<?= esc($userData['longitude']) ?>">
+            <p class="muted" style="font-size: 11px; text-align: center; margin-bottom: 20px; font-weight: 700;">📍 Arrastra el pin para fijar tu ubicación</p>
+
+            <div class="form-group">
+                <div class="input-wrapper">
+                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    <input name="address" value="<?= esc($userData['address']) ?>" placeholder="Dirección exacta">
                 </div>
             </div>
 
             <div class="form-group">
-                <label>Ubicación Base</label>
-                <div id="map"></div>
-                <input type="hidden" name="latitude" id="lat" value="<?= esc($userData['latitude']) ?>">
-                <input type="hidden" name="longitude" id="lng" value="<?= esc($userData['longitude']) ?>">
-                <p class="muted" style="font-size: 11px;">Mueve el mapa para ajustar tu ubicación base.</p>
-            </div>
-
-            <div class="form-group">
-                <label>Dirección Escrita</label>
                 <div class="input-wrapper">
-                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    <input name="address" value="<?= esc($userData['address']) ?>" placeholder="Calle, número, barrio...">
+                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <input name="business_reference" value="<?= esc($userData['business_reference']) ?>" placeholder="Referencias del local">
                 </div>
             </div>
 
-            <div class="form-group">
-                <label>Referencia</label>
-                <div class="input-wrapper">
-                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <input name="business_reference" value="<?= esc($userData['business_reference']) ?>" placeholder="Ej: Frente a la plaza, portón azul...">
-                </div>
-            </div>
-
-            <button type="submit" style="width: 100%; margin-top: 10px;">💾 Guardar Cambios</button>
+            <button type="submit" class="btn btn-save-tech">💾 Guardar Cambios</button>
         </div>
-    </form>
-</div>
+    </div>
+</form>
 
-<div id="toast" class="toast">¡Perfil actualizado!</div>
+<div id="toast" class="toast-tech">¡Perfil actualizado!</div>
 
 <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiYW5kZXJsb3AiLCJhIjoiY21uMGJ1ZXhzMGkxMDJycHRuYzEwcmp4NCJ9.Jn4uXN5yX4DFIImQjw_R4w';
@@ -294,48 +354,33 @@ require __DIR__ . '/_header.php';
 
     function initMap() {
         if (map) return;
-        
         map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/mapbox/streets-v12',
             center: initialCoords,
-            zoom: 13
+            zoom: 14
         });
-
         map.on('load', () => {
             const el = document.createElement('div');
             el.innerHTML = '📍'; el.style.fontSize = '32px'; el.style.cursor = 'pointer';
-            
-            marker = new mapboxgl.Marker({ draggable: true, element: el })
-                .setLngLat(initialCoords)
-                .addTo(map);
-
+            marker = new mapboxgl.Marker({ draggable: true, element: el }).setLngLat(initialCoords).addTo(map);
             function updateCoords() {
                 const lngLat = marker.getLngLat();
                 document.getElementById('lat').value = lngLat.lat.toFixed(6);
                 document.getElementById('lng').value = lngLat.lng.toFixed(6);
             }
-
             marker.on('dragend', updateCoords);
-            map.on('click', (e) => {
-                marker.setLngLat(e.lngLat);
-                updateCoords();
-            });
+            map.on('click', (e) => { marker.setLngLat(e.lngLat); updateCoords(); });
         });
     }
 
     function switchTab(tab) {
         document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        
         event.currentTarget.classList.add('active');
         document.getElementById('tab-' + tab).classList.add('active');
-
         if (tab === 'local') {
-            setTimeout(() => {
-                initMap();
-                if (map) map.resize();
-            }, 100);
+            setTimeout(() => { initMap(); if (map) map.resize(); }, 100);
         }
     }
 
@@ -344,7 +389,6 @@ require __DIR__ . '/_header.php';
         field.type = field.type === 'password' ? 'text' : 'password';
     }
 
-    // Show toast if needed
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('toast')) {
         const toast = document.getElementById('toast');
