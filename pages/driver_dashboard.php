@@ -5,263 +5,269 @@ require_role(['repartidor']);
 
 $user = current_user();
 
-// Obtener pedidos pendientes (sin asignar)
-// Incluimos delivery_cost que es lo que el repartidor gana
-$pendientes = app_all(
-    "SELECT d.*, u.business_name as local_name, u.address as local_address, u.logo_path as local_logo
-     FROM deliveries d 
-     LEFT JOIN users u ON d.local_user_id = u.id 
-     WHERE d.status = 'pendiente' 
-     ORDER BY d.created_at DESC"
-);
-
-$title = 'Pedidos Disponibles';
+$title = 'Escáner de Pedidos';
 require __DIR__ . '/_header.php';
 ?>
 
+<!-- Mapbox GL JS -->
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
+
 <style>
-    /* Driver Profile Hero */
-    .driver-hero {
-        position: relative;
-        margin: -25px -20px 30px -20px;
-        padding: 50px 20px 20px;
-        text-align: center;
-        overflow: hidden;
-        background: #fff;
-    }
-    .driver-hero-cover {
-        position: absolute;
-        top: 0; left: 0; right: 0; height: 160px;
-        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-        z-index: 1;
-    }
-    .driver-hero-cover::after {
-        content: '';
-        position: absolute;
-        inset: 0;
-        background: linear-gradient(to bottom, rgba(248, 250, 252, 0.1) 0%, var(--bg) 100%);
-    }
-    .driver-hero-content { position: relative; z-index: 2; }
-    
-    .driver-avatar-box {
-        width: 90px; height: 90px;
-        border-radius: 50%;
-        border: 4px solid #fff;
-        background: #fff;
-        margin: 0 auto 15px;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-        display: flex; align-items: center; justify-content: center;
-        overflow: hidden;
-    }
-    .driver-avatar-box span { font-size: 36px; }
-
-    .driver-name-row { display: flex; align-items: center; justify-content: center; gap: 6px; }
-    .driver-name-row h2 { font-size: 22px; margin: 0; color: var(--text); }
-    .badge-verified { background: var(--primary); color: #fff; border-radius: 50%; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; font-size: 10px; }
-
-    /* Available Orders Bento List */
-    .section-title { font-size: 13px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; margin: 0 0 15px 5px; display: flex; align-items: center; gap: 8px; }
-    .pulse-dot { width: 8px; height: 8px; background: var(--primary); border-radius: 50%; animation: pulse 1.5s infinite; }
-    @keyframes pulse { 0% { transform: scale(0.9); opacity: 1; } 100% { transform: scale(2); opacity: 0; } }
-
-    .order-bento-card {
-        background: #fff;
-        border-radius: var(--card-radius);
-        padding: 24px;
-        margin-bottom: 16px;
-        box-shadow: var(--shadow);
-        border: 1px solid rgba(0,0,0,0.01);
-        transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .order-bento-card:active { transform: scale(0.97); }
-
-    .local-info-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
-    .local-mini-logo { width: 44px; height: 44px; border-radius: 12px; background: var(--bg); display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #f1f5f9; }
-    .local-mini-logo img { width: 100%; height: 100%; object-fit: cover; }
-    .local-name-box b { display: block; font-size: 16px; color: var(--text); font-weight: 800; }
-    .local-name-box span { font-size: 12px; color: var(--muted); font-weight: 600; display: flex; align-items: center; gap: 4px; }
-
-    .route-bento { 
-        background: var(--bg); 
-        border-radius: 18px; 
-        padding: 16px; 
-        margin-bottom: 24px; 
-        display: flex; 
-        flex-direction: column; 
-        gap: 12px; 
-        position: relative;
-    }
-    .route-item { display: flex; align-items: flex-start; gap: 10px; position: relative; z-index: 2; }
-    .route-icon { color: var(--primary); margin-top: 2px; flex-shrink: 0; }
-    .route-text { font-size: 13px; font-weight: 600; color: var(--text); line-height: 1.3; }
-    .route-text small { display: block; color: var(--muted); font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px; }
-    
-    .route-line { position: absolute; left: 24px; top: 35px; bottom: 35px; width: 2px; background: repeating-linear-gradient(to bottom, #e2e8f0, #e2e8f0 4px, transparent 4px, transparent 8px); z-index: 1; }
-
-    .order-earnings { 
-        display: grid; 
-        grid-template-columns: 1fr 1fr; 
-        gap: 12px; 
-        margin-bottom: 24px; 
-    }
-    .earning-box { background: var(--primary-soft); padding: 12px; border-radius: 16px; border: 1px solid rgba(37, 99, 235, 0.05); }
-    .earning-box.product { background: #f8fafc; border-color: #e2e8f0; }
-    .earning-label { font-size: 9px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; display: block; }
-    .product .earning-label { color: var(--muted); }
-    .earning-val { font-size: 16px; font-weight: 800; color: var(--text); }
-
-    .btn-accept-tech {
-        width: 100%;
-        background: var(--primary);
-        color: #fff;
-        border: none;
-        border-radius: 18px;
-        padding: 18px;
-        font-weight: 800;
-        font-size: 15px;
+    .driver-scanner-view {
+        min-height: calc(100vh - 120px);
         display: flex;
+        flex-direction: column;
         align-items: center;
         justify-content: center;
-        gap: 10px;
-        box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
-        cursor: pointer;
+        padding-top: 0;
     }
-    .btn-accept-tech:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* RADAR */
+    .radar-wrapper {
+        position: relative;
+        width: 260px; height: 260px;
+        display: flex; align-items: center; justify-content: center;
+        margin-bottom: 40px;
+        transition: all 0.5s ease;
+    }
+    .radar-wrapper.paused { filter: grayscale(1); opacity: 0.4; }
+    .radar-center-circle { width: 100px; height: 100px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; box-shadow: 0 0 30px rgba(37, 99, 235, 0.4); color: #fff; font-size: 40px; }
+    .radar-ring-arc { position: absolute; border: 3px solid transparent; border-top-color: rgba(37, 99, 235, 0.4); border-radius: 50%; animation: rotate-arc linear infinite; }
+    .arc-1 { width: 160px; height: 180px; animation-duration: 2s; }
+    .arc-2 { width: 220px; height: 220px; animation-duration: 4s; border-right-color: rgba(37, 99, 235, 0.2); }
+    .arc-3 { width: 260px; height: 260px; animation-duration: 6s; border-bottom-color: rgba(37, 99, 235, 0.1); }
+    .paused .radar-ring-arc { animation-play-state: paused; border-color: #cbd5e1 !important; border-top-color: #94a3b8 !important; }
+    .radar-pulse-wave { position: absolute; width: 100px; height: 100px; background: var(--primary-soft); border-radius: 50%; animation: pulse-wave 2s infinite; z-index: 5; }
+    .paused .radar-pulse-wave { display: none; }
+    @keyframes rotate-arc { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    @keyframes pulse-wave { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2.6); opacity: 0; } }
+
+    /* TOGGLE */
+    .availability-toggle-box { text-align: center; }
+    .status-label-text { margin-top: 12px; font-size: 14px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .status-label-text.active { color: #10b981; }
+    .ios-switch { position: relative; display: inline-block; width: 60px; height: 32px; }
+    .ios-switch input { opacity: 0; width: 0; height: 0; }
+    .ios-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e2e8f0; transition: .4s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 32px; }
+    .ios-slider:before { position: absolute; content: ""; height: 24px; width: 24px; left: 4px; bottom: 4px; background-color: white; transition: .4s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 50%; box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
+    input:checked + .ios-slider { background-color: #10b981; }
+    input:checked + .ios-slider:before { transform: translateX(28px); }
+
+    /* BROADCAST MODAL */
+    .broadcast-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); z-index: 4000; display: none; align-items: center; justify-content: center; padding: 20px; }
+    .broadcast-card { 
+        background: #fff; width: 100%; max-width: 400px; border-radius: 28px; 
+        padding: 30px 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); 
+        animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    }
+    @keyframes modalPop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+
+    .shop-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
+    .shop-avatar { width: 50px; height: 50px; background: var(--primary-soft); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; overflow: hidden; border: 1px solid rgba(0,0,0,0.05); }
+    .shop-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .shop-info h3 { font-size: 18px; margin: 0; color: var(--text); }
+    .shop-info p { font-size: 12px; color: var(--muted); margin: 2px 0 0; font-weight: 600; }
+
+    #mini-route-map { height: 160px; border-radius: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
+
+    .money-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
+    .money-box { background: #f8fafc; padding: 15px; border-radius: 18px; border: 1px solid rgba(0,0,0,0.02); }
+    .money-box.earnings { background: var(--primary-soft); border-color: rgba(37, 99, 235, 0.1); }
+    .money-box small { display: block; font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
+    .money-box.earnings small { color: var(--primary); }
+    .money-box b { font-size: 17px; color: var(--text); }
+    .money-box.earnings b { color: var(--primary); }
+
+    .btn-accept-now { 
+        width: 100%; background: var(--primary); color: #fff; border: none; border-radius: 18px; 
+        padding: 18px; font-weight: 800; font-size: 16px; display: flex; align-items: center; 
+        justify-content: center; gap: 10px; cursor: pointer; transition: transform 0.2s;
+        box-shadow: 0 12px 30px rgba(37, 99, 235, 0.3);
+    }
+    .btn-accept-now:active { transform: scale(0.96); }
+    .btn-ignore { 
+        width: 100%; margin-top: 15px; background: transparent; color: var(--muted); border: none; 
+        font-weight: 700; font-size: 13px; cursor: pointer; 
+    }
 </style>
 
-<div class="driver-hero">
-    <div class="driver-hero-cover"></div>
-    <div class="driver-hero-content">
-        <div class="driver-avatar-box">
-            <span>🛵</span>
-        </div>
-        <div class="driver-name-row">
-            <h2><?= esc($user['name']) ?></h2>
-            <div class="badge-verified">✓</div>
-        </div>
-        <p class="muted" style="font-weight: 700; text-transform: uppercase; font-size: 10px; letter-spacing: 1px; margin-top: 4px;">Repartidor Pro</p>
+<div class="driver-scanner-view">
+    <div class="radar-wrapper paused" id="radar-ui">
+        <div class="radar-pulse-wave"></div>
+        <div class="radar-ring-arc arc-1"></div>
+        <div class="radar-ring-arc arc-2"></div>
+        <div class="radar-ring-arc arc-3"></div>
+        <div class="radar-center-circle"><span>🛵</span></div>
+    </div>
+
+    <div class="availability-toggle-box">
+        <label class="ios-switch">
+            <input type="checkbox" id="main-status-toggle" onchange="handleScannerToggle(this.checked)">
+            <span class="ios-slider"></span>
+        </label>
+        <div class="status-label-text" id="main-status-text">Desconectado</div>
     </div>
 </div>
 
-<div class="orders-section">
-    <div class="section-title">
-        <div class="pulse-dot"></div>
-        Pedidos Disponibles
-    </div>
-
-    <div class="available-list" id="driver-list">
-        <?php if (empty($pendientes)): ?>
-            <div class="card" style="text-align: center; padding: 60px 20px; border: none;">
-                <div style="background: var(--bg); width: 80px; height: 80px; border-radius: 24px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
-                    <svg style="width: 36px; height: 36px; color: var(--muted);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0a2 2 0 01-2 2H6a2 2 0 01-2-2m16 0l-3.586 3.586a2 2 0 01-2.828 0L12 14m0 0l-3.586 3.586a2 2 0 01-2.828 0L2 14"></path></svg>
-                </div>
-                <h3 style="font-size: 18px;">Sin pedidos</h3>
-                <p class="muted" style="font-weight: 500;">Buscando nuevas entregas...</p>
+<!-- MODAL DE BROADCAST -->
+<div id="broadcast-modal" class="broadcast-overlay">
+    <div class="broadcast-card">
+        <div class="shop-header">
+            <div class="shop-avatar" id="m-shop-logo-container">🏢</div>
+            <div class="shop-info">
+                <p>NUEVO PEDIDO DE</p>
+                <h3 id="m-shop-name">-</h3>
             </div>
-        <?php else: ?>
-            <?php foreach ($pendientes as $p): ?>
-                <div class="order-bento-card" id="order-<?= $p['id'] ?>">
-                    <div class="local-info-row">
-                        <div class="local-mini-logo">
-                            <?php if (!empty($p['local_logo'])): ?>
-                                <img src="<?= esc(delivery_app_url($p['local_logo'])) ?>" alt="Logo">
-                            <?php else: ?>
-                                <span style="font-size: 20px;">🏢</span>
-                            <?php endif; ?>
-                        </div>
-                        <div class="local-name-box">
-                            <b><?= esc((string)$p['local_name']) ?></b>
-                            <span>
-                                <svg style="width:12px; height:12px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path></svg>
-                                <?= esc((string)$p['local_address'] ?: 'Ubicación local') ?>
-                            </span>
-                        </div>
-                    </div>
+        </div>
 
-                    <div class="route-bento">
-                        <div class="route-line"></div>
-                        <div class="route-item">
-                            <div class="route-icon">🏠</div>
-                            <div class="route-text">
-                                <small>Punto de Retiro</small>
-                                <?= esc((string)$p['local_name']) ?>
-                            </div>
-                        </div>
-                        <div class="route-item">
-                            <div class="route-icon">📍</div>
-                            <div class="route-text">
-                                <small>Destino Cliente</small>
-                                <?= esc((string)$p['delivery_address']) ?>
-                            </div>
-                        </div>
-                    </div>
+        <div id="mini-route-map"></div>
 
-                    <div class="order-earnings">
-                        <div class="earning-box">
-                            <span class="earning-label">Tu Ganancia</span>
-                            <div class="earning-val"><?= gs((float)$p['delivery_cost']) ?></div>
-                        </div>
-                        <div class="earning-box product">
-                            <span class="earning-label">Pago Local</span>
-                            <div class="earning-val"><?= gs((float)$p['amount']) ?></div>
-                        </div>
-                    </div>
+        <div class="money-row">
+            <div class="money-box" id="m-product-box">
+                <small id="m-product-label">PAGAS AL LOCAL</small>
+                <b id="m-product-amount">0 Gs.</b>
+            </div>
+            <div class="money-box earnings">
+                <small>TU GANANCIA</small>
+                <b id="m-earnings">0 Gs.</b>
+            </div>
+        </div>
 
-                    <button onclick="acceptOrder(<?= (int)$p['id'] ?>, this)" class="btn-accept-tech">
-                        <span>TOMAR PEDIDO</span>
-                        <svg style="width:20px; height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
-                    </button>
-                </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
+        <button id="btn-accept" class="btn-accept-now" onclick="acceptBroadcastedOrder()">
+            ACEPTAR PEDIDO
+        </button>
+        <button class="btn-ignore" onclick="closeBroadcast()">IGNORAR</button>
     </div>
 </div>
 
 <script>
-    async function acceptOrder(id, btn) {
-        if (!confirm('¿Estás seguro de tomar este pedido?')) return;
-        
-        btn.disabled = true;
-        btn.innerHTML = '<span>PROCESANDO...</span>';
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYW5kZXJsb3AiLCJhIjoiY21uMGJ1ZXhzMGkxMDJycHRuYzEwcmp4NCJ9.Jn4uXN5yX4DFIImQjw_R4w';
+    
+    let checkInterval = null;
+    let currentBroadcastId = null;
+    let miniMap = null;
 
-        const formData = new FormData();
-        formData.append('order_id', id);
+    function handleScannerToggle(isOnline) {
+        const radar = document.getElementById('radar-ui');
+        const text = document.getElementById('main-status-text');
 
-        try {
-            const resp = await fetch('api_accept_order.php', {
-                method: 'POST',
-                body: formData
-            });
-            const res = await resp.json();
-
-            if (res.success) {
-                // Sonido de éxito
-                new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play();
-                
-                btn.style.background = '#10b981';
-                btn.innerHTML = '<span>¡PEDIDO TOMADO!</span>';
-                
-                setTimeout(() => {
-                    location.href = 'my_deliveries.php';
-                }, 1000);
-            } else {
-                alert(res.message);
-                btn.disabled = false;
-                btn.innerHTML = '<span>TOMAR PEDIDO</span>';
-            }
-        } catch (e) {
-            console.error(e);
-            alert('Error de conexión');
-            btn.disabled = false;
+        if (isOnline) {
+            radar.classList.remove('paused');
+            text.innerText = 'Buscando pedidos...';
+            text.classList.add('active');
+            startPolling();
+        } else {
+            radar.classList.add('paused');
+            text.innerText = 'Desconectado';
+            text.classList.remove('active');
+            stopPolling();
+            closeBroadcast();
         }
     }
 
-    // Polling sutil: refresca la lista cada 30s para ver nuevos pedidos
-    setInterval(() => {
-        // En una app real usaríamos fetch para actualizar el DOM sin recargar
-        // Por ahora refrescamos para mantener simplicidad y datos frescos
-        // location.reload(); 
-    }, 30000);
+    function startPolling() {
+        if (checkInterval) return;
+        checkInterval = setInterval(async () => {
+            try {
+                const resp = await fetch('api_check_new_orders.php');
+                const res = await resp.json();
+                
+                if (res.has_orders && res.order.id !== currentBroadcastId) {
+                    showBroadcast(res.order);
+                }
+            } catch (e) {}
+        }, 3000);
+    }
+
+    function stopPolling() {
+        if (checkInterval) { clearInterval(checkInterval); checkInterval = null; }
+    }
+
+    function showBroadcast(order) {
+        currentBroadcastId = order.id;
+        document.getElementById('m-shop-name').innerText = order.local_name;
+        document.getElementById('m-earnings').innerText = order.earnings.toLocaleString('de-DE') + ' Gs.';
+        
+        const logoContainer = document.getElementById('m-shop-logo-container');
+        if (order.local_logo) {
+            const baseUrl = '/php-delivery-app/';
+            logoContainer.innerHTML = `<img src="${baseUrl}${order.local_logo}" alt="Logo">`;
+        } else {
+            logoContainer.innerHTML = '🏢';
+        }
+
+        const productBox = document.getElementById('m-product-box');
+        if (order.driver_pays) {
+            productBox.style.opacity = '1';
+            document.getElementById('m-product-label').innerText = 'PAGAS AL LOCAL';
+            document.getElementById('m-product-amount').innerText = order.amount_product.toLocaleString('de-DE') + ' Gs.';
+        } else {
+            document.getElementById('m-product-label').innerText = 'PAGO AL LOCAL';
+            document.getElementById('m-product-amount').innerText = 'SIN COBRO';
+        }
+
+        document.getElementById('broadcast-modal').style.display = 'flex';
+        new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play();
+
+        // Inicializar mini mapa de ruta
+        setTimeout(() => initMiniMap(order), 100);
+    }
+
+    function initMiniMap(order) {
+        if (miniMap) miniMap.remove();
+        miniMap = new mapboxgl.Map({
+            container: 'mini-route-map',
+            style: 'mapbox://styles/mapbox/streets-v12',
+            center: [(order.local_lng + order.dest_lng) / 2, (order.local_lat + order.dest_lat) / 2],
+            zoom: 12,
+            interactive: false
+        });
+
+        miniMap.on('load', async () => {
+            new mapboxgl.Marker({ color: '#ff4444' }).setLngLat([order.local_lng, order.local_lat]).addTo(miniMap);
+            new mapboxgl.Marker({ color: '#10b981' }).setLngLat([order.dest_lng, order.dest_lat]).addTo(miniMap);
+            
+            const query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${order.local_lng},${order.local_lat};${order.dest_lng},${order.dest_lat}?geometries=geojson&access_token=${mapboxgl.accessToken}`);
+            const json = await query.json();
+            if (json.routes && json.routes[0]) {
+                miniMap.addSource('route', { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': json.routes[0].geometry } });
+                miniMap.addLayer({ 'id': 'route', 'type': 'line', 'source': 'route', 'layout': { 'line-join': 'round', 'line-cap': 'round' }, 'paint': { 'line-color': '#2563eb', 'line-width': 4, 'line-opacity': 0.8 } });
+                const bounds = new mapboxgl.LngLatBounds([order.local_lng, order.local_lat], [order.dest_lng, order.dest_lat]);
+                miniMap.fitBounds(bounds, { padding: 30 });
+            }
+        });
+    }
+
+    async function acceptBroadcastedOrder() {
+        if (!currentBroadcastId) return;
+        const btn = document.getElementById('btn-accept');
+        btn.disabled = true;
+        btn.innerText = 'PROCESANDO...';
+
+        const formData = new FormData();
+        formData.append('order_id', currentBroadcastId);
+
+        try {
+            const resp = await fetch('api_accept_order.php', { method: 'POST', body: formData });
+            const res = await resp.json();
+            if (res.success) {
+                location.href = 'my_deliveries.php';
+            } else {
+                alert(res.message);
+                closeBroadcast();
+            }
+        } catch (e) {
+            alert('Error al aceptar el pedido');
+            btn.disabled = false;
+            btn.innerText = 'ACEPTAR PEDIDO';
+        }
+    }
+
+    function closeBroadcast() {
+        document.getElementById('broadcast-modal').style.display = 'none';
+        currentBroadcastId = null;
+    }
 </script>
 
 <?php require __DIR__ . '/_footer.php'; ?>
