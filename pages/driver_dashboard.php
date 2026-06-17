@@ -3,7 +3,8 @@ require_once __DIR__ . '/../bootstrap.php';
 require_login();
 require_role(['repartidor']);
 
-$user = current_user();
+$sessionUser = current_user();
+$userData = app_one("SELECT * FROM users WHERE id = ?", "i", [(int)$sessionUser['id']]);
 
 $title = 'Escáner de Pedidos';
 require __DIR__ . '/_header.php';
@@ -19,40 +20,85 @@ require __DIR__ . '/_header.php';
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: center;
-        padding-top: 0;
+        padding-top: 30px;
     }
+
+    /* PROFILE HEADER SECTION */
+    .profile-header-tech {
+        text-align: center;
+        margin-bottom: 40px;
+        animation: fadeInDown 0.6s ease-out;
+    }
+    @keyframes fadeInDown { from { opacity: 0; transform: translateY(-20px); } to { opacity: 1; transform: translateY(0); } }
+
+    .avatar-wrapper-tech {
+        position: relative;
+        width: 88px;
+        height: 88px;
+        margin: 0 auto 18px;
+    }
+    .avatar-img-tech {
+        width: 100%; height: 100%;
+        border-radius: 50%;
+        border: 3.5px solid #fff;
+        background: #fff;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+        overflow: hidden;
+        display: flex; align-items: center; justify-content: center;
+    }
+    .avatar-img-tech img { width: 100%; height: 100%; object-fit: cover; }
+    .avatar-img-tech span { font-size: 36px; }
+
+    .verified-badge-tech {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        background: var(--primary);
+        color: #fff;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 12px;
+        border: 2.5px solid #fff;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+        z-index: 3;
+    }
+
+    .welcome-title-tech { font-size: 26px; font-weight: 800; color: var(--text); margin: 0; letter-spacing: -0.5px; }
+    .subtitle-tech { font-size: 14px; font-weight: 600; color: var(--muted); margin-top: 6px; }
 
     /* RADAR */
     .radar-wrapper {
         position: relative;
-        width: 260px; height: 260px;
+        width: 240px; height: 240px;
         display: flex; align-items: center; justify-content: center;
-        margin-bottom: 40px;
+        margin-bottom: 35px;
         transition: all 0.5s ease;
     }
     .radar-wrapper.paused { filter: grayscale(1); opacity: 0.4; }
-    .radar-center-circle { width: 100px; height: 100px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; box-shadow: 0 0 30px rgba(37, 99, 235, 0.4); color: #fff; font-size: 40px; }
+    .radar-center-circle { width: 100px; height: 100px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; z-index: 10; box-shadow: 0 0 30px rgba(37, 99, 235, 0.4); color: #fff; font-size: 36px; overflow: hidden; }
+    .radar-center-circle img { width: 100%; height: 100%; object-fit: cover; }
     .radar-ring-arc { position: absolute; border: 3px solid transparent; border-top-color: rgba(37, 99, 235, 0.4); border-radius: 50%; animation: rotate-arc linear infinite; }
-    .arc-1 { width: 160px; height: 180px; animation-duration: 2s; }
-    .arc-2 { width: 220px; height: 220px; animation-duration: 4s; border-right-color: rgba(37, 99, 235, 0.2); }
-    .arc-3 { width: 260px; height: 260px; animation-duration: 6s; border-bottom-color: rgba(37, 99, 235, 0.1); }
+    .arc-1 { width: 150px; height: 150px; animation-duration: 2s; }
+    .arc-2 { width: 195px; height: 195px; animation-duration: 4s; border-right-color: rgba(37, 99, 235, 0.2); }
+    .arc-3 { width: 240px; height: 240px; animation-duration: 6s; border-bottom-color: rgba(37, 99, 235, 0.1); }
     .paused .radar-ring-arc { animation-play-state: paused; border-color: #cbd5e1 !important; border-top-color: #94a3b8 !important; }
     .radar-pulse-wave { position: absolute; width: 100px; height: 100px; background: var(--primary-soft); border-radius: 50%; animation: pulse-wave 2s infinite; z-index: 5; }
     .paused .radar-pulse-wave { display: none; }
     @keyframes rotate-arc { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-    @keyframes pulse-wave { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2.6); opacity: 0; } }
+    @keyframes pulse-wave { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2.8); opacity: 0; } }
 
     /* TOGGLE */
     .availability-toggle-box { text-align: center; }
-    .status-label-text { margin-top: 12px; font-size: 14px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
+    .status-label-text { margin-top: 15px; font-size: 14px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
     .status-label-text.active { color: #10b981; }
-    .ios-switch { position: relative; display: inline-block; width: 60px; height: 32px; }
+    .ios-switch { position: relative; display: inline-block; width: 64px; height: 34px; }
     .ios-switch input { opacity: 0; width: 0; height: 0; }
-    .ios-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e2e8f0; transition: .4s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 32px; }
-    .ios-slider:before { position: absolute; content: ""; height: 24px; width: 24px; left: 4px; bottom: 4px; background-color: white; transition: .4s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 50%; box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
+    .ios-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e2e8f0; transition: .4s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 34px; }
+    .ios-slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 50%; box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
     input:checked + .ios-slider { background-color: #10b981; }
-    input:checked + .ios-slider:before { transform: translateX(28px); }
+    input:checked + .ios-slider:before { transform: translateX(30px); }
 
     /* BROADCAST MODAL */
     .broadcast-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); z-index: 4000; display: none; align-items: center; justify-content: center; padding: 20px; }
@@ -93,6 +139,23 @@ require __DIR__ . '/_header.php';
 </style>
 
 <div class="driver-scanner-view">
+    <!-- SECCIÓN DE PERFIL PERSONALIZADA -->
+    <div class="profile-header-tech">
+        <div class="avatar-wrapper-tech">
+            <div class="avatar-img-tech">
+                <?php if (!empty($userData['logo_path'])): ?>
+                    <img src="<?= esc(delivery_app_url($userData['logo_path'])) ?>?v=<?= time() ?>" alt="Avatar">
+                <?php else: ?>
+                    <span>🛵</span>
+                <?php endif; ?>
+            </div>
+            <div class="verified-badge-tech" title="Cuenta Verificada">✓</div>
+        </div>
+        <h2 class="welcome-title-tech">¡Hola!, <?= explode(' ', esc($userData['name']))[0] ?></h2>
+        <p class="subtitle-tech">Conéctate para recibir pedidos</p>
+    </div>
+
+    <!-- ÁREA DEL RADAR -->
     <div class="radar-wrapper paused" id="radar-ui">
         <div class="radar-pulse-wave"></div>
         <div class="radar-ring-arc arc-1"></div>
@@ -101,6 +164,7 @@ require __DIR__ . '/_header.php';
         <div class="radar-center-circle"><span>🛵</span></div>
     </div>
 
+    <!-- ÁREA DEL TOGGLE -->
     <div class="availability-toggle-box">
         <label class="ios-switch">
             <input type="checkbox" id="main-status-toggle" onchange="handleScannerToggle(this.checked)">
