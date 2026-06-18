@@ -126,6 +126,20 @@ require __DIR__ . '/_header.php';
         padding: 18px; font-weight: 700; font-size: 15px; display: flex; align-items: center; 
         justify-content: center; gap: 12px; box-shadow: 0 10px 20px rgba(30, 41, 59, 0.2);
     }
+    
+    /* Premium Banner - Refined */
+    .premium-banner {
+        display: flex; align-items: center; gap: 18px;
+        background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+        padding: 20px; border-radius: 20px;
+        margin-bottom: 16px; color: #fff; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
+    }
+    .crown-icon {
+        width: 44px; height: 44px; background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(5px); border-radius: 14px; 
+        display: flex; align-items: center; justify-content: center;
+        font-size: 22px; flex-shrink: 0; border: 1px solid rgba(255, 255, 255, 0.2);
+    }
 </style>
 
 <div class="history-header-bento">
@@ -149,6 +163,14 @@ require __DIR__ . '/_header.php';
                 <?= $day ?>
             </div>
         <?php endfor; ?>
+    </div>
+</div>
+
+<div class="premium-banner">
+    <div class="crown-icon">👑</div>
+    <div>
+        <h4 style="margin:0; font-size:14px; color:#fff; font-weight: 800;">Cantidad de pedidos</h4>
+        <p style="margin:0; font-size:12px; opacity:0.8; font-weight: 600;"><?= count($rows) ?> pedidos encontrados</p>
     </div>
 </div>
 
