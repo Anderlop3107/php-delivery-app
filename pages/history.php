@@ -130,9 +130,10 @@ require __DIR__ . '/_header.php';
     /* Premium Banner - Refined */
     .premium-banner {
         display: flex; align-items: center; gap: 18px;
-        background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+        background: rgba(37, 99, 235, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
         padding: 20px; border-radius: 20px;
         margin-bottom: 16px; color: #fff; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.1);
     }
     .crown-icon {
         width: 44px; height: 44px; background: rgba(255, 255, 255, 0.15);
@@ -167,7 +168,9 @@ require __DIR__ . '/_header.php';
 </div>
 
 <div class="premium-banner">
-    <div class="crown-icon">👑</div>
+    <div class="crown-icon">
+        <img src="../uploads/logos/corona.png" alt="Crown" style="width: 100px; height: 100px; object-fit: contain;">
+    </div>
     <div>
         <h4 style="margin:0; font-size:14px; color:#fff; font-weight: 800;">Cantidad de pedidos</h4>
         <p style="margin:0; font-size:12px; opacity:0.8; font-weight: 600;"><?= count($rows) ?> pedidos encontrados</p>
@@ -189,7 +192,9 @@ require __DIR__ . '/_header.php';
                 <p><?= esc($row['customer_name'] ?: 'Cliente') ?></p>
                 <span class="pill-tech <?= $pill_class ?>"><?= str_replace('_', ' ', $s) ?></span>
             </div>
-            <div class="order-amount-bento"><b><?= number_format($row['amount'], 0, ',', '.') ?> Gs.</b></div>
+            <div class="order-amount-bento">
+                <b><?= number_format($row['delivery_cost'], 0, ',', '.') ?> Gs.</b>
+            </div>
         </div>
     <?php endforeach; ?>
 </div>
