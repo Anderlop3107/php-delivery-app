@@ -27,19 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
     $name = trim((string) ($_POST['name'] ?? ''));
     $phone = trim((string) ($_POST['phone'] ?? ''));
     $pass = (string) ($_POST['password'] ?? '');
-    
-    $bName = trim((string) ($_POST['business_name'] ?? ''));
-    $whatsapp = trim((string) ($_POST['whatsapp'] ?? ''));
-    $address = trim((string) ($_POST['address'] ?? ''));
-    $ref = trim((string) ($_POST['business_reference'] ?? ''));
-    $lat = $_POST['latitude'] !== '' ? (float) $_POST['latitude'] : null;
-    $lng = $_POST['longitude'] !== '' ? (float) $_POST['longitude'] : null;
 
     if ($name === '') $errors[] = 'El nombre es obligatorio.';
 
     if ($errors === []) {
-        app_exec("UPDATE users SET name=?, phone=?, business_name=?, whatsapp=?, address=?, business_reference=?, latitude=?, longitude=? WHERE id=?",
-            'ssssssddi', [$name, $phone, $bName, $whatsapp, $address, $ref, $lat, $lng, (int) $user['id']]);
+        app_exec("UPDATE users SET name=?, phone=? WHERE id=?", 'ssi', [$name, $phone, (int) $user['id']]);
         
         if ($pass !== '') {
             $hash = password_hash($pass, PASSWORD_BCRYPT);
@@ -53,10 +45,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
 $title = 'Perfil';
 require __DIR__ . '/_header.php';
 ?>
-
-<!-- Mapbox GL JS -->
-<link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet">
-<script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
 
 <style>
     /* Profile Hero Header */
@@ -213,8 +201,6 @@ require __DIR__ . '/_header.php';
     }
     @keyframes toastPop { from { bottom: 70px; opacity: 0; } to { bottom: 100px; opacity: 1; } }
 
-    #map { height: 220px; border-radius: 24px; margin-bottom: 15px; border: 1px solid var(--border); box-shadow: var(--shadow); }
-    
     .btn-save-tech { width: 100%; margin-top: 15px; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25); }
     .btn-logout-tech { 
         background: #ffffff; 
@@ -229,7 +215,7 @@ require __DIR__ . '/_header.php';
     }
     .btn-logout-tech:active { background: #fef2f2; }
     
-    /* Premium Upload Cards */
+    /* Premium Upload Cards - Now as distinct Cards */
     .upload-card-interactive {
         display: flex; align-items: center; justify-content: space-between;
         background: #fff; border-radius: 20px;
@@ -238,10 +224,11 @@ require __DIR__ . '/_header.php';
         border: 1px solid rgba(0,0,0,0.05);
         box-shadow: 0 4px 15px rgba(0,0,0,0.03);
         transition: transform 0.2s ease;
+        white-space: nowrap;
     }
     .upload-card-interactive:active { transform: scale(0.98); }
     .user-icon { font-size: 24px; margin-right: 15px; flex-shrink: 0; }
-    .arrow-icon { font-size: 20px; font-weight: bold; flex-shrink: 0; margin-left: 10px; color: var(--muted); }
+    .arrow-icon { font-size: 18px; font-weight: bold; flex-shrink: 0; margin-left: 10px; color: var(--muted); }
 </style>
 
 <div class="profile-hero">
@@ -320,7 +307,7 @@ require __DIR__ . '/_header.php';
     <!-- Tab 2: Local -->
     <div id="tab-local" class="tab-content">
         <div class="card" style="border:none; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
-            <div class="premium-upload-banner" onclick="window.location.href='upload_id.php'">
+            <div class="upload-card-interactive" onclick="window.location.href='upload_id.php'">
                 <div style="display: flex; align-items: center;">
                     <span class="user-icon">👤</span>
                     <span style="font-weight: 800; font-size: 15px;">Agregar Cédula de Identidad</span>
@@ -328,7 +315,7 @@ require __DIR__ . '/_header.php';
                 <span class="arrow-icon">></span>
             </div>
 
-            <div class="premium-upload-banner" onclick="window.location.href='upload_license.php'">
+            <div class="upload-card-interactive" onclick="window.location.href='upload_license.php'">
                 <div style="display: flex; align-items: center;">
                     <span class="user-icon">🚗</span>
                     <span style="font-weight: 800; font-size: 15px;">Agregar registro de conducir</span>
@@ -336,7 +323,7 @@ require __DIR__ . '/_header.php';
                 <span class="arrow-icon">></span>
             </div>
 
-            <div class="premium-upload-banner" onclick="window.location.href='upload_habilitacion.php'">
+            <div class="upload-card-interactive" onclick="window.location.href='upload_habilitacion.php'">
                 <div style="display: flex; align-items: center;">
                     <span class="user-icon">📄</span>
                     <span style="font-weight: 800; font-size: 15px;">Agregar Habilitación</span>
@@ -344,7 +331,7 @@ require __DIR__ . '/_header.php';
                 <span class="arrow-icon">></span>
             </div>
 
-            <div class="premium-upload-banner" onclick="window.location.href='upload_cedula_verde.php'">
+            <div class="upload-card-interactive" onclick="window.location.href='upload_cedula_verde.php'">
                 <div style="display: flex; align-items: center;">
                     <span class="user-icon">🚙</span>
                     <span style="font-weight: 800; font-size: 15px;">Agregar Cédula verde</span>
