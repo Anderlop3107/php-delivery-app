@@ -4,15 +4,16 @@ require_login();
 
 $user = current_user();
 
-// 1. Obtener fecha seleccionada (por defecto hoy)
-$selectedDate = $_GET['date'] ?? date('Y-m-d');
+// 1. Obtener rango de fechas
+$startDate = $_GET['start_date'] ?? date('Y-m-01');
+$endDate = $_GET['end_date'] ?? date('Y-m-d');
 $month = isset($_GET['month']) ? (int)$_GET['month'] : (int)date('m');
 $year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
 
 // Lógica de filtrado
-$where = "DATE(d.created_at) = ?";
-$types = "s";
-$params = [$selectedDate];
+$where = "DATE(d.created_at) BETWEEN ? AND ?";
+$types = "ss";
+$params = [$startDate, $endDate];
 
 if ($user['role'] === 'local') {
     $where .= " AND d.local_user_id = ?";
@@ -35,13 +36,13 @@ $rows = app_all(
     $params
 );
 
-// Configuración del Calendario
 $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
 $firstDayOfMonth = date('w', strtotime("$year-$month-01"));
 $monthsNames = [
     1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril', 5 => 'Mayo', 6 => 'Junio',
     7 => 'Julio', 8 => 'Agosto', 9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
 ];
+$monthName = $monthsNames[$month];
 
 $title = 'Historial';
 require __DIR__ . '/_header.php';
@@ -58,16 +59,21 @@ require __DIR__ . '/_header.php';
         border: none; font-size: 1.25rem; font-weight: 800; color: var(--text); background: transparent; outline: none; cursor: pointer; padding: 0;
     }
     
-    .calendar-grid-bento { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
-    .calendar-day-label-bento { font-size: 9px; font-weight: 800; color: #cbd5e1; text-transform: uppercase; margin-bottom: 4px; }
+    /* Gap 0 for seamless strip */
+    .calendar-grid-bento { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; text-align: center; }
+    .calendar-day-label-bento { font-size: 9px; font-weight: 800; color: #cbd5e1; text-transform: uppercase; margin-bottom: 8px; }
     
     .calendar-day-bento { 
-        height: 30px; display: flex; align-items: center; justify-content: center; 
-        font-size: 12px; font-weight: 700; color: #475569; border-radius: 8px;
-        cursor: pointer; text-decoration: none; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+        height: 34px; width: 100%;
+        display: flex; align-items: center; justify-content: center; 
+        font-size: 12px; font-weight: 600; color: #475569;
+        cursor: pointer; text-decoration: none; transition: all 0.2s; 
     }
-    .calendar-day-bento.active { background: var(--primary) !important; color: #ffffff !important; box-shadow: 0 8px 15px rgba(37, 99, 235, 0.2); transform: scale(1.05); }
-    .calendar-day-bento.today { color: var(--primary); border: 2px solid var(--primary-soft); }
+
+    /* Range Selection Styles - Solid, transparent blue strip */
+    .calendar-day-bento.active { background: var(--primary) !important; color: #ffffff !important; box-shadow: 0 8px 15px rgba(37, 99, 235, 0.2); transform: scale(1.05); border-radius: 8px !important; }
+    .calendar-day-bento.in-range { background: var(--primary-soft); color: var(--primary); border-radius: 0; }
+    .calendar-day-bento.today { color: var(--primary); border: 2px solid var(--primary-soft); border-radius: 8px; }
 
     /* History List Items */
     .order-card-bento { 
@@ -129,29 +135,19 @@ require __DIR__ . '/_header.php';
                 <option value="<?= $num ?>" <?= $month == $num ? 'selected' : '' ?>><?= $name ?></option>
             <?php endforeach; ?>
         </select>
-        <span style="font-weight: 700; color: #cbd5e1; font-size: 15px;"><?= $year ?></span>
     </div>
 
     <div class="calendar-grid-bento">
-        <div class="calendar-day-label-bento">D</div>
-        <div class="calendar-day-label-bento">L</div>
-        <div class="calendar-day-label-bento">M</div>
-        <div class="calendar-day-label-bento">X</div>
-        <div class="calendar-day-label-bento">J</div>
-        <div class="calendar-day-label-bento">V</div>
-        <div class="calendar-day-label-bento">S</div>
-
+        <div class="calendar-day-label-bento">D</div><div class="calendar-day-label-bento">L</div><div class="calendar-day-label-bento">M</div><div class="calendar-day-label-bento">X</div><div class="calendar-day-label-bento">J</div><div class="calendar-day-label-bento">V</div><div class="calendar-day-label-bento">S</div>
         <?php 
-        for ($i = 0; $i < $firstDayOfMonth; $i++) echo '<div></div>';
+        $pad = ($firstDayOfMonth == 0) ? 6 : $firstDayOfMonth - 1;
+        for ($i = 0; $i < $pad; $i++) echo '<div></div>';
         for ($day = 1; $day <= $daysInMonth; $day++):
             $dateStr = sprintf('%04d-%02d-%02d', $year, $month, $day);
-            $isActive = $selectedDate === $dateStr;
-            $isToday = date('Y-m-d') === $dateStr;
         ?>
-            <a href="?date=<?= $dateStr ?>&month=<?= $month ?>&year=<?= $year ?>" 
-               class="calendar-day-bento <?= $isActive ? 'active' : '' ?> <?= $isToday ? 'today' : '' ?>">
+            <div class="calendar-day-bento" id="day-<?= $dateStr ?>" onclick="selectDate('<?= $dateStr ?>')">
                 <?= $day ?>
-            </a>
+            </div>
         <?php endfor; ?>
     </div>
 </div>
@@ -165,17 +161,13 @@ require __DIR__ . '/_header.php';
         if ($s === 'cancelado' || $s === 'rechazado') $pill_class = 'pill-canceled';
     ?>
         <div class="order-card-bento" onclick='showDetails(<?= json_encode($row) ?>)'>
-            <div class="order-icon-bento">
-                <svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 11-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-            </div>
+            <div class="order-icon-bento"><svg style="width: 24px; height: 24px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 11-8 0v4M5 9h14l1 12H4L5 9z"></path></svg></div>
             <div class="order-info-bento">
                 <h4>ID #<?= $row['id'] ?></h4>
                 <p><?= esc($row['customer_name'] ?: 'Cliente') ?></p>
                 <span class="pill-tech <?= $pill_class ?>"><?= str_replace('_', ' ', $s) ?></span>
             </div>
-            <div class="order-amount-bento">
-                <b><?= number_format($row['amount'], 0, ',', '.') ?> Gs.</b>
-            </div>
+            <div class="order-amount-bento"><b><?= number_format($row['amount'], 0, ',', '.') ?> Gs.</b></div>
         </div>
     <?php endforeach; ?>
 </div>
@@ -192,10 +184,38 @@ require __DIR__ . '/_header.php';
 </div>
 
 <script>
-    function changeMonth(m) {
-        window.location.href = `?month=${m}&year=<?= $year ?>&date=<?= $selectedDate ?>`;
+    let startDate = '<?= $startDate ?>';
+    let endDate = '<?= $endDate ?>';
+
+    function selectDate(date) {
+        if (!startDate || (startDate && endDate)) {
+            startDate = date; endDate = null;
+        } else {
+            endDate = date;
+            if (endDate < startDate) { [startDate, endDate] = [endDate, startDate]; }
+            window.location.href = `?start_date=${startDate}&end_date=${endDate}&month=<?= $month ?>&year=<?= $year ?>`;
+        }
+        updateCalendar();
     }
 
+    function updateCalendar() {
+        document.querySelectorAll('.calendar-day-bento').forEach(el => {
+            const d = el.id.replace('day-', '');
+            el.classList.remove('active', 'in-range', 'start-point', 'end-point');
+            
+            if (d === startDate || d === endDate) { el.classList.add('active'); }
+            if (startDate && endDate && d > startDate && d < endDate) { el.classList.add('in-range'); }
+            if (startDate && d === startDate) { el.classList.add('start-point'); }
+            if (endDate && d === endDate) { el.classList.add('end-point'); }
+        });
+    }
+    updateCalendar(); // Inicializar
+
+    function changeMonth(m) { 
+        let y = <?= $year ?>;
+        if(m > 12) { m = 1; y++; } else if(m < 1) { m = 12; y--; }
+        window.location.href = `?month=${m}&year=${y}&start_date=${startDate}&end_date=${endDate}`; 
+    }
     function showDetails(order) {
         const body = document.getElementById('modal-body');
         const total = parseInt(order.amount) + parseInt(order.delivery_cost);
