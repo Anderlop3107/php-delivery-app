@@ -291,7 +291,7 @@ require __DIR__ . '/_header.php';
 
 <div class="segmented-control-tech">
     <button type="button" class="segment-btn active" onclick="switchTab('cuenta')">Mi Cuenta</button>
-    <button type="button" class="segment-btn" onclick="switchTab('local')">Mi Negocio</button>
+    <button type="button" class="segment-btn" onclick="switchTab('local')">Documentos</button>
 </div>
 
 <form method="post">
