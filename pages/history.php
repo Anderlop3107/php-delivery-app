@@ -111,8 +111,14 @@ require __DIR__ . '/_header.php';
         display: none; align-items: flex-end; 
     }
     .modal-content-tech { 
-        background: #fff; width: 100%; border-radius: 32px 32px 0 0; 
-        padding: 32px 24px 60px; transform: translateY(100%); transition: transform 0.4s; box-shadow: 0 -20px 40px rgba(0,0,0,0.1);
+        background: #FFFFFF;
+        width: 100%;
+        border-radius: 32px 32px 0 0;
+        padding: 40px 28px 60px;
+        transform: translateY(100%);
+        transition: transform 0.4s cubic-bezier(0.19, 1, 0.22, 1);
+        box-shadow: 0 -20px 50px rgba(0,0,0,0.15);
+        border-top: 6px solid var(--primary); /* Premium Accent */
     }
     .modal-overlay-glass.active { display: flex; }
     .modal-overlay-glass.active .modal-content-tech { transform: translateY(0); }
@@ -122,9 +128,9 @@ require __DIR__ . '/_header.php';
     .detail-row-tech b { color: var(--text); font-size: 14px; text-align: right; font-weight: 700; }
 
     .btn-maps-tech { 
-        width: 100%; margin-top: 24px; background: #1e293b; color: #fff; border: none; border-radius: 18px; 
+        width: 100%; margin-top: 24px; background: var(--primary); color: #fff; border: none; border-radius: 18px; 
         padding: 18px; font-weight: 700; font-size: 15px; display: flex; align-items: center; 
-        justify-content: center; gap: 12px; box-shadow: 0 10px 20px rgba(30, 41, 59, 0.2);
+        justify-content: center; gap: 12px; box-shadow: 0 10px 20px var(--primary-soft);
     }
     
     /* Premium Banner - Refined */
@@ -203,7 +209,6 @@ require __DIR__ . '/_header.php';
     <div class="modal-content-tech" onclick="event.stopPropagation()">
         <div class="modal-header-tech">
             <h3 style="font-size: 20px;">Detalles de Envío</h3>
-            <button style="background:var(--bg); border:none; border-radius:50%; width:36px; height:36px;" onclick="closeModal()">✕</button>
         </div>
         <div id="modal-body"></div>
         <button type="button" id="modal-gps-btn" class="btn-maps-tech">Localizar en Maps</button>
