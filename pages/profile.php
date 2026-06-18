@@ -229,6 +229,39 @@ require __DIR__ . '/_header.php';
     .upload-card-interactive:active { transform: scale(0.98); }
     .user-icon { font-size: 24px; margin-right: 15px; flex-shrink: 0; }
     .arrow-icon { font-size: 18px; font-weight: bold; flex-shrink: 0; margin-left: 10px; color: var(--muted); }
+    
+    /* Translucent blue style with subtle sweep shimmer */
+    .upload-card-interactive.blue-shimmer {
+        position: relative;
+        overflow: hidden;
+        background: rgba(37, 99, 235, 0.08);
+        border: 1px solid rgba(37, 99, 235, 0.15);
+        color: var(--primary);
+    }
+    .upload-card-interactive.blue-shimmer .arrow-icon {
+        color: var(--primary);
+    }
+    .upload-card-interactive.blue-shimmer::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -150%;
+        width: 60%;
+        height: 100%;
+        background: linear-gradient(
+            to right,
+            rgba(255, 255, 255, 0) 0%,
+            rgba(255, 255, 255, 0.45) 50%,
+            rgba(255, 255, 255, 0) 100%
+        );
+        transform: skewX(-25deg);
+        animation: shineSweep 3.5s infinite ease-in-out;
+    }
+    @keyframes shineSweep {
+        0% { left: -150%; }
+        40% { left: 150%; }
+        100% { left: 150%; }
+    }
 </style>
 
 <div class="profile-hero">
@@ -307,7 +340,7 @@ require __DIR__ . '/_header.php';
     <!-- Tab 2: Local -->
     <div id="tab-local" class="tab-content">
         <div class="card" style="border:none; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
-            <div class="upload-card-interactive" onclick="window.location.href='upload_id.php'">
+            <div class="upload-card-interactive blue-shimmer" onclick="window.location.href='upload_id.php'">
                 <div style="display: flex; align-items: center;">
                     <span class="user-icon">👤</span>
                     <span style="font-weight: 800; font-size: 15px;">Agregar Cédula de Identidad</span>
@@ -315,7 +348,7 @@ require __DIR__ . '/_header.php';
                 <span class="arrow-icon">></span>
             </div>
 
-            <div class="upload-card-interactive" onclick="window.location.href='upload_license.php'">
+            <div class="upload-card-interactive blue-shimmer" onclick="window.location.href='upload_license.php'">
                 <div style="display: flex; align-items: center;">
                     <span class="user-icon">🚗</span>
                     <span style="font-weight: 800; font-size: 15px;">Agregar registro de conducir</span>
@@ -323,7 +356,7 @@ require __DIR__ . '/_header.php';
                 <span class="arrow-icon">></span>
             </div>
 
-            <div class="upload-card-interactive" onclick="window.location.href='upload_habilitacion.php'">
+            <div class="upload-card-interactive blue-shimmer" onclick="window.location.href='upload_habilitacion.php'">
                 <div style="display: flex; align-items: center;">
                     <span class="user-icon">📄</span>
                     <span style="font-weight: 800; font-size: 15px;">Agregar Habilitación</span>
@@ -331,7 +364,7 @@ require __DIR__ . '/_header.php';
                 <span class="arrow-icon">></span>
             </div>
 
-            <div class="upload-card-interactive" onclick="window.location.href='upload_cedula_verde.php'">
+            <div class="upload-card-interactive blue-shimmer" onclick="window.location.href='upload_cedula_verde.php'">
                 <div style="display: flex; align-items: center;">
                     <span class="user-icon">🚙</span>
                     <span style="font-weight: 800; font-size: 15px;">Agregar Cédula verde</span>
