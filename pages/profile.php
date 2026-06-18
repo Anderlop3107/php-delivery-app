@@ -228,6 +228,20 @@ require __DIR__ . '/_header.php';
         font-weight: 700;
     }
     .btn-logout-tech:active { background: #fef2f2; }
+    
+    /* Premium Upload Cards */
+    .upload-card-interactive {
+        display: flex; align-items: center; justify-content: space-between;
+        background: #fff; border-radius: 20px;
+        padding: 20px; margin-bottom: 12px;
+        color: var(--text); cursor: pointer;
+        border: 1px solid rgba(0,0,0,0.05);
+        box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+        transition: transform 0.2s ease;
+    }
+    .upload-card-interactive:active { transform: scale(0.98); }
+    .user-icon { font-size: 24px; margin-right: 15px; flex-shrink: 0; }
+    .arrow-icon { font-size: 20px; font-weight: bold; flex-shrink: 0; margin-left: 10px; color: var(--muted); }
 </style>
 
 <div class="profile-hero">
@@ -306,37 +320,36 @@ require __DIR__ . '/_header.php';
     <!-- Tab 2: Local -->
     <div id="tab-local" class="tab-content">
         <div class="card" style="border:none; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
-            <div class="form-group">
-                <div class="input-wrapper">
-                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"></path></svg>
-                    <input name="business_name" value="<?= esc($userData['business_name']) ?>" placeholder="Nombre del negocio">
+            <div class="premium-upload-banner" onclick="window.location.href='upload_id.php'">
+                <div style="display: flex; align-items: center;">
+                    <span class="user-icon">👤</span>
+                    <span style="font-weight: 800; font-size: 15px;">Agregar Cédula de Identidad</span>
                 </div>
+                <span class="arrow-icon">></span>
             </div>
 
-            <div class="form-group">
-                <div class="input-wrapper">
-                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z"></path></svg>
-                    <input name="whatsapp" value="<?= esc($userData['whatsapp']) ?>" placeholder="WhatsApp de contacto">
+            <div class="premium-upload-banner" onclick="window.location.href='upload_license.php'">
+                <div style="display: flex; align-items: center;">
+                    <span class="user-icon">🚗</span>
+                    <span style="font-weight: 800; font-size: 15px;">Agregar registro de conducir</span>
                 </div>
+                <span class="arrow-icon">></span>
             </div>
 
-            <div id="map"></div>
-            <input type="hidden" name="latitude" id="lat" value="<?= esc($userData['latitude']) ?>">
-            <input type="hidden" name="longitude" id="lng" value="<?= esc($userData['longitude']) ?>">
-            <p class="muted" style="font-size: 11px; text-align: center; margin-bottom: 20px; font-weight: 700;">📍 Arrastra el pin para fijar tu ubicación</p>
-
-            <div class="form-group">
-                <div class="input-wrapper">
-                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                    <input name="address" value="<?= esc($userData['address']) ?>" placeholder="Dirección exacta">
+            <div class="premium-upload-banner" onclick="window.location.href='upload_habilitacion.php'">
+                <div style="display: flex; align-items: center;">
+                    <span class="user-icon">📄</span>
+                    <span style="font-weight: 800; font-size: 15px;">Agregar Habilitación</span>
                 </div>
+                <span class="arrow-icon">></span>
             </div>
 
-            <div class="form-group">
-                <div class="input-wrapper">
-                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <input name="business_reference" value="<?= esc($userData['business_reference']) ?>" placeholder="Referencias del local">
+            <div class="premium-upload-banner" onclick="window.location.href='upload_cedula_verde.php'">
+                <div style="display: flex; align-items: center;">
+                    <span class="user-icon">🚙</span>
+                    <span style="font-weight: 800; font-size: 15px;">Agregar Cédula verde</span>
                 </div>
+                <span class="arrow-icon">></span>
             </div>
 
             <button type="submit" class="btn btn-save-tech">💾 Guardar Cambios</button>
@@ -347,41 +360,11 @@ require __DIR__ . '/_header.php';
 <div id="toast" class="toast-tech">¡Perfil actualizado!</div>
 
 <script>
-    mapboxgl.accessToken = 'pk.eyJ1IjoiYW5kZXJsb3AiLCJhIjoiY21uMGJ1ZXhzMGkxMDJycHRuYzEwcmp4NCJ9.Jn4uXN5yX4DFIImQjw_R4w';
-    
-    let map, marker;
-    const initialCoords = [<?= (float)($userData['longitude'] ?? -57.6359) ?>, <?= (float)($userData['latitude'] ?? -25.2637) ?>];
-
-    function initMap() {
-        if (map) return;
-        map = new mapboxgl.Map({
-            container: 'map',
-            style: 'mapbox://styles/mapbox/streets-v12',
-            center: initialCoords,
-            zoom: 14
-        });
-        map.on('load', () => {
-            const el = document.createElement('div');
-            el.innerHTML = '📍'; el.style.fontSize = '32px'; el.style.cursor = 'pointer';
-            marker = new mapboxgl.Marker({ draggable: true, element: el }).setLngLat(initialCoords).addTo(map);
-            function updateCoords() {
-                const lngLat = marker.getLngLat();
-                document.getElementById('lat').value = lngLat.lat.toFixed(6);
-                document.getElementById('lng').value = lngLat.lng.toFixed(6);
-            }
-            marker.on('dragend', updateCoords);
-            map.on('click', (e) => { marker.setLngLat(e.lngLat); updateCoords(); });
-        });
-    }
-
     function switchTab(tab) {
         document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         event.currentTarget.classList.add('active');
         document.getElementById('tab-' + tab).classList.add('active');
-        if (tab === 'local') {
-            setTimeout(() => { initMap(); if (map) map.resize(); }, 100);
-        }
     }
 
     function togglePass() {
