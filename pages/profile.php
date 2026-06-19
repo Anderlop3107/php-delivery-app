@@ -31,11 +31,27 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
     if ($name === '') $errors[] = 'El nombre es obligatorio.';
 
     if ($errors === []) {
+        // Guardar datos comunes de cuenta
         app_exec("UPDATE users SET name=?, phone=? WHERE id=?", 'ssi', [$name, $phone, (int) $user['id']]);
         
         if ($pass !== '') {
             $hash = password_hash($pass, PASSWORD_BCRYPT);
             app_exec("UPDATE users SET password_hash = ? WHERE id = ?", 'si', [$hash, (int)$user['id']]);
+        }
+
+        // Si el usuario es local, actualizar datos comerciales y de geolocalización
+        if ($userData['role'] === 'local') {
+            $business_name = trim((string) ($_POST['business_name'] ?? ''));
+            $address = trim((string) ($_POST['address'] ?? ''));
+            $business_reference = trim((string) ($_POST['business_reference'] ?? ''));
+            $latitude = isset($_POST['latitude']) && $_POST['latitude'] !== '' ? (float)$_POST['latitude'] : null;
+            $longitude = isset($_POST['longitude']) && $_POST['longitude'] !== '' ? (float)$_POST['longitude'] : null;
+
+            app_exec(
+                "UPDATE users SET business_name = ?, address = ?, business_reference = ?, latitude = ?, longitude = ? WHERE id = ?",
+                'sssddi',
+                [$business_name, $address, $business_reference, $latitude, $longitude, (int)$user['id']]
+            );
         }
         
         header('Location: profile.php?toast=updated'); exit;
@@ -45,6 +61,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
 $title = 'Perfil';
 require __DIR__ . '/_header.php';
 ?>
+<?php if ($userData['role'] === 'local'): ?>
+<!-- Mapbox GL JS -->
+<link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet">
+<script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
+<?php endif; ?>
 
 <style>
     /* Profile Hero Header */
@@ -291,7 +312,11 @@ require __DIR__ . '/_header.php';
 
 <div class="segmented-control-tech">
     <button type="button" class="segment-btn active" onclick="switchTab('cuenta')">Mi Cuenta</button>
-    <button type="button" class="segment-btn" onclick="switchTab('local')">Documentos</button>
+    <?php if ($userData['role'] === 'local'): ?>
+        <button type="button" class="segment-btn" onclick="switchTab('local')">Mi Negocio</button>
+    <?php else: ?>
+        <button type="button" class="segment-btn" onclick="switchTab('documentos')">Documentos</button>
+    <?php endif; ?>
 </div>
 
 <form method="post">
@@ -337,44 +362,96 @@ require __DIR__ . '/_header.php';
         </div>
     </div>
 
-    <!-- Tab 2: Local -->
-    <div id="tab-local" class="tab-content">
-        <div class="card" style="border:none; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
-            <div class="upload-card-interactive blue-shimmer" onclick="window.location.href='upload_id.php'">
-                <div style="display: flex; align-items: center;">
-                    <span class="user-icon">👤</span>
-                    <span style="font-weight: 800; font-size: 15px;">Agregar Cédula de Identidad</span>
+    <!-- Tab 2: Local o Documentos dependiendo del Rol -->
+    <?php if ($userData['role'] === 'local'): ?>
+        <div id="tab-local" class="tab-content">
+            <div class="card" style="border:none; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
+                <!-- Nombre del Local -->
+                <div class="form-group">
+                    <label class="muted" style="font-weight: 700; font-size: 11px; text-transform: uppercase;">Nombre del Local</label>
+                    <div class="input-wrapper" style="margin-top: 5px;">
+                        <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349M3.12 12.42V6.368M3 21V9.349m0 0L8.852 3.7a1.5 1.5 0 0 1 2.037.22l5.852 5.43m-13.74 0h13.74m0 0v11.261"></path></svg>
+                        <input name="business_name" value="<?= esc($userData['business_name']) ?>" placeholder="Nombre del local" required>
+                    </div>
                 </div>
-                <span class="arrow-icon">></span>
-            </div>
 
-            <div class="upload-card-interactive blue-shimmer" onclick="window.location.href='upload_license.php'">
-                <div style="display: flex; align-items: center;">
-                    <span class="user-icon">🚗</span>
-                    <span style="font-weight: 800; font-size: 15px;">Agregar registro de conducir</span>
+                <!-- Teléfono del Local -->
+                <div class="form-group">
+                    <label class="muted" style="font-weight: 700; font-size: 11px; text-transform: uppercase;">Teléfono del Local</label>
+                    <div class="input-wrapper" style="margin-top: 5px;">
+                        <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.387a20.373 20.373 0 0 1-9.357-9.357c-.155-.44-.01-1.028.387-1.21l1.293-.97c.361-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25z"></path></svg>
+                        <input type="tel" name="phone" value="<?= esc($userData['phone']) ?>" placeholder="Teléfono del local">
+                    </div>
                 </div>
-                <span class="arrow-icon">></span>
-            </div>
 
-            <div class="upload-card-interactive blue-shimmer" onclick="window.location.href='upload_habilitacion.php'">
-                <div style="display: flex; align-items: center;">
-                    <span class="user-icon">📄</span>
-                    <span style="font-weight: 800; font-size: 15px;">Agregar Habilitación</span>
+                <!-- Dirección física del Local -->
+                <div class="form-group">
+                    <label class="muted" style="font-weight: 700; font-size: 11px; text-transform: uppercase;">Dirección del Local</label>
+                    <div class="input-wrapper" style="margin-top: 5px;">
+                        <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z"></path></svg>
+                        <input name="address" id="local_address" value="<?= esc($userData['address']) ?>" placeholder="Dirección física del local">
+                    </div>
                 </div>
-                <span class="arrow-icon">></span>
-            </div>
 
-            <div class="upload-card-interactive blue-shimmer" onclick="window.location.href='upload_cedula_verde.php'">
-                <div style="display: flex; align-items: center;">
-                    <span class="user-icon">🚙</span>
-                    <span style="font-weight: 800; font-size: 15px;">Agregar Cédula verde</span>
+                <!-- Referencia o Indicaciones -->
+                <div class="form-group">
+                    <label class="muted" style="font-weight: 700; font-size: 11px; text-transform: uppercase;">Referencia o Indicaciones del Local</label>
+                    <div class="input-wrapper" style="margin-top: 5px;">
+                        <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"></path></svg>
+                        <input name="business_reference" value="<?= esc($userData['business_reference']) ?>" placeholder="Ej: Portón azul al lado del súper">
+                    </div>
                 </div>
-                <span class="arrow-icon">></span>
-            </div>
 
-            <button type="submit" class="btn btn-save-tech">💾 Guardar Cambios</button>
+                <!-- Ubicación en el Mapa -->
+                <div class="form-group">
+                    <label class="muted" style="font-weight: 700; font-size: 11px; text-transform: uppercase;">Ubicación en el Mapa</label>
+                    <div id="local-map" style="height: 200px; border-radius: 16px; margin-top: 8px; border: 1px solid var(--border);"></div>
+                    <input type="hidden" name="latitude" id="local_lat" value="<?= esc($userData['latitude']) ?>">
+                    <input type="hidden" name="longitude" id="local_lng" value="<?= esc($userData['longitude']) ?>">
+                </div>
+
+                <button type="submit" class="btn btn-save-tech">💾 Guardar Cambios</button>
+            </div>
         </div>
-    </div>
+    <?php else: ?>
+        <div id="tab-documentos" class="tab-content">
+            <div class="card" style="border:none; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
+                <div class="upload-card-interactive blue-shimmer" onclick="window.location.href='upload_id.php'">
+                    <div style="display: flex; align-items: center;">
+                        <span class="user-icon">👤</span>
+                        <span style="font-weight: 800; font-size: 15px;">Agregar Cédula de Identidad</span>
+                    </div>
+                    <span class="arrow-icon">></span>
+                </div>
+
+                <div class="upload-card-interactive blue-shimmer" onclick="window.location.href='upload_license.php'">
+                    <div style="display: flex; align-items: center;">
+                        <span class="user-icon">🚗</span>
+                        <span style="font-weight: 800; font-size: 15px;">Agregar registro de conducir</span>
+                    </div>
+                    <span class="arrow-icon">></span>
+                </div>
+
+                <div class="upload-card-interactive blue-shimmer" onclick="window.location.href='upload_habilitacion.php'">
+                    <div style="display: flex; align-items: center;">
+                        <span class="user-icon">📄</span>
+                        <span style="font-weight: 800; font-size: 15px;">Agregar Habilitación</span>
+                    </div>
+                    <span class="arrow-icon">></span>
+                </div>
+
+                <div class="upload-card-interactive blue-shimmer" onclick="window.location.href='upload_cedula_verde.php'">
+                    <div style="display: flex; align-items: center;">
+                        <span class="user-icon">🚙</span>
+                        <span style="font-weight: 800; font-size: 15px;">Agregar Cédula verde</span>
+                    </div>
+                    <span class="arrow-icon">></span>
+                </div>
+
+                <button type="submit" class="btn btn-save-tech">💾 Guardar Cambios</button>
+            </div>
+        </div>
+    <?php endif; ?>
 </form>
 
 <div id="toast" class="toast-tech">¡Perfil actualizado!</div>
@@ -384,7 +461,20 @@ require __DIR__ . '/_header.php';
         document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         event.currentTarget.classList.add('active');
-        document.getElementById('tab-' + tab).classList.add('active');
+        
+        // El tab id de documentos es tab-documentos, el de local es tab-local
+        if (tab === 'local') {
+            document.getElementById('tab-local').classList.add('active');
+        } else if (tab === 'documentos') {
+            document.getElementById('tab-documentos').classList.add('active');
+        } else {
+            document.getElementById('tab-' + tab).classList.add('active');
+        }
+        
+        // Redimensionar el mapa si se activa la pestaña del local
+        if (tab === 'local' && typeof localMap !== 'undefined') {
+            setTimeout(() => { localMap.resize(); }, 100);
+        }
     }
 
     function togglePass() {
@@ -399,6 +489,45 @@ require __DIR__ . '/_header.php';
         toast.style.display = 'block';
         setTimeout(() => toast.style.display = 'none', 3000);
     }
+
+    // Inicializar mapa de Mapbox para el comercio (Local)
+    let localMap;
+    let localMarker;
+    
+    <?php if ($userData['role'] === 'local'): ?>
+    mapboxgl.accessToken = 'pk.eyJ1IjoiYW5kZXJsb3AiLCJhIjoiY21uMGJ1ZXhzMGkxMDJycHRuYzEwcmp4NCJ9.Jn4uXN5yX4DFIImQjw_R4w';
+    
+    const initialLat = <?= (float)($userData['latitude'] ?? -25.2637) ?>;
+    const initialLng = <?= (float)($userData['longitude'] ?? -57.6359) ?>;
+    
+    localMap = new mapboxgl.Map({
+        container: 'local-map',
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [initialLng, initialLat],
+        zoom: 14
+    });
+    
+    localMap.on('load', () => {
+        const el = document.createElement('div');
+        el.innerHTML = '📍'; el.style.fontSize = '32px'; el.style.cursor = 'pointer';
+        
+        localMarker = new mapboxgl.Marker({ draggable: true, element: el })
+            .setLngLat([initialLng, initialLat])
+            .addTo(localMap);
+            
+        localMarker.on('dragend', () => {
+            const coords = localMarker.getLngLat();
+            document.getElementById('local_lat').value = coords.lat;
+            document.getElementById('local_lng').value = coords.lng;
+        });
+        
+        localMap.on('click', (e) => {
+            localMarker.setLngLat(e.lngLat);
+            document.getElementById('local_lat').value = e.lngLat.lat;
+            document.getElementById('local_lng').value = e.lngLat.lng;
+        });
+    });
+    <?php endif; ?>
 </script>
 
 <?php require __DIR__ . '/_footer.php'; ?>
