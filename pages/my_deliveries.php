@@ -196,7 +196,15 @@ require __DIR__ . '/_header.php';
 
                 <!-- BLOQUE DEL LOCAL -->
                 <div class="person-box <?= $ocultarLocal ? 'oculto' : '' ?>" id="info-local-<?= $row['id'] ?>">
-                    <div class="person-avatar"><?= $isLocal ? '🛵' : '🏠' ?></div>
+                    <div class="person-avatar">
+                        <?php if ($isLocal): ?>
+                            <svg style="width: 24px; height: 24px; fill: #f59e0b;" viewBox="0 0 512 512">
+                                <path d="M472 272c-22.1 0-40 17.9-40 40 0 5 .9 9.8 2.6 14.3l-55.9 33.5C362.4 345.5 341 336 317.2 336H240l-28.7-57.4C226.7 266.3 240 248.7 240 228v-4c0-24.3-19.7-44-44-44h-56c-13.3 0-24 10.7-24 24v8h-16v-8c0-13.3-10.7-24-24-24H24c-13.3 0-24 10.7-24 24v32c0 13.3 10.7 24 24 24h32v88c0 13.3 10.7 24 24 24h21.1c11.6 20.3 33.5 34 58.9 34h120c15 0 28.9-5 40.2-13.5l55 33c-1.2 4.1-2.2 8.3-2.2 12.5 0 22.1 17.9 40 40 40s40-17.9 40-40-17.9-40-40-40c-5 0-9.8.9-14.3 2.6l-55.9-33.5c16.3-14.3 37.7-23.8 61.5-23.8H472c22.1 0 40-17.9 40-40s-17.9-40-40-40zM120 400c-13.3 0-24-10.7-24-24s10.7-24 24-24 24 10.7 24 24-10.7 24-24 24zm352-64c13.3 0 24 10.7 24 24s-10.7 24-24 24-24-10.7-24-24 10.7-24 24-24z"/>
+                            </svg>
+                        <?php else: ?>
+                            🏠
+                        <?php endif; ?>
+                    </div>
                     <div class="person-details">
                         <b><?= esc($isLocal ? ($row['repartidor_name'] ?: 'Buscando...') : $row['local_name']) ?></b>
                         <span><?= $isLocal ? 'Conductor asignado' : 'Punto de retiro' ?></span>
