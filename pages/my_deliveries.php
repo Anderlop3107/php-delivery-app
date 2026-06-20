@@ -235,9 +235,49 @@ require __DIR__ . '/_header.php';
         } catch (e) { console.error(e); }
     }
 
-    // Refresh solo si no hay interacción (Local)
+    // Refresh solo si no hay interacción y monitoreo de estados (Local)
     <?php if($isLocal): ?>
-    setInterval(() => { location.reload(); }, 10000);
+    (function() {
+        const currentStatuses = {
+            <?php foreach ($rows as $row): ?>
+                "<?= $row['id'] ?>": "<?= esc($row['status']) ?>",
+            <?php endforeach; ?>
+        };
+
+        const storageKey = 'local_delivery_statuses';
+        const prevStatusesStr = sessionStorage.getItem(storageKey);
+        let playArrivalSound = false;
+
+        if (prevStatusesStr) {
+            try {
+                const prevStatuses = JSON.parse(prevStatusesStr);
+                for (const orderId in currentStatuses) {
+                    const currentStatus = currentStatuses[orderId];
+                    const prevStatus = prevStatuses[orderId];
+                    
+                    // Si cambia a "repartidor_en_local" desde otro estado o si es un nuevo pedido asignado que ya está en local
+                    if (currentStatus === 'repartidor_en_local' && prevStatus !== 'repartidor_en_local') {
+                        playArrivalSound = true;
+                        break;
+                    }
+                }
+            } catch (e) {
+                console.error("Error parsing stored statuses:", e);
+            }
+        }
+
+        // Guardar estados actuales para el próximo ciclo
+        sessionStorage.setItem(storageKey, JSON.stringify(currentStatuses));
+
+        if (playArrivalSound) {
+            const arrivalAudio = new Audio('<?= esc(delivery_app_url("uploads/sounds/delivery_arrived.mp3")) ?>');
+            arrivalAudio.play().catch(err => {
+                console.log("Audio playback prevented by browser autoplay policy:", err);
+            });
+        }
+
+        setInterval(() => { location.reload(); }, 10000);
+    })();
     <?php endif; ?>
 </script>
 
