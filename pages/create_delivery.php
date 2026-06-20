@@ -215,21 +215,83 @@ require __DIR__ . '/_header.php';
     input:checked + .slider:before { transform: translateX(20px); }
 
     /* Success Modal */
-    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); backdrop-filter: blur(5px); z-index: 3000; display: none; align-items: center; justify-content: center; padding: 20px; }
-    .modal-card { background: #fff; width: 100%; max-width: 320px; border-radius: 30px; padding: 40px 20px 30px; text-align: center; position: relative; animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
-    @keyframes modalPop { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    .modal-overlay { 
+        position: fixed; 
+        top: 0; left: 0; right: 0; bottom: 0; 
+        background: rgba(15, 23, 42, 0.4); 
+        backdrop-filter: blur(8px); 
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 3000; 
+        display: none; 
+        align-items: center; 
+        justify-content: center; 
+        padding: 20px; 
+    }
+    .modal-card { 
+        background: #ffffff; 
+        width: 100%; 
+        max-width: 320px; 
+        border-radius: 28px; 
+        padding: 40px 24px 30px; 
+        text-align: center; 
+        position: relative; 
+        border-top: 6px solid var(--primary);
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+        animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    }
+    @keyframes modalPop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
     
-    .modal-close-top { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 32px; height: 32px; background: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); cursor: pointer; border: none; font-weight: 800; color: #94a3b8; }
+    .modal-close-top { 
+        position: absolute; 
+        top: -16px; left: 50%; 
+        transform: translateX(-50%); 
+        width: 32px; height: 32px; 
+        background: #ffffff; 
+        border-radius: 50%; 
+        display: flex; align-items: center; justify-content: center; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+        cursor: pointer; 
+        border: 1px solid rgba(0,0,0,0.03); 
+        font-weight: 800; 
+        color: #94a3b8; 
+        transition: transform 0.2s;
+    }
+    .modal-close-top:active { transform: translateX(-50%) scale(0.9); }
     
-    .status-icon-container { width: 80px; height: 80px; border-radius: 50%; background: var(--primary-soft); margin: 0 auto 25px; display: flex; align-items: center; justify-content: center; position: relative; }
-    .status-icon-waves { position: absolute; width: 100%; height: 100%; border-radius: 50%; border: 2px solid var(--primary-soft); animation: waveRipple 2s infinite; }
-    @keyframes waveRipple { from { transform: scale(1); opacity: 1; } to { transform: scale(1.5); opacity: 0; } }
-    .check-mark { font-size: 32px; color: #000; z-index: 2; }
+    .status-icon-container { 
+        width: 80px; height: 80px; 
+        border-radius: 50%; 
+        background: var(--primary-soft); 
+        margin: 0 auto 25px; 
+        display: flex; align-items: center; justify-content: center; 
+        position: relative; 
+    }
+    .status-icon-waves { 
+        position: absolute; 
+        width: 100%; height: 100%; 
+        border-radius: 50%; 
+        border: 2px solid var(--primary-soft); 
+        animation: waveRipple 2s infinite; 
+    }
+    @keyframes waveRipple { from { transform: scale(1); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+    .check-mark { font-size: 36px; color: var(--primary); font-weight: 800; z-index: 2; }
 
-    .modal-card h2 { font-size: 22px; font-weight: 800; margin: 0 0 8px; color: var(--text); }
-    .modal-card p { font-size: 14px; color: #64748b; margin: 0 0 30px; font-weight: 500; }
+    .modal-card h2 { font-size: 22px; font-weight: 800; margin: 0 0 8px; color: var(--text); letter-spacing: -0.5px; }
+    .modal-card p { font-size: 14px; color: var(--muted); margin: 0 0 30px; font-weight: 600; }
     
-    .btn-listo { background: #1e293b; color: #fff; width: 100%; padding: 16px; border-radius: 16px; font-weight: 700; border: none; cursor: pointer; transition: background 0.2s; }
+    .btn-listo { 
+        background: var(--primary); 
+        color: #ffffff; 
+        width: 100%; 
+        padding: 16px; 
+        border-radius: 16px; 
+        font-weight: 700; 
+        border: none; 
+        cursor: pointer; 
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.2); 
+        transition: all 0.2s; 
+    }
+    .btn-listo:active { transform: scale(0.97); opacity: 0.95; }
 </style>
 
 <div id="success-modal" class="modal-overlay">
