@@ -196,7 +196,7 @@ require __DIR__ . '/_header.php';
 
                 <!-- BLOQUE DEL LOCAL -->
                 <div class="person-box <?= $ocultarLocal ? 'oculto' : '' ?>" id="info-local-<?= $row['id'] ?>">
-                    <div class="person-avatar">🏠</div>
+                    <div class="person-avatar"><?= $isLocal ? '🛵' : '🏠' ?></div>
                     <div class="person-details">
                         <b><?= esc($isLocal ? ($row['repartidor_name'] ?: 'Buscando...') : $row['local_name']) ?></b>
                         <span><?= $isLocal ? 'Conductor asignado' : 'Punto de retiro' ?></span>
