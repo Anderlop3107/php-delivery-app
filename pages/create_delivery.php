@@ -628,6 +628,12 @@ require __DIR__ . '/_header.php';
         const modal = document.getElementById('success-modal');
         modal.style.display = 'flex';
         
+        // Reproducir sonido de éxito
+        const successAudio = new Audio('<?= esc(delivery_app_url("uploads/sounds/success.mp3")) ?>');
+        successAudio.play().catch(err => {
+            console.log("La reproducción automática de audio fue prevenida por el navegador:", err);
+        });
+        
         // Redirección automática en 3 segundos
         setTimeout(() => {
             window.location.href = '../dashboard.php';
