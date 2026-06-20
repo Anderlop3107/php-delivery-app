@@ -4,11 +4,14 @@ require_login();
 
 $user = current_user();
 
-// 1. Obtener rango de fechas
+// 1. Obtener rango de fechas y página actual
 $startDate = $_GET['start_date'] ?? date('Y-m-01');
 $endDate = $_GET['end_date'] ?? date('Y-m-d');
 $month = isset($_GET['month']) ? (int)$_GET['month'] : (int)date('m');
 $year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
+$page = isset($_GET['page']) ? max(1, (int)$_GET['page']) : 1;
+$limit = 10;
+$offset = ($page - 1) * $limit;
 
 // Lógica de filtrado
 $where = "DATE(d.created_at) BETWEEN ? AND ?";
@@ -25,16 +28,42 @@ if ($user['role'] === 'local') {
     $params[] = (int) $user['id'];
 }
 
+// Obtener el total de registros para calcular las páginas
+$countRow = app_one(
+    "SELECT COUNT(*) AS total FROM deliveries d WHERE $where",
+    $types,
+    $params
+);
+$totalOrders = (int)($countRow['total'] ?? 0);
+$totalPages = ceil($totalOrders / $limit);
+
+// Preparar parámetros con límite y desplazamiento
+$paramsWithLimit = $params;
+$paramsWithLimit[] = $limit;
+$paramsWithLimit[] = $offset;
+$typesWithLimit = $types . "ii";
+
 $rows = app_all(
     "SELECT d.*, l.name AS local_name, r.name AS repartidor_name, l.business_name
      FROM deliveries d
      LEFT JOIN users l ON l.id = d.local_user_id
      LEFT JOIN users r ON r.id = d.repartidor_user_id
      WHERE $where
-     ORDER BY d.created_at DESC",
-    $types,
-    $params
+     ORDER BY d.created_at DESC
+     LIMIT ? OFFSET ?",
+    $typesWithLimit,
+    $paramsWithLimit
 );
+
+function getPageUrl($p, $startDate, $endDate, $month, $year) {
+    return '?' . http_build_query([
+        'page' => $p,
+        'start_date' => $startDate,
+        'end_date' => $endDate,
+        'month' => $month,
+        'year' => $year
+    ]);
+}
 
 $daysInMonth = cal_days_in_month(CAL_GREGORIAN, $month, $year);
 $firstDayOfMonth = date('w', strtotime("$year-$month-01"));
@@ -147,6 +176,70 @@ require __DIR__ . '/_header.php';
         display: flex; align-items: center; justify-content: center;
         font-size: 22px; flex-shrink: 0; border: 1px solid rgba(255, 255, 255, 0.2);
     }
+
+    /* Pagination Styles */
+    .pagination-container-tech {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 24px;
+        margin-bottom: 30px;
+        padding: 12px;
+        background: #ffffff;
+        border-radius: 16px;
+        box-shadow: var(--shadow);
+        border: 1px solid rgba(0,0,0,0.02);
+    }
+    .pagination-btn-tech {
+        padding: 10px 18px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--primary);
+        background: var(--primary-soft);
+        border-radius: 12px;
+        text-decoration: none;
+        transition: all 0.2s ease;
+    }
+    .pagination-btn-tech:hover:not(.disabled) {
+        background: var(--primary);
+        color: #fff;
+        transform: translateY(-1px);
+    }
+    .pagination-btn-tech.disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        pointer-events: none;
+        color: var(--muted);
+        background: var(--bg);
+    }
+    .pagination-pages-tech {
+        display: flex;
+        gap: 6px;
+        align-items: center;
+    }
+    .pagination-page-btn-tech {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--text);
+        text-decoration: none;
+        transition: all 0.2s ease;
+        background: var(--bg);
+    }
+    .pagination-page-btn-tech:hover {
+        background: rgba(37, 99, 235, 0.1);
+        color: var(--primary);
+    }
+    .pagination-page-btn-tech.active {
+        background: var(--primary);
+        color: #ffffff;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+    }
 </style>
 
 <div class="history-header-bento">
@@ -179,7 +272,7 @@ require __DIR__ . '/_header.php';
     </div>
     <div>
         <h4 style="margin:0; font-size:14px; color:#fff; font-weight: 800;">Cantidad de pedidos</h4>
-        <p style="margin:0; font-size:12px; opacity:0.8; font-weight: 600;"><?= count($rows) ?> Pedidos realizados</p>
+        <p style="margin:0; font-size:12px; opacity:0.8; font-weight: 600;"><?= $totalOrders ?> Pedidos realizados</p>
     </div>
 </div>
 
@@ -204,6 +297,22 @@ require __DIR__ . '/_header.php';
         </div>
     <?php endforeach; ?>
 </div>
+
+<?php if ($totalPages > 1): ?>
+<div class="pagination-container-tech">
+    <a href="<?= getPageUrl($page - 1, $startDate, $endDate, $month, $year) ?>" class="pagination-btn-tech <?= $page <= 1 ? 'disabled' : '' ?>">&larr; Anterior</a>
+    
+    <div class="pagination-pages-tech">
+        <?php for ($p = 1; $p <= $totalPages; $p++): ?>
+            <a href="<?= getPageUrl($p, $startDate, $endDate, $month, $year) ?>" class="pagination-page-btn-tech <?= $page === $p ? 'active' : '' ?>">
+                <?= $p ?>
+            </a>
+        <?php endfor; ?>
+    </div>
+    
+    <a href="<?= getPageUrl($page + 1, $startDate, $endDate, $month, $year) ?>" class="pagination-btn-tech <?= $page >= $totalPages ? 'disabled' : '' ?>">Siguiente &rarr;</a>
+</div>
+<?php endif; ?>
 
 <div id="modal" class="modal-overlay-glass" onclick="closeModal()">
     <div class="modal-content-tech" onclick="event.stopPropagation()">
