@@ -20,7 +20,7 @@ if ($userData['role'] === 'repartidor') {
 $stats = app_one("
     SELECT 
         COUNT(*) as total_pedidos,
-        COUNT(CASE WHEN status NOT IN ('cancelado', 'rechazado') THEN 1 END) as completados,
+        COUNT(CASE WHEN status = 'entregado' THEN 1 END) as completados,
         COUNT(CASE WHEN status='cancelado' THEN 1 END) as cancelados
     FROM deliveries 
     WHERE local_user_id = ? AND DATE(created_at) = DATE(NOW())
@@ -30,13 +30,13 @@ $total_pedidos = (int)($stats['total_pedidos'] ?? 0);
 $completados = (int)($stats['completados'] ?? 0);
 $cancelados = (int)($stats['cancelados'] ?? 0);
 
-// Data para el gráfico semanal real (últimos 7 días)
+// Data para el gráfico semanal real (últimos 7 días) de entregas completadas
 $weekly_raw = app_all("
     SELECT 
         DAYOFWEEK(created_at) as dow,
         COUNT(*) as cnt
     FROM deliveries
-    WHERE local_user_id = ? AND created_at >= DATE_SUB(DATE(NOW()), INTERVAL 6 DAY)
+    WHERE local_user_id = ? AND status = 'entregado' AND created_at >= DATE_SUB(DATE(NOW()), INTERVAL 6 DAY)
     GROUP BY DATE(created_at)
     ORDER BY created_at ASC
 ", "i", [(int)$userData['id']]);
@@ -247,8 +247,7 @@ require __DIR__ . '/pages/_header.php';
             <svg viewBox="0 0 100 100" class="donut-svg">
                 <circle cx="50" cy="50" r="40" class="donut-bg"></circle>
                 <?php 
-                    $exito = $total_pedidos - $cancelados;
-                    $dash = $total_pedidos > 0 ? ($exito / $total_pedidos) * 251.2 : 0;
+                    $dash = $total_pedidos > 0 ? ($completados / $total_pedidos) * 251.2 : 0;
                 ?>
                 <circle cx="50" cy="50" r="40" class="donut-ring" 
                         style="stroke-dasharray: <?= $dash ?> 251.2;"></circle>
