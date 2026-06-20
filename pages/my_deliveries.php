@@ -289,21 +289,40 @@ require __DIR__ . '/_header.php';
         // Guardar estados actuales para el próximo ciclo
         sessionStorage.setItem(storageKey, JSON.stringify(currentStatuses));
 
+        function playNotificationSound(src) {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (AudioContext) {
+                    const ctx = new AudioContext();
+                    const audio = new Audio(src);
+                    const source = ctx.createMediaElementSource(audio);
+                    const gainNode = ctx.createGain();
+                    
+                    // Amplificación de volumen al 200% para escuchar fuerte en el local
+                    gainNode.gain.value = 2.0;
+                    
+                    source.connect(gainNode);
+                    gainNode.connect(ctx.destination);
+                    
+                    audio.play().catch(err => console.log("Audio Context play blocked:", err));
+                } else {
+                    const audio = new Audio(src);
+                    audio.volume = 1.0;
+                    audio.play().catch(err => console.log("Fallback play blocked:", err));
+                }
+            } catch (e) {
+                const audio = new Audio(src);
+                audio.volume = 1.0;
+                audio.play().catch(err => console.log("Audio play failed:", err));
+            }
+        }
+
         if (playArrivalSound) {
-            const arrivalAudio = new Audio('<?= esc(delivery_app_url("uploads/sounds/delivery_arrived.mp3")) ?>');
-            arrivalAudio.play().catch(err => {
-                console.log("Audio playback prevented by browser autoplay policy:", err);
-            });
+            playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_arrived.mp3")) ?>');
         } else if (playCompletedSound) {
-            const completedAudio = new Audio('<?= esc(delivery_app_url("uploads/sounds/delivery_completed.mp3")) ?>');
-            completedAudio.play().catch(err => {
-                console.log("Audio playback prevented by browser autoplay policy:", err);
-            });
+            playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_completed.mp3")) ?>');
         } else if (playAssignedSound) {
-            const assignedAudio = new Audio('<?= esc(delivery_app_url("uploads/sounds/delivery_assigned.mp3")) ?>');
-            assignedAudio.play().catch(err => {
-                console.log("Audio playback prevented by browser autoplay policy:", err);
-            });
+            playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_assigned.mp3")) ?>');
         }
 
         setInterval(() => { location.reload(); }, 10000);
