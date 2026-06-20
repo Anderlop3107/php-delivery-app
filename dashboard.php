@@ -270,7 +270,9 @@ require __DIR__ . '/pages/_header.php';
                 $isActive = ($day === $today_key);
             ?>
                 <div class="bar-col">
-                    <div class="bar <?= $isActive ? 'active' : '' ?>" style="height: <?= $h ?>%;"></div>
+                    <div style="height: 80px; width: 100%; display: flex; align-items: flex-end; justify-content: center;">
+                        <div class="bar <?= $isActive ? 'active' : '' ?>" style="height: <?= $h ?>%;"></div>
+                    </div>
                     <span class="day-label"><?= $day ?></span>
                 </div>
             <?php endforeach; ?>
