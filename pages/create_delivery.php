@@ -54,6 +54,11 @@ require __DIR__ . '/_header.php';
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
 
+<!-- jQuery and Toastr -->
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
 <style>
     /* Chevron Stepper */
     .chevron-stepper {
@@ -385,6 +390,24 @@ require __DIR__ . '/_header.php';
 <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiYW5kZXJsb3AiLCJhIjoiY21uMGJ1ZXhzMGkxMDJycHRuYzEwcmp4NCJ9.Jn4uXN5yX4DFIImQjw_R4w';
     
+    toastr.options = {
+      "closeButton": false,
+      "debug": false,
+      "newestOnTop": false,
+      "progressBar": false,
+      "positionClass": "toast-bottom-center",
+      "preventDuplicates": false,
+      "onclick": null,
+      "showDuration": "300",
+      "hideDuration": "1000",
+      "timeOut": "5000",
+      "extendedTimeOut": "1000",
+      "showEasing": "swing",
+      "hideEasing": "linear",
+      "showMethod": "fadeIn",
+      "hideMethod": "fadeOut"
+    };
+    
     let marker;
     let originCoords = [<?= (float)($localData['longitude'] ?? -57.6359) ?>, <?= (float)($localData['latitude'] ?? -25.2637) ?>];
     let routeMap;
@@ -456,7 +479,8 @@ require __DIR__ . '/_header.php';
         const cRef = document.getElementById('c_ref');
 
         if (!cName.value || !cAddress.value || !cCost.value) {
-            alert('Por favor, completa los datos y selecciona ubicación.'); return;
+            toastr["error"]("Selecciona ubicación.", "¡Atención!");
+            return;
         }
 
         document.getElementById('v-customer-name').innerText = cName.value;
