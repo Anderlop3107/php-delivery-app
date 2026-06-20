@@ -244,50 +244,26 @@ require __DIR__ . '/_header.php';
         } catch (e) { console.error(e); }
     }
 
-    // Refresh solo si no hay interacción y monitoreo de estados (Local)
+    // Monitoreo y notificaciones en segundo plano sin interrumpir interacción (Local)
     <?php if($isLocal): ?>
     (function() {
-        const currentStatuses = {
+        // Solicitar permisos de notificación de escritorio
+        if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+
+        // Obtener estado inicial cargado en PHP
+        const initialStatuses = {
             <?php foreach ($rows as $row): ?>
                 "<?= $row['id'] ?>": "<?= esc($row['status']) ?>",
             <?php endforeach; ?>
         };
 
         const storageKey = 'local_delivery_statuses';
-        const prevStatusesStr = sessionStorage.getItem(storageKey);
-        let playArrivalSound = false;
-        let playCompletedSound = false;
-        let playAssignedSound = false;
-
-        if (prevStatusesStr) {
-            try {
-                const prevStatuses = JSON.parse(prevStatusesStr);
-                for (const orderId in currentStatuses) {
-                    const currentStatus = currentStatuses[orderId];
-                    const prevStatus = prevStatuses[orderId];
-                    
-                    // Si cambia a "repartidor_en_local" desde otro estado
-                    if (currentStatus === 'repartidor_en_local' && prevStatus !== 'repartidor_en_local') {
-                        playArrivalSound = true;
-                    }
-
-                    // Si cambia a "entregado" desde otro estado
-                    if (currentStatus === 'entregado' && prevStatus !== 'entregado') {
-                        playCompletedSound = true;
-                    }
-
-                    // Si cambia a "aceptado" (delivery asignado) desde pendiente o si es nuevo y ya está aceptado
-                    if (currentStatus === 'aceptado' && (prevStatus === 'pendiente' || !prevStatus)) {
-                        playAssignedSound = true;
-                    }
-                }
-            } catch (e) {
-                console.error("Error parsing stored statuses:", e);
-            }
+        // Inicializar sessionStorage si no existe
+        if (!sessionStorage.getItem(storageKey)) {
+            sessionStorage.setItem(storageKey, JSON.stringify(initialStatuses));
         }
-
-        // Guardar estados actuales para el próximo ciclo
-        sessionStorage.setItem(storageKey, JSON.stringify(currentStatuses));
 
         function playNotificationSound(src) {
             try {
@@ -298,34 +274,127 @@ require __DIR__ . '/_header.php';
                     const source = ctx.createMediaElementSource(audio);
                     const gainNode = ctx.createGain();
                     
-                    // Amplificación de volumen al 200% para escuchar fuerte en el local
+                    // Amplificar volumen a 2.0 (200%) para que suene fuerte en el local
                     gainNode.gain.value = 2.0;
                     
                     source.connect(gainNode);
                     gainNode.connect(ctx.destination);
                     
-                    audio.play().catch(err => console.log("Audio Context play blocked:", err));
+                    audio.play().catch(err => console.log("AudioContext playback blocked:", err));
                 } else {
                     const audio = new Audio(src);
                     audio.volume = 1.0;
-                    audio.play().catch(err => console.log("Fallback play blocked:", err));
+                    audio.play().catch(err => console.log("Standard playback blocked:", err));
                 }
             } catch (e) {
                 const audio = new Audio(src);
                 audio.volume = 1.0;
-                audio.play().catch(err => console.log("Audio play failed:", err));
+                audio.play().catch(err => console.log("Audio fallback failed:", err));
             }
         }
 
-        if (playArrivalSound) {
-            playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_arrived.mp3")) ?>');
-        } else if (playCompletedSound) {
-            playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_completed.mp3")) ?>');
-        } else if (playAssignedSound) {
-            playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_assigned.mp3")) ?>');
+        function showDesktopNotification(title, body) {
+            if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+                new Notification(title, {
+                    body: body,
+                    icon: '<?= esc(delivery_app_url("uploads/logos/corona.png")) ?>'
+                });
+            }
         }
 
-        setInterval(() => { location.reload(); }, 10000);
+        async function checkUpdates() {
+            try {
+                const resp = await fetch('api_get_active_deliveries.php');
+                if (!resp.ok) return;
+                const data = await resp.json();
+
+                const currentStatuses = {};
+                data.forEach(order => {
+                    currentStatuses[order.id] = order.status;
+                });
+
+                const prevStatusesStr = sessionStorage.getItem(storageKey);
+                if (prevStatusesStr) {
+                    const prevStatuses = JSON.parse(prevStatusesStr);
+                    let playArrivalSound = false;
+                    let playCompletedSound = false;
+                    let playAssignedSound = false;
+                    let notificationText = '';
+
+                    for (const orderId in currentStatuses) {
+                        const currentStatus = currentStatuses[orderId];
+                        const prevStatus = prevStatuses[orderId];
+
+                        // 1. Llegada al local
+                        if (currentStatus === 'repartidor_en_local' && prevStatus !== 'repartidor_en_local') {
+                            playArrivalSound = true;
+                            notificationText = "El delivery ha llegado al local.";
+                        }
+                        // 2. Pedido entregado
+                        if (currentStatus === 'entregado' && prevStatus !== 'entregado') {
+                            playCompletedSound = true;
+                            notificationText = "Pedido entregado con éxito.";
+                        }
+                        // 3. Asignación del chofer
+                        if (currentStatus === 'aceptado' && (prevStatus === 'pendiente' || !prevStatus)) {
+                            playAssignedSound = true;
+                            notificationText = "Delivery asignado al pedido.";
+                        }
+                    }
+
+                    // Guardar los nuevos estados
+                    sessionStorage.setItem(storageKey, JSON.stringify(currentStatuses));
+
+                    if (playArrivalSound || playCompletedSound || playAssignedSound) {
+                        // Reproducir sonido y mostrar banner de notificación
+                        if (playArrivalSound) {
+                            playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_arrived.mp3")) ?>');
+                            showDesktopNotification("¡Delivery en Local!", notificationText);
+                        } else if (playCompletedSound) {
+                            playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_completed.mp3")) ?>');
+                            showDesktopNotification("¡Pedido Entregado!", notificationText);
+                        } else if (playAssignedSound) {
+                            playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_assigned.mp3")) ?>');
+                            showDesktopNotification("¡Chofer Asignado!", notificationText);
+                        }
+
+                        // Recargar pantalla solo si la pestaña está activa, de lo contrario esperar a que el usuario regrese
+                        if (document.visibilityState === 'visible') {
+                            window.location.reload();
+                        } else {
+                            sessionStorage.setItem('needs_reload', 'true');
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Error checking status update in background:", e);
+            }
+        }
+
+        // Si la pestaña vuelve a primer plano y hay cambios pendientes, recargar interfaz
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && sessionStorage.getItem('needs_reload') === 'true') {
+                sessionStorage.removeItem('needs_reload');
+                window.location.reload();
+            }
+        });
+
+        // Hilo Web Worker secundario para evitar el throttling del navegador en pestañas inactivas
+        try {
+            const workerCode = `
+                setInterval(() => {
+                    postMessage('tick');
+                }, 10000);
+            `;
+            const blob = new Blob([workerCode], {type: 'application/javascript'});
+            const worker = new Worker(URL.createObjectURL(blob));
+            worker.onmessage = function() {
+                checkUpdates();
+            };
+        } catch (e) {
+            // Fallback si Web Workers no están disponibles en el dispositivo
+            setInterval(checkUpdates, 10000);
+        }
     })();
     <?php endif; ?>
 </script>
