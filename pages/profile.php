@@ -204,23 +204,84 @@ require __DIR__ . '/_header.php';
         cursor: pointer;
     }
 
-    /* Toast Notification Bento Style */
-    .toast-tech {
-        position: fixed;
-        bottom: 100px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: #1e293b;
-        color: #fff;
-        padding: 14px 28px;
-        border-radius: 20px;
-        font-weight: 700;
-        box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-        z-index: 3000;
-        display: none;
-        animation: toastPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    /* Success Modal Style */
+    .modal-overlay { 
+        position: fixed; 
+        top: 0; left: 0; right: 0; bottom: 0; 
+        background: rgba(15, 23, 42, 0.4); 
+        backdrop-filter: blur(8px); 
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 3000; 
+        display: none; 
+        align-items: center; 
+        justify-content: center; 
+        padding: 20px; 
     }
-    @keyframes toastPop { from { bottom: 70px; opacity: 0; } to { bottom: 100px; opacity: 1; } }
+    .modal-card { 
+        background: #ffffff; 
+        width: 100%; 
+        max-width: 320px; 
+        border-radius: 28px; 
+        padding: 40px 24px 30px; 
+        text-align: center; 
+        position: relative; 
+        border-top: 6px solid var(--primary);
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+        animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    }
+    @keyframes modalPop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    
+    .modal-close-top { 
+        position: absolute; 
+        top: -16px; left: 50%; 
+        transform: translateX(-50%); 
+        width: 32px; height: 32px; 
+        background: #ffffff; 
+        border-radius: 50%; 
+        display: flex; align-items: center; justify-content: center; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.08); 
+        cursor: pointer; 
+        border: 1px solid rgba(0,0,0,0.03); 
+        font-weight: 800; 
+        color: #94a3b8; 
+        transition: transform 0.2s;
+    }
+    .modal-close-top:active { transform: translateX(-50%) scale(0.9); }
+    
+    .status-icon-container { 
+        width: 80px; height: 80px; 
+        border-radius: 50%; 
+        background: var(--primary-soft); 
+        margin: 0 auto 25px; 
+        display: flex; align-items: center; justify-content: center; 
+        position: relative; 
+    }
+    .status-icon-waves { 
+        position: absolute; 
+        width: 100%; height: 100%; 
+        border-radius: 50%; 
+        border: 2px solid var(--primary-soft); 
+        animation: waveRipple 2s infinite; 
+    }
+    @keyframes waveRipple { from { transform: scale(1); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+    .check-mark { font-size: 36px; color: var(--primary); font-weight: 800; z-index: 2; }
+
+    .modal-card h2 { font-size: 22px; font-weight: 800; margin: 0 0 8px; color: var(--text); letter-spacing: -0.5px; }
+    .modal-card p { font-size: 14px; color: var(--muted); margin: 0 0 30px; font-weight: 600; }
+    
+    .btn-listo { 
+        background: var(--primary); 
+        color: #ffffff; 
+        width: 100%; 
+        padding: 16px; 
+        border-radius: 16px; 
+        font-weight: 700; 
+        border: none; 
+        cursor: pointer; 
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.2); 
+        transition: all 0.2s; 
+    }
+    .btn-listo:active { transform: scale(0.97); opacity: 0.95; }
 
     .btn-save-tech { width: 100%; margin-top: 15px; box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25); }
     .btn-logout-tech { 
@@ -454,7 +515,18 @@ require __DIR__ . '/_header.php';
     <?php endif; ?>
 </form>
 
-<div id="toast" class="toast-tech">¡Perfil actualizado!</div>
+<div id="success-modal" class="modal-overlay">
+    <div class="modal-card">
+        <button type="button" class="modal-close-top" onclick="closeSuccessModal()">✕</button>
+        <div class="status-icon-container">
+            <div class="status-icon-waves"></div>
+            <span class="check-mark">✓</span>
+        </div>
+        <h2 id="success-modal-title">¡Perfil actualizado!</h2>
+        <p id="success-modal-message">Tus cambios se han guardado con éxito.</p>
+        <button type="button" class="btn-listo" onclick="closeSuccessModal()">Listo</button>
+    </div>
+</div>
 
 <script>
     function switchTab(tab) {
@@ -484,10 +556,37 @@ require __DIR__ . '/_header.php';
 
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.has('toast')) {
-        const toast = document.getElementById('toast');
-        if (urlParams.get('toast') === 'logo') toast.innerText = '¡Logotipo actualizado!';
-        toast.style.display = 'block';
-        setTimeout(() => toast.style.display = 'none', 3000);
+        const modal = document.getElementById('success-modal');
+        const titleEl = document.getElementById('success-modal-title');
+        const msgEl = document.getElementById('success-modal-message');
+        
+        if (urlParams.get('toast') === 'logo') {
+            titleEl.innerText = '¡Logotipo actualizado!';
+            msgEl.innerText = 'El logotipo de tu negocio ha sido actualizado con éxito.';
+        } else {
+            titleEl.innerText = '¡Perfil actualizado!';
+            msgEl.innerText = 'Tus cambios se han guardado con éxito.';
+        }
+        
+        modal.style.display = 'flex';
+        
+        // Reproducir sonido de éxito
+        const successAudio = new Audio('<?= esc(delivery_app_url("uploads/sounds/success.mp3")) ?>');
+        successAudio.play().catch(err => {
+            console.log("Audio playback prevented:", err);
+        });
+        
+        // El modal dura exactamente 5 segundos
+        setTimeout(() => {
+            closeSuccessModal();
+        }, 5000);
+    }
+
+    function closeSuccessModal() {
+        // Remover el parámetro 'toast' del URL para evitar que aparezca de nuevo al refrescar
+        const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
+        window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
+        document.getElementById('success-modal').style.display = 'none';
     }
 
     // Inicializar mapa de Mapbox para el comercio (Local)
