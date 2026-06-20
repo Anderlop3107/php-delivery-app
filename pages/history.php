@@ -135,8 +135,8 @@ require __DIR__ . '/_header.php';
     
     /* Premium Banner - Refined */
     .premium-banner {
-        display: flex; flex-direction: column; align-items: center; justify-content: center;
-        gap: 12px; text-align: center;
+        display: flex; flex-direction: row; align-items: center; justify-content: center;
+        gap: 16px; text-align: left;
         background: rgba(37, 99, 235, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
         padding: 24px 20px; border-radius: 20px;
         margin-bottom: 16px; color: #fff; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
