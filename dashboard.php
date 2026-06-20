@@ -49,7 +49,7 @@ foreach ($weekly_raw as $row) {
     $weekly_data[$key] = (int)$row['cnt'];
 }
 
-$max_week = max($weekly_data) ?: 1; 
+$max_week = max(5, max($weekly_data)); 
 $today_key = $map_dow[date('w') + 1]; 
 
 $title = 'Inicio';
