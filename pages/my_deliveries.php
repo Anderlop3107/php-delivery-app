@@ -257,6 +257,7 @@ require __DIR__ . '/_header.php';
         const prevStatusesStr = sessionStorage.getItem(storageKey);
         let playArrivalSound = false;
         let playCompletedSound = false;
+        let playAssignedSound = false;
 
         if (prevStatusesStr) {
             try {
@@ -273,6 +274,11 @@ require __DIR__ . '/_header.php';
                     // Si cambia a "entregado" desde otro estado
                     if (currentStatus === 'entregado' && prevStatus !== 'entregado') {
                         playCompletedSound = true;
+                    }
+
+                    // Si cambia a "aceptado" (delivery asignado) desde pendiente o si es nuevo y ya está aceptado
+                    if (currentStatus === 'aceptado' && (prevStatus === 'pendiente' || !prevStatus)) {
+                        playAssignedSound = true;
                     }
                 }
             } catch (e) {
@@ -291,6 +297,11 @@ require __DIR__ . '/_header.php';
         } else if (playCompletedSound) {
             const completedAudio = new Audio('<?= esc(delivery_app_url("uploads/sounds/delivery_completed.mp3")) ?>');
             completedAudio.play().catch(err => {
+                console.log("Audio playback prevented by browser autoplay policy:", err);
+            });
+        } else if (playAssignedSound) {
+            const assignedAudio = new Audio('<?= esc(delivery_app_url("uploads/sounds/delivery_assigned.mp3")) ?>');
+            assignedAudio.play().catch(err => {
                 console.log("Audio playback prevented by browser autoplay policy:", err);
             });
         }
