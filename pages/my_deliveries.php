@@ -8,12 +8,13 @@ $isDriver = ($user['role'] === 'repartidor');
 
 // Consultas optimizadas con coordenadas del local para GPS
 if ($isLocal) {
+    // Incluir entregas que cambiaron de estado recientemente (último minuto) para poder notificar por audio en tiempo real
     $rows = app_all(
         "SELECT d.*, r.name AS repartidor_name, r.phone AS repartidor_phone, u_local.latitude as local_lat, u_local.longitude as local_lng
          FROM deliveries d
          LEFT JOIN users r ON r.id = d.repartidor_user_id
          JOIN users u_local ON d.local_user_id = u_local.id
-         WHERE d.local_user_id = ? AND d.status NOT IN ('entregado', 'cancelado', 'rechazado')
+         WHERE d.local_user_id = ? AND (d.status NOT IN ('entregado', 'cancelado', 'rechazado') OR d.updated_at >= DATE_SUB(NOW(), INTERVAL 1 MINUTE))
          ORDER BY d.created_at DESC",
         'i',
         [(int) $user['id']]
@@ -28,6 +29,14 @@ if ($isLocal) {
         'i',
         [(int) $user['id']]
     );
+}
+
+// Filtrar las filas activas para renderizar en la interfaz
+$activeRows = [];
+foreach ($rows as $r) {
+    if (!in_array($r['status'], ['entregado', 'cancelado', 'rechazado'])) {
+        $activeRows[] = $r;
+    }
 }
 
 $title = 'Pedidos en curso';
@@ -106,7 +115,7 @@ require __DIR__ . '/_header.php';
 </div>
 
 <div class="pending-list" id="orders-list">
-    <?php if (empty($rows)): ?>
+    <?php if (empty($activeRows)): ?>
         <div style="text-align: center; padding: 80px 20px;">
             <div style="background: var(--primary-soft); width: 100px; height: 100px; border-radius: 30px; display: flex; align-items: center; justify-content: center; margin: 0 auto 25px;">
                 <svg style="width: 44px; height: 44px; color: var(--primary);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg>
@@ -115,7 +124,7 @@ require __DIR__ . '/_header.php';
             <p class="muted">No tienes pedidos activos en curso.</p>
         </div>
     <?php else: ?>
-        <?php foreach ($rows as $row): 
+        <?php foreach ($activeRows as $row): 
             $s = strtolower(trim((string)$row['status']));
             // Fallback inteligente para estados corruptos
             if (empty($s)) { $s = $row['repartidor_user_id'] ? 'aceptado' : 'pendiente'; }
@@ -247,6 +256,7 @@ require __DIR__ . '/_header.php';
         const storageKey = 'local_delivery_statuses';
         const prevStatusesStr = sessionStorage.getItem(storageKey);
         let playArrivalSound = false;
+        let playCompletedSound = false;
 
         if (prevStatusesStr) {
             try {
@@ -255,10 +265,14 @@ require __DIR__ . '/_header.php';
                     const currentStatus = currentStatuses[orderId];
                     const prevStatus = prevStatuses[orderId];
                     
-                    // Si cambia a "repartidor_en_local" desde otro estado o si es un nuevo pedido asignado que ya está en local
+                    // Si cambia a "repartidor_en_local" desde otro estado
                     if (currentStatus === 'repartidor_en_local' && prevStatus !== 'repartidor_en_local') {
                         playArrivalSound = true;
-                        break;
+                    }
+
+                    // Si cambia a "entregado" desde otro estado
+                    if (currentStatus === 'entregado' && prevStatus !== 'entregado') {
+                        playCompletedSound = true;
                     }
                 }
             } catch (e) {
@@ -272,6 +286,11 @@ require __DIR__ . '/_header.php';
         if (playArrivalSound) {
             const arrivalAudio = new Audio('<?= esc(delivery_app_url("uploads/sounds/delivery_arrived.mp3")) ?>');
             arrivalAudio.play().catch(err => {
+                console.log("Audio playback prevented by browser autoplay policy:", err);
+            });
+        } else if (playCompletedSound) {
+            const completedAudio = new Audio('<?= esc(delivery_app_url("uploads/sounds/delivery_completed.mp3")) ?>');
+            completedAudio.play().catch(err => {
                 console.log("Audio playback prevented by browser autoplay policy:", err);
             });
         }
