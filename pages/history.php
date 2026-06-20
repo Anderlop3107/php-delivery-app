@@ -179,7 +179,7 @@ require __DIR__ . '/_header.php';
     </div>
     <div>
         <h4 style="margin:0; font-size:14px; color:#fff; font-weight: 800;">Cantidad de pedidos</h4>
-        <p style="margin:0; font-size:12px; opacity:0.8; font-weight: 600;"><?= count($rows) ?> pedidos encontrados</p>
+        <p style="margin:0; font-size:12px; opacity:0.8; font-weight: 600;"><?= count($rows) ?> Pedidos realizados</p>
     </div>
 </div>
 
