@@ -98,24 +98,28 @@ require __DIR__ . '/_header.php';
 
     .hero-content { position: relative; z-index: 2; }
 
-    .profile-avatar-center {
+    .profile-avatar-wrapper {
+        position: relative;
         width: 100px;
         height: 100px;
+        margin: 0 auto 16px;
+    }
+    .profile-avatar-center {
+        width: 100%;
+        height: 100%;
         border-radius: 50%;
         border: 4px solid #ffffff;
         box-shadow: 0 10px 25px rgba(0,0,0,0.12);
-        margin: 0 auto 16px;
         background: #fff;
         overflow: hidden;
-        position: relative;
     }
     .profile-avatar-center img { width: 100%; height: 100%; object-fit: cover; }
     .profile-avatar-center .placeholder { font-size: 40px; line-height: 92px; }
 
     .edit-badge-overlay {
         position: absolute;
-        bottom: 5px;
-        right: 0;
+        bottom: -6px;
+        right: -6px;
         background: var(--primary);
         color: #fff;
         width: 32px;
@@ -127,7 +131,11 @@ require __DIR__ . '/_header.php';
         border: 3px solid #fff;
         cursor: pointer;
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-        z-index: 3;
+        z-index: 10;
+        transition: transform 0.2s ease;
+    }
+    .edit-badge-overlay:hover {
+        transform: scale(1.1);
     }
 
     .profile-name-box { display: flex; align-items: center; justify-content: center; gap: 6px; margin-bottom: 4px; }
@@ -349,12 +357,14 @@ require __DIR__ . '/_header.php';
 <div class="profile-hero">
     <div class="hero-cover"></div>
     <div class="hero-content">
-        <div class="profile-avatar-center">
-            <?php if (!empty($userData['logo_path'])): ?>
-                <img src="<?= esc(delivery_app_url($userData['logo_path'])) ?>?v=<?= time() ?>" id="avatar-preview">
-            <?php else: ?>
-                <div class="placeholder">🏢</div>
-            <?php endif; ?>
+        <div class="profile-avatar-wrapper">
+            <div class="profile-avatar-center">
+                <?php if (!empty($userData['logo_path'])): ?>
+                    <img src="<?= esc(delivery_app_url($userData['logo_path'])) ?>?v=<?= time() ?>" id="avatar-preview">
+                <?php else: ?>
+                    <div class="placeholder">🏢</div>
+                <?php endif; ?>
+            </div>
             <label for="logo-input" class="edit-badge-overlay">
                 <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"></path></svg>
             </label>
