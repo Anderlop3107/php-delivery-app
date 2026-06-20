@@ -183,6 +183,190 @@ $user = current_user();
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
         </a>
     </nav>
+
+    <?php if ($user && $user['role'] === 'local'): ?>
+    <script>
+        (function() {
+            // Solicitar permisos de notificación de escritorio
+            if (typeof Notification !== 'undefined' && Notification.permission === 'default') {
+                Notification.requestPermission();
+            }
+
+            const storageKey = 'local_delivery_statuses';
+            const notifiedKey = 'local_notified_orders_states';
+
+            function playNotificationSound(src) {
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) {
+                        const ctx = new AudioContext();
+                        const audio = new Audio(src);
+                        const source = ctx.createMediaElementSource(audio);
+                        const gainNode = ctx.createGain();
+                        gainNode.gain.value = 2.0; // 200% volumen
+                        source.connect(gainNode);
+                        gainNode.connect(ctx.destination);
+                        audio.play().catch(err => {
+                            console.log("Web Audio blocked, trying standard fallback...", err);
+                            const simpleAudio = new Audio(src);
+                            simpleAudio.volume = 1.0;
+                            simpleAudio.play().catch(e => console.log("Fallback blocked:", e));
+                        });
+                    } else {
+                        const audio = new Audio(src);
+                        audio.volume = 1.0;
+                        audio.play().catch(err => console.log("Audio blocked:", err));
+                    }
+                } catch (e) {
+                    const audio = new Audio(src);
+                    audio.volume = 1.0;
+                    audio.play().catch(err => console.log("Audio failed:", err));
+                }
+            }
+
+            function showDesktopNotification(title, body) {
+                if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+                    new Notification(title, {
+                        body: body,
+                        icon: '<?= esc(delivery_app_url("uploads/logos/corona.png")) ?>'
+                    });
+                }
+            }
+
+            async function checkUpdates() {
+                try {
+                    const resp = await fetch('<?= esc(delivery_app_url("pages/api_get_active_deliveries.php")) ?>');
+                    if (!resp.ok) return;
+                    const data = await resp.json();
+
+                    const currentStatuses = {};
+                    data.forEach(order => {
+                        currentStatuses[order.id] = order.status;
+                    });
+
+                    // Cargar historial de notificaciones enviadas
+                    let notified = {};
+                    try {
+                        const savedNotified = sessionStorage.getItem(notifiedKey);
+                        if (savedNotified) notified = JSON.parse(savedNotified);
+                    } catch (e) {}
+
+                    let playArrivalSound = false;
+                    let playCompletedSound = false;
+                    let playAssignedSound = false;
+                    let notificationText = '';
+
+                    // Inicializar estados en el primer load de la sesión para no sonar cosas viejas
+                    const isFirstSessionLoad = !sessionStorage.getItem(storageKey);
+                    if (isFirstSessionLoad) {
+                        data.forEach(order => {
+                            if (order.status === 'repartidor_en_local') {
+                                notified[order.id + '_assigned'] = true;
+                                notified[order.id + '_arrived'] = true;
+                            } else if (order.status === 'aceptado') {
+                                notified[order.id + '_assigned'] = true;
+                            } else if (order.status === 'entregado') {
+                                notified[order.id + '_assigned'] = true;
+                                notified[order.id + '_arrived'] = true;
+                                notified[order.id + '_completed'] = true;
+                            }
+                        });
+                        sessionStorage.setItem(storageKey, JSON.stringify(currentStatuses));
+                        sessionStorage.setItem(notifiedKey, JSON.stringify(notified));
+                        return;
+                    }
+
+                    for (const orderId in currentStatuses) {
+                        const currentStatus = currentStatuses[orderId];
+
+                        // 1. Llegada al local
+                        if (currentStatus === 'repartidor_en_local') {
+                            const notifId = orderId + '_arrived';
+                            if (!notified[notifId]) {
+                                playArrivalSound = true;
+                                notified[notifId] = true;
+                                notificationText = "El delivery ha llegado al local (Pedido #" + orderId + ")";
+                            }
+                        }
+                        // 2. Pedido entregado
+                        if (currentStatus === 'entregado') {
+                            const notifId = orderId + '_completed';
+                            if (!notified[notifId]) {
+                                playCompletedSound = true;
+                                notified[notifId] = true;
+                                notificationText = "Pedido entregado con éxito (Pedido #" + orderId + ")";
+                            }
+                        }
+                        // 3. Asignación del chofer
+                        if (currentStatus === 'aceptado') {
+                            const notifId = orderId + '_assigned';
+                            if (!notified[notifId]) {
+                                playAssignedSound = true;
+                                notified[notifId] = true;
+                                notificationText = "Delivery asignado (Pedido #" + orderId + ")";
+                            }
+                        }
+                    }
+
+                    // Guardar los nuevos estados y registro de notificados
+                    sessionStorage.setItem(storageKey, JSON.stringify(currentStatuses));
+                    sessionStorage.setItem(notifiedKey, JSON.stringify(notified));
+
+                    if (playArrivalSound || playCompletedSound || playAssignedSound) {
+                        if (playArrivalSound) {
+                            playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_arrived.mp3")) ?>');
+                            showDesktopNotification("¡Delivery en Local!", notificationText);
+                        } else if (playCompletedSound) {
+                            playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_completed.mp3")) ?>');
+                            showDesktopNotification("¡Pedido Entregado!", notificationText);
+                        } else if (playAssignedSound) {
+                            playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_assigned.mp3")) ?>');
+                            showDesktopNotification("¡Chofer Asignado!", notificationText);
+                        }
+
+                        // Recargar pantalla solo si estamos en la vista de seguimiento (my_deliveries.php)
+                        const onTrackingPage = window.location.pathname.indexOf('my_deliveries.php') !== -1;
+                        if (onTrackingPage) {
+                            if (document.visibilityState === 'visible') {
+                                window.location.reload();
+                            } else {
+                                sessionStorage.setItem('needs_reload', 'true');
+                            }
+                        }
+                    }
+                } catch (e) {
+                    console.error("Error global background update check:", e);
+                }
+            }
+
+            // Si la pestaña vuelve a primer plano y hay cambios pendientes en la vista de seguimiento, recargar
+            document.addEventListener('visibilitychange', () => {
+                const onTrackingPage = window.location.pathname.indexOf('my_deliveries.php') !== -1;
+                if (onTrackingPage && document.visibilityState === 'visible' && sessionStorage.getItem('needs_reload') === 'true') {
+                    sessionStorage.removeItem('needs_reload');
+                    window.location.reload();
+                }
+            });
+
+            // Web Worker secundario para evitar throttling en pestañas inactivas
+            try {
+                const workerCode = `
+                    setInterval(() => {
+                        postMessage('tick');
+                    }, 10000);
+                `;
+                const blob = new Blob([workerCode], {type: 'application/javascript'});
+                const worker = new Worker(URL.createObjectURL(blob));
+                worker.onmessage = function() {
+                    checkUpdates();
+                };
+                setTimeout(checkUpdates, 1000);
+            } catch (e) {
+                setInterval(checkUpdates, 10000);
+            }
+        })();
+    </script>
+    <?php endif; ?>
 <?php endif; ?>
 
 <div class="wrap">
