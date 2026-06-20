@@ -5,7 +5,7 @@ require_login();
 $user = current_user();
 
 // 1. Obtener rango de fechas y página actual
-$startDate = $_GET['start_date'] ?? date('Y-m-01');
+$startDate = $_GET['start_date'] ?? date('Y-m-d');
 $endDate = $_GET['end_date'] ?? date('Y-m-d');
 $month = isset($_GET['month']) ? (int)$_GET['month'] : (int)date('m');
 $year = isset($_GET['year']) ? (int)$_GET['year'] : (int)date('Y');
