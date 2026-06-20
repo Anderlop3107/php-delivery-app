@@ -135,15 +135,16 @@ require __DIR__ . '/_header.php';
     
     /* Premium Banner - Refined */
     .premium-banner {
-        display: flex; align-items: center; gap: 18px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 12px; text-align: center;
         background: rgba(37, 99, 235, 0.85); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-        padding: 20px; border-radius: 20px;
+        padding: 24px 20px; border-radius: 20px;
         margin-bottom: 16px; color: #fff; box-shadow: 0 10px 20px rgba(37, 99, 235, 0.2);
         border: 1px solid rgba(255, 255, 255, 0.1);
     }
     .crown-icon {
-        width: 44px; height: 44px; background: rgba(255, 255, 255, 0.15);
-        backdrop-filter: blur(5px); border-radius: 14px; 
+        width: 56px; height: 56px; background: rgba(255, 255, 255, 0.15);
+        backdrop-filter: blur(5px); border-radius: 16px; 
         display: flex; align-items: center; justify-content: center;
         font-size: 22px; flex-shrink: 0; border: 1px solid rgba(255, 255, 255, 0.2);
     }
