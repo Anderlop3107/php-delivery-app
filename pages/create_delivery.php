@@ -634,10 +634,10 @@ require __DIR__ . '/_header.php';
             console.log("La reproducción automática de audio fue prevenida por el navegador:", err);
         });
         
-        // Redirección automática en 3 segundos
+        // Redirección automática en 5 segundos
         setTimeout(() => {
             window.location.href = '../dashboard.php';
-        }, 3000);
+        }, 5000);
     }
 
     function closeSuccessModal() {
