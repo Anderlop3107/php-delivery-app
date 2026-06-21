@@ -641,12 +641,12 @@ require __DIR__ . '/_header.php';
         
         // Redirección automática en 5 segundos
         setTimeout(() => {
-            window.location.href = '../dashboard.php';
+            window.location.href = 'my_deliveries.php';
         }, 5000);
     }
 
     function closeSuccessModal() {
-        window.location.href = '../dashboard.php';
+        window.location.href = 'my_deliveries.php';
     }
 
     // Detectar éxito en la URL
