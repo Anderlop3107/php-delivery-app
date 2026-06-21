@@ -467,13 +467,20 @@ $user = current_user();
                             if (document.visibilityState === 'visible') {
                                 if (soundPlayed) {
                                     setTimeout(() => {
-                                        window.location.reload();
+                                        if (playCompletedSound) {
+                                            window.location.href = '<?= esc(delivery_app_url("dashboard.php")) ?>';
+                                        } else {
+                                            window.location.reload();
+                                        }
                                     }, 2000);
                                 } else {
                                     window.location.reload();
                                 }
                             } else {
                                 sessionStorage.setItem('needs_reload', 'true');
+                                if (playCompletedSound) {
+                                    sessionStorage.setItem('needs_redirect_dashboard', 'true');
+                                }
                             }
                         }
                     }
@@ -500,7 +507,12 @@ $user = current_user();
 
                     if (onTrackingPage && sessionStorage.getItem('needs_reload') === 'true') {
                         sessionStorage.removeItem('needs_reload');
-                        window.location.reload();
+                        if (sessionStorage.getItem('needs_redirect_dashboard') === 'true') {
+                            sessionStorage.removeItem('needs_redirect_dashboard');
+                            window.location.href = '<?= esc(delivery_app_url("dashboard.php")) ?>';
+                        } else {
+                            window.location.reload();
+                        }
                     }
                 }
             });
