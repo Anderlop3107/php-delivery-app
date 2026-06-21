@@ -165,7 +165,7 @@ require __DIR__ . '/pages/_header.php';
     .donut-bg { fill: none; stroke: #f1f5f9; stroke-width: 10; }
     .donut-ring { 
         fill: none; stroke: var(--primary); stroke-width: 10; 
-        stroke-linecap: round; transition: stroke-dasharray 1s ease;
+        stroke-linecap: round; transition: stroke-dasharray 1.5s cubic-bezier(0.4, 0, 0.2, 1);
     }
     .donut-text { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 16px; color: var(--primary); }
 
@@ -187,7 +187,7 @@ require __DIR__ . '/pages/_header.php';
         max-width: 32px;
         background: var(--primary);
         border-radius: 8px;
-        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        transition: all 1.2s cubic-bezier(0.4, 0, 0.2, 1);
         min-height: 6px;
     }
     .bar.active { 
@@ -251,7 +251,8 @@ require __DIR__ . '/pages/_header.php';
                     $dash = min(10, $completados) * 25.12;
                 ?>
                 <circle cx="50" cy="50" r="40" class="donut-ring" 
-                        style="stroke-dasharray: <?= $dash ?> 251.2;"></circle>
+                        id="donut-progress-ring"
+                        style="stroke-dasharray: 0 251.2;"></circle>
             </svg>
             <div class="donut-text"><?= $completados ?></div>
         </div>
@@ -271,7 +272,7 @@ require __DIR__ . '/pages/_header.php';
             ?>
                 <div class="bar-col">
                     <div style="height: 80px; width: 100%; display: flex; align-items: flex-end; justify-content: center;">
-                        <div class="bar <?= $isActive ? 'active' : '' ?>" style="height: <?= $h ?>%;"></div>
+                        <div class="bar <?= $isActive ? 'active' : '' ?>" data-height="<?= $h ?>%" style="height: 0%;"></div>
                     </div>
                     <span class="day-label"><?= $day ?></span>
                 </div>
@@ -279,5 +280,23 @@ require __DIR__ . '/pages/_header.php';
         </div>
     </div>
 </div>
+
+<script>
+    window.addEventListener('load', () => {
+        // Ejecutar animación con un pequeño retardo para asegurar el render inicial de los navegadores móviles
+        setTimeout(() => {
+            // Animar dónut
+            const donutRing = document.getElementById('donut-progress-ring');
+            if (donutRing) {
+                donutRing.style.strokeDasharray = '<?= $dash ?> 251.2';
+            }
+            
+            // Animar barras
+            document.querySelectorAll('.bar-chart .bar').forEach(bar => {
+                bar.style.height = bar.getAttribute('data-height');
+            });
+        }, 150);
+    });
+</script>
 
 <?php require __DIR__ . '/pages/_footer.php'; ?>
