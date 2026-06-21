@@ -113,6 +113,11 @@ require __DIR__ . '/_header.php';
     }
     .call-link-btn:active { transform: scale(0.9); }
     
+    .wa-link-btn svg, .call-link-btn svg {
+        color: #fff !important;
+        opacity: 1 !important;
+    }
+    
     .driver-actions { margin-top: 20px; display: grid; gap: 12px; }
     .btn-action-main { background: var(--primary); color: #fff; border: none; border-radius: 16px; padding: 16px; font-weight: 800; font-size: 14px; cursor: pointer; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.15); }
     .btn-action-gps { background: #1e293b; color: #fff; border: none; border-radius: 16px; padding: 16px; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
