@@ -247,12 +247,13 @@ require __DIR__ . '/pages/_header.php';
             <svg viewBox="0 0 100 100" class="donut-svg">
                 <circle cx="50" cy="50" r="40" class="donut-bg"></circle>
                 <?php 
-                    $dash = $total_pedidos > 0 ? ($completados / $total_pedidos) * 251.2 : 0;
+                    // Cada pedido completado aumenta un 10% el gráfico (objetivo: 10 al día)
+                    $dash = min(10, $completados) * 25.12;
                 ?>
                 <circle cx="50" cy="50" r="40" class="donut-ring" 
                         style="stroke-dasharray: <?= $dash ?> 251.2;"></circle>
             </svg>
-            <div class="donut-text"><?= $total_pedidos ?></div>
+            <div class="donut-text"><?= $completados ?></div>
         </div>
     </div>
 
