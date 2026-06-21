@@ -234,7 +234,7 @@ require __DIR__ . '/_header.php';
         if (checkInterval) return;
         checkInterval = setInterval(async () => {
             try {
-                const resp = await fetch('api_check_new_orders.php');
+                const resp = await fetch('api_check_new_orders.php?_t=' + Date.now());
                 const res = await resp.json();
                 
                 if (res.has_orders && res.order.id !== currentBroadcastId) {
@@ -272,7 +272,11 @@ require __DIR__ . '/_header.php';
         }
 
         document.getElementById('broadcast-modal').style.display = 'flex';
-        new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play();
+        if (window.playNotificationSound) {
+            window.playNotificationSound('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
+        } else {
+            new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(e => console.log(e));
+        }
 
         // Inicializar mini mapa de ruta
         setTimeout(() => initMiniMap(order), 100);

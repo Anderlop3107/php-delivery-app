@@ -154,6 +154,11 @@ $user = current_user();
             text-transform: uppercase; 
             letter-spacing: 0.3px; 
         }
+        
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translate(-50%, 20px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
     </style>
 </head>
 <body>
@@ -184,6 +189,137 @@ $user = current_user();
         </a>
     </nav>
 
+    <?php if ($user): ?>
+    <script>
+        // Global Audio Context Manager for Autoplay Unlocking on Mobile
+        let myAudioContext = null;
+        let audioUnlocked = false;
+
+        function initAudioContext() {
+            if (audioUnlocked) return;
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass) {
+                myAudioContext = new AudioContextClass();
+                if (myAudioContext.state === 'suspended') {
+                    myAudioContext.resume().then(() => {
+                        audioUnlocked = true;
+                        hideAudioBanner();
+                    });
+                } else {
+                    audioUnlocked = true;
+                    hideAudioBanner();
+                }
+            }
+        }
+
+        function unlockAudio() {
+            initAudioContext();
+            if (myAudioContext) {
+                myAudioContext.resume().catch(e => console.log(e));
+            }
+            // Desbloquear HTML5 Audio reproduciendo un segundo de silencio en base64
+            const silentSrc = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA";
+            const audio = new Audio(silentSrc);
+            audio.play().then(() => {
+                audioUnlocked = true;
+                hideAudioBanner();
+                console.log("Audio HTML5 desbloqueado con éxito");
+            }).catch(e => console.log("Fallo al desbloquear Audio HTML5:", e));
+        }
+
+        function showAudioBanner() {
+            if (audioUnlocked) return;
+            if (document.getElementById('audio-unlock-banner')) return;
+            const banner = document.createElement('div');
+            banner.id = 'audio-unlock-banner';
+            banner.style.cssText = `
+                position: fixed; bottom: 85px; left: 50%; transform: translateX(-50%);
+                background: #FF8C42; color: #fff; padding: 12px 20px;
+                border-radius: 20px; font-size: 13px; font-weight: 800;
+                box-shadow: 0 10px 25px rgba(255,140,66,0.3); z-index: 9999;
+                display: flex; align-items: center; gap: 8px; cursor: pointer;
+                animation: fadeInUp 0.4s ease-out; border: 1.5px solid rgba(255,255,255,0.2);
+                text-transform: uppercase; letter-spacing: 0.5px;
+            `;
+            banner.innerHTML = `<span>🔊 Toca la pantalla para activar sonidos</span>`;
+            banner.addEventListener('click', (e) => {
+                e.stopPropagation();
+                unlockAudio();
+            });
+            document.body.appendChild(banner);
+        }
+
+        function hideAudioBanner() {
+            const banner = document.getElementById('audio-unlock-banner');
+            if (banner) {
+                banner.remove();
+            }
+        }
+
+        window.addEventListener('click', unlockAudio, { once: true });
+        window.addEventListener('touchstart', unlockAudio, { once: true });
+
+        // Global function to play sounds reliably via Web Audio or HTML5 Audio
+        window.playNotificationSound = async function(src) {
+            // 1. Intentar Web Audio con decodificación (para ganancia a 200% volumen)
+            try {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) {
+                    if (!myAudioContext) {
+                        myAudioContext = new AudioContextClass();
+                    }
+                    const ctx = myAudioContext;
+                    if (ctx.state === 'suspended') {
+                        await ctx.resume();
+                    }
+                    
+                    const resp = await fetch(src);
+                    const arrayBuffer = await resp.arrayBuffer();
+                    const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
+                    
+                    const source = ctx.createBufferSource();
+                    source.buffer = audioBuffer;
+                    
+                    const gainNode = ctx.createGain();
+                    gainNode.gain.value = 2.0; // 200% volumen
+                    
+                    source.connect(gainNode);
+                    gainNode.connect(ctx.destination);
+                    source.start(0);
+                    return; // Éxito
+                }
+            } catch (e) {
+                console.log("Web Audio falló, usando HTML5 Audio fallback:", e);
+            }
+            
+            // 2. Fallback de HTML5 Audio tradicional (100% compatible y desbloqueado por gesto previo)
+            try {
+                const audio = new Audio(src);
+                audio.volume = 1.0;
+                audio.play().catch(err => console.log("HTML5 Audio bloqueado:", err));
+            } catch (e) {
+                console.log("Error de fallback HTML5:", e);
+            }
+        };
+        
+        // Check after load if audio is suspended
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                if (AudioContextClass) {
+                    const tempCtx = new AudioContextClass();
+                    if (tempCtx.state === 'suspended') {
+                        showAudioBanner();
+                    } else {
+                        audioUnlocked = true;
+                    }
+                    tempCtx.close();
+                }
+            }, 1200);
+        });
+    </script>
+    <?php endif; ?>
+
     <?php if ($user && $user['role'] === 'local'): ?>
     <script>
         (function() {
@@ -196,31 +332,11 @@ $user = current_user();
             const notifiedKey = 'local_notified_orders_states';
 
             function playNotificationSound(src) {
-                try {
-                    const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    if (AudioContext) {
-                        const ctx = new AudioContext();
-                        const audio = new Audio(src);
-                        const source = ctx.createMediaElementSource(audio);
-                        const gainNode = ctx.createGain();
-                        gainNode.gain.value = 2.0; // 200% volumen
-                        source.connect(gainNode);
-                        gainNode.connect(ctx.destination);
-                        audio.play().catch(err => {
-                            console.log("Web Audio blocked, trying standard fallback...", err);
-                            const simpleAudio = new Audio(src);
-                            simpleAudio.volume = 1.0;
-                            simpleAudio.play().catch(e => console.log("Fallback blocked:", e));
-                        });
-                    } else {
-                        const audio = new Audio(src);
-                        audio.volume = 1.0;
-                        audio.play().catch(err => console.log("Audio blocked:", err));
-                    }
-                } catch (e) {
+                if (window.playNotificationSound) {
+                    window.playNotificationSound(src);
+                } else {
                     const audio = new Audio(src);
-                    audio.volume = 1.0;
-                    audio.play().catch(err => console.log("Audio failed:", err));
+                    audio.play().catch(e => console.log("Fallback blocked:", e));
                 }
             }
 
@@ -235,7 +351,7 @@ $user = current_user();
 
             async function checkUpdates() {
                 try {
-                    const resp = await fetch('<?= esc(delivery_app_url("pages/api_get_active_deliveries.php")) ?>');
+                    const resp = await fetch('<?= esc(delivery_app_url("pages/api_get_active_deliveries.php")) ?>?_t=' + Date.now());
                     if (!resp.ok) return;
                     const data = await resp.json();
 
@@ -251,13 +367,30 @@ $user = current_user();
                         if (savedNotified) notified = JSON.parse(savedNotified);
                     } catch (e) {}
 
+                    // Detectar si algún estado cambió respecto al último chequeo
+                    let statusChanged = false;
+                    const savedStatusesStr = sessionStorage.getItem(storageKey);
+                    if (savedStatusesStr) {
+                        const savedStatuses = JSON.parse(savedStatusesStr);
+                        for (const orderId in currentStatuses) {
+                            if (savedStatuses[orderId] !== currentStatuses[orderId]) {
+                                statusChanged = true;
+                            }
+                        }
+                        for (const orderId in savedStatuses) {
+                            if (currentStatuses[orderId] === undefined) {
+                                statusChanged = true;
+                            }
+                        }
+                    }
+
                     let playArrivalSound = false;
                     let playCompletedSound = false;
                     let playAssignedSound = false;
                     let notificationText = '';
 
                     // Inicializar estados en el primer load de la sesión para no sonar cosas viejas
-                    const isFirstSessionLoad = !sessionStorage.getItem(storageKey);
+                    const isFirstSessionLoad = !savedStatusesStr;
                     if (isFirstSessionLoad) {
                         data.forEach(order => {
                             if (order.status === 'repartidor_en_local') {
@@ -312,23 +445,33 @@ $user = current_user();
                     sessionStorage.setItem(storageKey, JSON.stringify(currentStatuses));
                     sessionStorage.setItem(notifiedKey, JSON.stringify(notified));
 
-                    if (playArrivalSound || playCompletedSound || playAssignedSound) {
-                        if (playArrivalSound) {
-                            playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_arrived.mp3")) ?>');
-                            showDesktopNotification("¡Delivery en Local!", notificationText);
-                        } else if (playCompletedSound) {
-                            playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_completed.mp3")) ?>');
-                            showDesktopNotification("¡Pedido Entregado!", notificationText);
-                        } else if (playAssignedSound) {
-                            playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_assigned.mp3")) ?>');
-                            showDesktopNotification("¡Chofer Asignado!", notificationText);
-                        }
+                    let soundPlayed = false;
+                    if (playArrivalSound) {
+                        playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_arrived.mp3")) ?>');
+                        showDesktopNotification("¡Delivery en Local!", notificationText);
+                        soundPlayed = true;
+                    } else if (playCompletedSound) {
+                        playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_completed.mp3")) ?>');
+                        showDesktopNotification("¡Pedido Entregado!", notificationText);
+                        soundPlayed = true;
+                    } else if (playAssignedSound) {
+                        playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_assigned.mp3")) ?>');
+                        showDesktopNotification("¡Chofer Asignado!", notificationText);
+                        soundPlayed = true;
+                    }
 
-                        // Recargar pantalla solo si estamos en la vista de seguimiento (my_deliveries.php)
+                    // Recargar pantalla si hubo CUALQUIER cambio de estado
+                    if (statusChanged) {
                         const onTrackingPage = window.location.pathname.indexOf('my_deliveries.php') !== -1;
                         if (onTrackingPage) {
                             if (document.visibilityState === 'visible') {
-                                window.location.reload();
+                                if (soundPlayed) {
+                                    setTimeout(() => {
+                                        window.location.reload();
+                                    }, 2000);
+                                } else {
+                                    window.location.reload();
+                                }
                             } else {
                                 sessionStorage.setItem('needs_reload', 'true');
                             }
@@ -342,9 +485,23 @@ $user = current_user();
             // Si la pestaña vuelve a primer plano y hay cambios pendientes en la vista de seguimiento, recargar
             document.addEventListener('visibilitychange', () => {
                 const onTrackingPage = window.location.pathname.indexOf('my_deliveries.php') !== -1;
-                if (onTrackingPage && document.visibilityState === 'visible' && sessionStorage.getItem('needs_reload') === 'true') {
-                    sessionStorage.removeItem('needs_reload');
-                    window.location.reload();
+                
+                if (document.visibilityState === 'visible') {
+                    // Verificar si el canal de audio del navegador se suspendió al bloquear la pantalla y solicitar reactivación
+                    const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContextClass) {
+                        const tempCtx = new AudioContextClass();
+                        if (tempCtx.state === 'suspended') {
+                            audioUnlocked = false;
+                            showAudioBanner();
+                        }
+                        tempCtx.close();
+                    }
+
+                    if (onTrackingPage && sessionStorage.getItem('needs_reload') === 'true') {
+                        sessionStorage.removeItem('needs_reload');
+                        window.location.reload();
+                    }
                 }
             });
 
@@ -353,7 +510,7 @@ $user = current_user();
                 const workerCode = `
                     setInterval(() => {
                         postMessage('tick');
-                    }, 10000);
+                    }, 5000);
                 `;
                 const blob = new Blob([workerCode], {type: 'application/javascript'});
                 const worker = new Worker(URL.createObjectURL(blob));
@@ -362,7 +519,7 @@ $user = current_user();
                 };
                 setTimeout(checkUpdates, 1000);
             } catch (e) {
-                setInterval(checkUpdates, 10000);
+                setInterval(checkUpdates, 5000);
             }
         })();
     </script>

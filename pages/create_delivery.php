@@ -550,12 +550,17 @@ require __DIR__ . '/_header.php';
         document.getElementById('v-ref').innerText = cRef.value || 'Sin referencia';
         
         // Configurar enlaces de comunicación
-        const cleanPhone = cPhone.value.replace(/\D/g, '');
+        let cleanPhone = cPhone.value.replace(/\D/g, '');
+        if (cleanPhone.startsWith('0')) {
+            cleanPhone = '595' + cleanPhone.substring(1);
+        } else if (cleanPhone && !cleanPhone.startsWith('595')) {
+            cleanPhone = '595' + cleanPhone;
+        }
         const waLink = document.getElementById('v-wa-link');
         const callLink = document.getElementById('v-call-link');
         if (cleanPhone) {
             waLink.href = `https://wa.me/${cleanPhone}`;
-            callLink.href = `tel:${cleanPhone}`;
+            callLink.href = `tel:${cPhone.value.replace(/\D/g, '')}`;
             waLink.style.display = 'flex';
             callLink.style.display = 'flex';
         } else {
