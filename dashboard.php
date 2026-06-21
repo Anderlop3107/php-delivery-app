@@ -186,13 +186,11 @@ require __DIR__ . '/pages/_header.php';
         width: 100%;
         max-width: 32px;
         background: var(--primary);
-        opacity: 0.7;
         border-radius: 8px;
         transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         min-height: 6px;
     }
     .bar.active { 
-        opacity: 1;
         background: var(--primary); 
         box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25); 
     }
