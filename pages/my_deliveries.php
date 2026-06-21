@@ -181,7 +181,7 @@ require __DIR__ . '/_header.php';
                             <strong>Referencia:</strong> <?= esc($row['order_description']) ?>
                         </p>
                     <?php endif; ?>
-                    <div style="display: flex; gap: 10px; margin-top: 15px;">
+                    <div style="display: flex; gap: 10px; margin-top: 15px; justify-content: flex-end;">
                         <?php 
                             $cleanCustPhone = preg_replace('/[^0-9]/', '', $row['customer_phone'] ?? '');
                             if (str_starts_with($cleanCustPhone, '0')) {
