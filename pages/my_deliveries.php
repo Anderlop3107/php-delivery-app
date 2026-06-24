@@ -426,7 +426,7 @@ require __DIR__ . '/_header.php';
                                     </svg>
                                 </div>
                                 <div>
-                                    <span style="font-size: 14px; font-weight: 800; color: var(--text); display: block; margin-top: 2px;">Resumen de la entrega</span>
+                                    <span style="font-size: 14px; font-weight: 800; color: #10b981; display: block; margin-top: 2px;">Resumen de la entrega</span>
                                 </div>
                             </div>
                             
