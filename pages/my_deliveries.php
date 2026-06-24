@@ -125,7 +125,6 @@ require __DIR__ . '/_header.php';
 </style>
 
 <div class="pending-header">
-    <p class="muted" style="margin-bottom: 4px; text-transform: uppercase; letter-spacing: 1px;">En Tiempo Real</p>
     <h1>Seguimiento de Entrega</h1>
 </div>
 
