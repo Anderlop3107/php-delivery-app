@@ -46,9 +46,16 @@ require __DIR__ . '/_header.php';
 <style>
     .oculto { display: none !important; }
     
-    .pending-header { margin-bottom: 24px; padding: 10px 0; }
-    .pending-header h1 { font-size: 26px; font-weight: 800; color: var(--text); }
-    .pending-header p { font-size: 14px; font-weight: 600; color: var(--muted); }
+    .pending-header { margin-bottom: 28px; padding: 10px 0 5px; }
+    .pending-header h1 { 
+        font-size: 28px; 
+        font-weight: 800; 
+        background: linear-gradient(135deg, var(--text) 40%, #475569 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        letter-spacing: -0.03em; 
+        margin: 0; 
+    }
     
     .status-card { 
         background: #fff; 
@@ -180,6 +187,7 @@ require __DIR__ . '/_header.php';
 
 <div class="pending-header">
     <h1>Seguimiento de Entrega</h1>
+    <div style="width: 36px; height: 4.5px; background: var(--primary); border-radius: 10px; margin-top: 10px; box-shadow: 0 3px 10px rgba(37, 99, 235, 0.25);"></div>
 </div>
 
 <div class="pending-list" id="orders-list">
