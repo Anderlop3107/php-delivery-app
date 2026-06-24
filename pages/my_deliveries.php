@@ -94,6 +94,7 @@ require __DIR__ . '/_header.php';
     .person-avatar { 
         width: 44px; height: 44px; border-radius: 14px; background: var(--primary); 
         display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 16px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+        overflow: hidden;
     }
     .person-details { flex: 1; }
     .person-details b { display: block; font-size: 15px; font-weight: 700; color: var(--text); }
@@ -215,7 +216,13 @@ require __DIR__ . '/_header.php';
 
                 <!-- BLOQUE DEL LOCAL -->
                 <div class="person-box <?= $ocultarLocal ? 'oculto' : '' ?>" id="info-local-<?= $row['id'] ?>">
-                    <div class="person-avatar"><?= $isLocal ? '🛵' : '🏠' ?></div>
+                    <div class="person-avatar">
+                        <?php if (!$isLocal && !empty($row['local_logo'])): ?>
+                            <img src="<?= esc(delivery_app_url($row['local_logo'])) ?>" alt="Logo Local" style="width: 100%; height: 100%; object-fit: cover;">
+                        <?php else: ?>
+                            <?= $isLocal ? '🛵' : '🏠' ?>
+                        <?php endif; ?>
+                    </div>
                     <div class="person-details">
                         <b><?= esc($isLocal ? ($row['repartidor_name'] ?: 'Buscando...') : $row['local_name']) ?></b>
                         <span><?= $isLocal ? 'Conductor asignado' : 'Punto de retiro' ?></span>
