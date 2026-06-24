@@ -180,6 +180,86 @@ require __DIR__ . '/_header.php';
     }
     .btn-accept-now:active { transform: scale(0.97); }
     
+    /* Estilos del slider Deslizar para Aceptar */
+    .swipe-track {
+        position: relative;
+        width: 100%;
+        height: 58px;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        border: none;
+        border-radius: 29px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: inset 0 2px 4px rgba(0,0,0,0.1), 0 10px 25px rgba(37, 99, 235, 0.2);
+        user-select: none;
+        margin-top: 10px;
+    }
+    .swipe-bg-fill {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 0;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 29px;
+        z-index: 1;
+    }
+    .swipe-text {
+        position: absolute;
+        width: 100%;
+        text-align: center;
+        font-weight: 800;
+        font-size: 11.5px;
+        color: #fff;
+        opacity: 0.9;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        z-index: 2;
+        pointer-events: none;
+        transition: all 0.2s;
+    }
+    .swipe-handle {
+        position: absolute;
+        left: 4px;
+        top: 4px;
+        width: 50px;
+        height: 50px;
+        background: #fff;
+        color: var(--primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: grab;
+        z-index: 3;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.12);
+        transition: background-color 0.2s, color 0.2s;
+    }
+    .swipe-handle:active {
+        cursor: grabbing;
+    }
+    .swipe-handle svg {
+        color: var(--primary) !important;
+        opacity: 1 !important;
+        transition: transform 0.2s;
+    }
+    
+    /* Estado cuando se desliza completamente y se procesa */
+    .swipe-track.processing .swipe-text {
+        color: #fff;
+        opacity: 1;
+    }
+    .swipe-track.processing .swipe-handle {
+        background: #10b981;
+        color: #fff;
+    }
+    .swipe-track.processing .swipe-handle svg {
+        color: #fff !important;
+        transform: rotate(360deg);
+    }
+    
     .btn-ignore { 
         width: 100%; margin-top: 16px; background: transparent; color: var(--muted); border: none; 
         font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s;
@@ -192,6 +272,82 @@ require __DIR__ . '/_header.php';
         50% { opacity: 1; }
         100% { opacity: 0.4; }
     }
+
+    /* Success Modal */
+    .modal-overlay { 
+        position: fixed; 
+        top: 0; left: 0; right: 0; bottom: 0; 
+        background: rgba(15, 23, 42, 0.4); 
+        backdrop-filter: blur(8px); 
+        -webkit-backdrop-filter: blur(8px);
+        z-index: 5000; 
+        display: none; 
+        align-items: center; 
+        justify-content: center; 
+        padding: 20px; 
+    }
+    .modal-card-success { 
+        background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%); 
+        width: 100%; 
+        max-width: 320px; 
+        border-radius: 28px; 
+        padding: 40px 24px 30px; 
+        text-align: center; 
+        position: relative; 
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.3);
+        animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+    }
+    .modal-close-top { 
+        position: absolute; 
+        top: -16px; left: 50%; 
+        transform: translateX(-50%); 
+        width: 32px; height: 32px; 
+        background: #ffffff; 
+        border-radius: 50%; 
+        display: flex; align-items: center; justify-content: center; 
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+        cursor: pointer; 
+        border: none; 
+        font-weight: 800; 
+        color: var(--primary); 
+        transition: transform 0.2s;
+    }
+    .modal-close-top:active { transform: translateX(-50%) scale(0.9); }
+    
+    .status-icon-container { 
+        width: 80px; height: 80px; 
+        border-radius: 50%; 
+        background: rgba(255, 255, 255, 0.15); 
+        margin: 0 auto 25px; 
+        display: flex; align-items: center; justify-content: center; 
+        position: relative; 
+    }
+    .status-icon-waves { 
+        position: absolute; 
+        width: 100%; height: 100%; 
+        border-radius: 50%; 
+        border: 2px solid rgba(255, 255, 255, 0.25); 
+        animation: waveRipple 2s infinite; 
+    }
+    @keyframes waveRipple { from { transform: scale(1); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+    .check-mark { font-size: 36px; color: #ffffff; font-weight: 800; z-index: 2; }
+
+    .modal-card-success h2 { font-size: 22px; font-weight: 800; margin: 0 0 8px; color: #ffffff; letter-spacing: -0.5px; }
+    .modal-card-success p { font-size: 14px; color: rgba(255, 255, 255, 0.85); margin: 0 0 30px; font-weight: 600; }
+    
+    .btn-listo { 
+        background: #ffffff; 
+        color: var(--primary); 
+        width: 100%; 
+        padding: 16px; 
+        border-radius: 16px; 
+        font-weight: 800; 
+        border: none; 
+        cursor: pointer; 
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15); 
+        transition: all 0.2s; 
+    }
+    .btn-listo:active { transform: scale(0.97); opacity: 0.95; }
 </style>
 
 <div class="driver-scanner-view">
@@ -271,11 +427,29 @@ require __DIR__ . '/_header.php';
             </div>
         </div>
 
-        <button id="btn-accept" class="btn-accept-now" onclick="acceptBroadcastedOrder()">
-            <span>ACEPTAR PEDIDO</span>
-            <svg style="width:20px; height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.8"><path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
-        </button>
+        <!-- CONTENEDOR DESLIZABLE PARA ACEPTAR -->
+        <div id="swipe-container" class="swipe-track">
+            <div id="swipe-bg-fill" class="swipe-bg-fill"></div>
+            <div class="swipe-text">Deslizar para Aceptar</div>
+            <div id="swipe-handle" class="swipe-handle">
+                <svg style="width:20px; height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.8"><path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+            </div>
+        </div>
         <button class="btn-ignore" onclick="closeBroadcast()">IGNORAR</button>
+    </div>
+</div>
+
+<!-- Modal de Éxito (Pedido Aceptado) -->
+<div id="accept-success-modal" class="modal-overlay">
+    <div class="modal-card-success">
+        <button class="modal-close-top" onclick="closeAcceptSuccessModal()">✕</button>
+        <div class="status-icon-container">
+            <div class="status-icon-waves"></div>
+            <span class="check-mark">✓</span>
+        </div>
+        <h2>Pedido Aceptado</h2>
+        <p>¡Excelente! Ve al local a retirar el pedido.</p>
+        <button class="btn-listo" onclick="closeAcceptSuccessModal()">Listo</button>
     </div>
 </div>
 
@@ -351,11 +525,8 @@ require __DIR__ . '/_header.php';
         }
 
         document.getElementById('broadcast-modal').style.display = 'flex';
-        if (window.playNotificationSound) {
-            window.playNotificationSound('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3');
-        } else {
-            new Audio('https://assets.mixkit.co/active_storage/sfx/2869/2869-preview.mp3').play().catch(e => console.log(e));
-        }
+        if (typeof resetSlider === 'function') resetSlider();
+        playBroadcastSound();
 
         // Inicializar mini mapa de ruta
         setTimeout(() => initMiniMap(order), 100);
@@ -397,11 +568,118 @@ require __DIR__ . '/_header.php';
         });
     }
 
+    let audioCtx = null;
+    let audioSourceNode = null;
+    let audioGainNode = null;
+    let audioBufferCached = null;
+    let broadcastAudioHTML5 = null;
+
+    async function playBroadcastSound() {
+        const src = '/php-delivery-app/assets/sounds/notification.mp3';
+        
+        try {
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass) {
+                if (!audioCtx) {
+                    audioCtx = new AudioContextClass();
+                }
+                if (audioCtx.state === 'suspended') {
+                    await audioCtx.resume();
+                }
+
+                // Detener cualquier sonido previo
+                stopBroadcastSound();
+
+                if (!audioBufferCached) {
+                    const resp = await fetch(src);
+                    const arrayBuffer = await resp.arrayBuffer();
+                    audioBufferCached = await audioCtx.decodeAudioData(arrayBuffer);
+                }
+
+                audioSourceNode = audioCtx.createBufferSource();
+                audioSourceNode.buffer = audioBufferCached;
+                audioSourceNode.loop = true;
+
+                audioGainNode = audioCtx.createGain();
+                audioGainNode.gain.value = 3.0; // Ganancia a 300% volumen
+
+                audioSourceNode.connect(audioGainNode);
+                audioGainNode.connect(audioCtx.destination);
+                audioSourceNode.start(0);
+                return;
+            }
+        } catch (e) {
+            console.log("Web Audio looping falló, usando HTML5 fallback:", e);
+        }
+
+        // Fallback HTML5 Audio tradicional (100% volumen, bucle)
+        playBroadcastSoundHTML5();
+    }
+
+    function playBroadcastSoundHTML5() {
+        if (!broadcastAudioHTML5) {
+            broadcastAudioHTML5 = new Audio('/php-delivery-app/assets/sounds/notification.mp3');
+            broadcastAudioHTML5.loop = true;
+            broadcastAudioHTML5.volume = 1.0;
+        }
+        broadcastAudioHTML5.currentTime = 0;
+        broadcastAudioHTML5.play().catch(err => console.log("HTML5 looping falló:", err));
+    }
+
+    function stopBroadcastSound() {
+        // Detener Web Audio
+        if (audioSourceNode) {
+            try {
+                audioSourceNode.stop();
+            } catch(e) {}
+            audioSourceNode = null;
+        }
+        // Detener HTML5 Audio fallback
+        if (broadcastAudioHTML5) {
+            broadcastAudioHTML5.pause();
+            broadcastAudioHTML5.currentTime = 0;
+        }
+    }
+
+    let acceptTimeout = null;
+
+    function showAcceptSuccessModal() {
+        // Detener sonido de broadcast
+        stopBroadcastSound();
+        
+        // Cerrar modal de broadcast
+        document.getElementById('broadcast-modal').style.display = 'none';
+
+        // Mostrar modal de éxito
+        const modal = document.getElementById('accept-success-modal');
+        if (modal) modal.style.display = 'flex';
+
+        // Reproducir sonido de éxito
+        const successAudio = new Audio('<?= esc(delivery_app_url("uploads/sounds/success.mp3")) ?>');
+        successAudio.play().catch(err => {
+            console.log("Audio play blocked or failed:", err);
+        });
+
+        // Redirección automática en 5 segundos
+        acceptTimeout = setTimeout(() => {
+            window.location.href = 'my_deliveries.php';
+        }, 5000);
+    }
+
+    function closeAcceptSuccessModal() {
+        if (acceptTimeout) clearTimeout(acceptTimeout);
+        window.location.href = 'my_deliveries.php';
+    }
+
     async function acceptBroadcastedOrder() {
         if (!currentBroadcastId) return;
-        const btn = document.getElementById('btn-accept');
-        btn.disabled = true;
-        btn.innerText = 'PROCESANDO...';
+        
+        stopBroadcastSound();
+        
+        const track = document.getElementById('swipe-container');
+        const text = track ? track.querySelector('.swipe-text') : null;
+        if (track) track.classList.add('processing');
+        if (text) text.innerText = 'PROCESANDO...';
 
         const formData = new FormData();
         formData.append('order_id', currentBroadcastId);
@@ -410,22 +688,115 @@ require __DIR__ . '/_header.php';
             const resp = await fetch('api_accept_order.php', { method: 'POST', body: formData });
             const res = await resp.json();
             if (res.success) {
-                location.href = 'my_deliveries.php';
+                showAcceptSuccessModal();
             } else {
                 alert(res.message);
+                resetSlider();
                 closeBroadcast();
             }
         } catch (e) {
             alert('Error al aceptar el pedido');
-            btn.disabled = false;
-            btn.innerText = 'ACEPTAR PEDIDO';
+            resetSlider();
         }
+    }
+
+    function resetSlider() {
+        const track = document.getElementById('swipe-container');
+        const handle = document.getElementById('swipe-handle');
+        const bgFill = document.getElementById('swipe-bg-fill');
+        const text = track ? track.querySelector('.swipe-text') : null;
+        
+        if (track) track.classList.remove('processing');
+        if (text) text.innerText = 'DESLIZAR PARA ACEPTAR';
+        if (handle) handle.style.transform = 'translateX(0px)';
+        if (bgFill) bgFill.style.width = '0%';
     }
 
     function closeBroadcast() {
         document.getElementById('broadcast-modal').style.display = 'none';
         currentBroadcastId = null;
+        resetSlider();
+        stopBroadcastSound();
     }
+
+    // Inicializar lógica de arrastre para el slider
+    document.addEventListener("DOMContentLoaded", () => {
+        const handle = document.getElementById('swipe-handle');
+        const track = document.getElementById('swipe-container');
+        const bgFill = document.getElementById('swipe-bg-fill');
+        const text = track ? track.querySelector('.swipe-text') : null;
+
+        if (!handle || !track) return;
+
+        let isDragging = false;
+        let startX = 0;
+        let maxTranslate = 0;
+        let currentTranslate = 0;
+
+        function updateSliderDimensions() {
+            maxTranslate = track.clientWidth - handle.clientWidth - 8; // 8px de margen (4px izquierdo + 4px derecho)
+        }
+
+        // Eventos táctiles
+        handle.addEventListener('touchstart', dragStart, { passive: true });
+        window.addEventListener('touchmove', dragMove, { passive: false });
+        window.addEventListener('touchend', dragEnd);
+
+        // Eventos de ratón
+        handle.addEventListener('mousedown', dragStart);
+        window.addEventListener('mousemove', dragMove);
+        window.addEventListener('mouseup', dragEnd);
+
+        window.addEventListener('resize', updateSliderDimensions);
+
+        function dragStart(e) {
+            if (track.classList.contains('processing')) return;
+            isDragging = true;
+            updateSliderDimensions();
+            startX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
+            handle.style.transition = 'none';
+            bgFill.style.transition = 'none';
+        }
+
+        function dragMove(e) {
+            if (!isDragging) return;
+            
+            const currentX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
+            let diff = currentX - startX;
+
+            if (diff < 0) diff = 0;
+            if (diff > maxTranslate) diff = maxTranslate;
+
+            currentTranslate = diff;
+            
+            handle.style.transform = `translateX(${diff}px)`;
+            
+            const percentage = (diff / maxTranslate) * 100;
+            bgFill.style.width = `calc(${percentage}% + ${handle.clientWidth}px)`;
+
+            if (e.cancelable) e.preventDefault();
+        }
+
+        async function dragEnd() {
+            if (!isDragging) return;
+            isDragging = false;
+
+            handle.style.transition = 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+            bgFill.style.transition = 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+
+            if (currentTranslate >= maxTranslate * 0.88) {
+                track.classList.add('processing');
+                handle.style.transform = `translateX(${maxTranslate}px)`;
+                bgFill.style.width = '100%';
+                if (text) text.innerText = 'PROCESANDO...';
+                await acceptBroadcastedOrder();
+            } else {
+                currentTranslate = 0;
+                handle.style.transform = 'translateX(0px)';
+                bgFill.style.width = '0%';
+            }
+        }
+    });
 </script>
 
 <?php require __DIR__ . '/_footer.php'; ?>
