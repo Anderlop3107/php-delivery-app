@@ -348,9 +348,7 @@ require __DIR__ . '/_header.php';
                         <div class="progress-bar-segment <?= $class ?>"></div>
                     <?php endfor; ?>
                 </div>
-                <div class="step-text-display" style="margin-top: 10px; margin-bottom: 20px;">
-                    <?= $current['label'] ?>
-                </div>
+
 
                 <!-- BLOQUE DEL CLIENTE -->
                 <div class="customer-info <?= $ocultarCliente ? 'oculto' : '' ?>" id="info-cliente-<?= $row['id'] ?>" style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
