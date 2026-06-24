@@ -297,14 +297,14 @@ require __DIR__ . '/_header.php';
             // Fallback inteligente para estados corruptos
             if (empty($s)) { $s = $row['repartidor_user_id'] ? 'aceptado' : 'pendiente'; }
 
-            // MAPA DE FLUJO DE 6 ETAPAS
+            // MAPA DE FLUJO DE 5 ETAPAS (Simplificado: Confirmar Retiro pasa directo a Entregando Pedido)
             $flow = [
                 'pendiente' => ['label' => 'Pedido Recibido', 'prog' => 1],
                 'aceptado' => ['label' => 'Camino al Local', 'prog' => 2],
                 'repartidor_en_local' => ['label' => 'En el Local / Retirando', 'prog' => 3],
-                'en_camino_al_cliente' => ['label' => 'En camino al Cliente', 'prog' => 4],
-                'en_puerta' => ['label' => 'Entregando Pedido', 'prog' => 5],
-                'entregado' => ['label' => '¡Pedido Entregado!', 'prog' => 6],
+                'en_camino_al_cliente' => ['label' => 'Entregando Pedido', 'prog' => 4],
+                'en_puerta' => ['label' => 'Entregando Pedido', 'prog' => 4],
+                'entregado' => ['label' => '¡Pedido Entregado!', 'prog' => 5],
             ];
             
             $current = $flow[$s] ?? ['label' => 'Procesando...', 'prog' => 1];
@@ -338,9 +338,9 @@ require __DIR__ . '/_header.php';
                     </span>
                 </div>
 
-                <!-- BARRA DE PROGRESO (5 Segmentos) -->
+                <!-- BARRA DE PROGRESO (4 Segmentos) -->
                 <div class="delivery-progress-bento" style="margin-top: 16px;">
-                    <?php for($i=1; $i<=5; $i++): 
+                    <?php for($i=1; $i<=4; $i++): 
                         $class = '';
                         if ($prog > $i) $class = 'completed';
                         elseif ($prog == $i) $class = 'active';
@@ -460,11 +460,9 @@ require __DIR__ . '/_header.php';
                             <button onclick="window.open('https://www.google.com/maps/search/?api=1&query=<?= $row['local_lat'] ?>,<?= $row['local_lng'] ?>')" class="btn-action-gps">🗺️ Abrir GPS al Local</button>
                             <button onclick="updateStatus(<?= $row['id'] ?>, 'repartidor_en_local')" class="btn-action-main">📍 Llegué al Local</button>
                         <?php elseif ($s === 'repartidor_en_local'): ?>
-                            <button onclick="updateStatus(<?= $row['id'] ?>, 'en_camino_al_cliente')" class="btn-action-main">Confirmar Retiro</button>
-                        <?php elseif ($s === 'en_camino_al_cliente'): ?>
+                            <button onclick="updateStatus(<?= $row['id'] ?>, 'en_puerta')" class="btn-action-main">Confirmar Retiro</button>
+                        <?php elseif ($s === 'en_puerta' || $s === 'en_camino_al_cliente'): ?>
                             <button onclick="window.open('https://www.google.com/maps/search/?api=1&query=<?= $row['delivery_latitude'] ?>,<?= $row['delivery_longitude'] ?>')" class="btn-action-gps">🗺️ Abrir GPS al Cliente</button>
-                            <button onclick="updateStatus(<?= $row['id'] ?>, 'en_puerta')" class="btn-action-main">🏁 Llegué donde el Cliente</button>
-                        <?php elseif ($s === 'en_puerta'): ?>
                             <button onclick="updateStatus(<?= $row['id'] ?>, 'entregado')" class="btn-action-main" style="background:#10b981;">✅ Confirmar Pedido Entregado</button>
                         <?php endif; ?>
                     </div>
