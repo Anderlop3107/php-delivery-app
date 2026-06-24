@@ -109,14 +109,23 @@ require __DIR__ . '/_header.php';
     .delivery-progress-bento { display: flex; gap: 6px; margin-top: 24px; height: 6px; }
     .progress-bar-segment { flex: 1; background: #f1f5f9; border-radius: 10px; transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     @keyframes pulse-active-bar {
-        0% { opacity: 0.7; }
-        50% { opacity: 1; }
-        100% { opacity: 0.7; }
+        0% {
+            background-position: 0% 50%;
+            box-shadow: 0 0 4px rgba(37, 99, 235, 0.3);
+        }
+        50% {
+            background-position: 100% 50%;
+            box-shadow: 0 0 16px rgba(37, 99, 235, 0.75);
+        }
+        100% {
+            background-position: 0% 50%;
+            box-shadow: 0 0 4px rgba(37, 99, 235, 0.3);
+        }
     }
     .progress-bar-segment.active { 
-        background: var(--primary); 
-        box-shadow: 0 0 12px rgba(37, 99, 235, 0.45); 
-        animation: pulse-active-bar 2s infinite ease-in-out;
+        background: linear-gradient(270deg, var(--primary), #60a5fa, var(--primary));
+        background-size: 200% 200%;
+        animation: pulse-active-bar 1.5s infinite ease-in-out;
     }
     .progress-bar-segment.completed { background: #10b981; }
 
