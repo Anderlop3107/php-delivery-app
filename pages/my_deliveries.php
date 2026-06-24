@@ -249,7 +249,7 @@ require __DIR__ . '/_header.php';
                 <!-- BLOQUE DEL CLIENTE -->
                 <div class="customer-info <?= $ocultarCliente ? 'oculto' : '' ?>" id="info-cliente-<?= $row['id'] ?>">
                     <h4 style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
-                        <svg style="width:20px; height:20px; color: var(--primary); opacity: 0.85;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                        <svg style="width:16px; height:16px; color: var(--primary); opacity: 0.7;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                         </svg>
                         <span><?= esc($row['customer_name'] ?: 'Cliente') ?></span>
