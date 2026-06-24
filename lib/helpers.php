@@ -32,6 +32,7 @@ function delivery_status_text(string $status): string
         'en_camino_al_local' => 'En camino al local',
         'repartidor_en_local' => '¡Repartidor en tu local!',
         'en_camino_al_cliente' => 'Pedido en camino al cliente',
+        'en_puerta' => 'Entregando Pedido',
         'entregado' => '¡Pedido Entregado!',
         'cancelado' => 'Pedido Cancelado',
         'rechazado' => 'Pedido Rechazado',
