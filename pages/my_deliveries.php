@@ -418,20 +418,20 @@ require __DIR__ . '/_header.php';
 
                     <!-- Tarjeta de Cobro / Ganancia -->
                     <div style="background: rgba(16, 185, 129, 0.04); border: 1px solid rgba(16, 185, 129, 0.08); border-left: 4px solid #10b981; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;">
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <div style="background: #10b981; color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);">
-                                <svg style="width:16px; height:16px; color: #fff; opacity: 1;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                                </svg>
+                        <?php if ((int)$row['driver_pays_local'] === 1): ?>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="background: #10b981; color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);">
+                                    <svg style="width:16px; height:16px; color: #fff; opacity: 1;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <small style="display: block; font-size: 9px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Cuentas del Viaje</small>
+                                    <span style="font-size: 14px; font-weight: 800; color: var(--text);">Resumen de Dinero</span>
+                                </div>
                             </div>
-                            <div>
-                                <small style="display: block; font-size: 9px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Cuentas del Viaje</small>
-                                <span style="font-size: 14px; font-weight: 800; color: var(--text);">Resumen de Dinero</span>
-                            </div>
-                        </div>
-                        
-                        <div style="margin-top: 4px; display: flex; flex-direction: column; gap: 6px; font-size: 13px;">
-                            <?php if ((int)$row['driver_pays_local'] === 1): ?>
+                            
+                            <div style="margin-top: 4px; display: flex; flex-direction: column; gap: 6px; font-size: 13px;">
                                 <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 4px; border-bottom: 1px dashed rgba(0,0,0,0.06);">
                                     <span style="color: var(--muted); font-weight: 550;">Recibes por Producto:</span>
                                     <b style="color: var(--text);"><?= gs($row['amount']) ?></b>
@@ -444,13 +444,20 @@ require __DIR__ . '/_header.php';
                                     <span style="color: var(--text); font-weight: 800;">Cobro Total al Cliente:</span>
                                     <b style="color: var(--primary); font-size: 15px; font-weight: 850;"><?= gs($row['amount'] + $row['delivery_cost']) ?></b>
                                 </div>
-                            <?php else: ?>
-                                <div style="display: flex; justify-content: space-between; align-items: center;">
-                                    <span style="color: var(--muted); font-weight: 550;">Ganancia por envío:</span>
-                                    <b style="color: #10b981; font-size: 15px; font-weight: 850;"><?= gs($row['delivery_cost']) ?></b>
+                            </div>
+                        <?php else: ?>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="background: #10b981; color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);">
+                                    <svg style="width:16px; height:16px; color: #fff; opacity: 1;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
                                 </div>
-                            <?php endif; ?>
-                        </div>
+                                <div>
+                                    <small style="display: block; font-size: 9px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Ganancia</small>
+                                    <span style="font-size: 18px; font-weight: 850; color: #10b981; display: block; margin-top: 2px;"><?= gs($row['delivery_cost']) ?></span>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
 
