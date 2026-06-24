@@ -110,22 +110,21 @@ require __DIR__ . '/_header.php';
     .progress-bar-segment { flex: 1; background: #f1f5f9; border-radius: 10px; transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
     @keyframes pulse-active-bar {
         0% {
-            background-position: 0% 50%;
-            box-shadow: 0 0 4px rgba(37, 99, 235, 0.3);
+            opacity: 0.55;
+            box-shadow: 0 0 4px rgba(37, 99, 235, 0.15);
         }
         50% {
-            background-position: 100% 50%;
-            box-shadow: 0 0 16px rgba(37, 99, 235, 0.75);
+            opacity: 1;
+            box-shadow: 0 0 10px rgba(37, 99, 235, 0.45);
         }
         100% {
-            background-position: 0% 50%;
-            box-shadow: 0 0 4px rgba(37, 99, 235, 0.3);
+            opacity: 0.55;
+            box-shadow: 0 0 4px rgba(37, 99, 235, 0.15);
         }
     }
     .progress-bar-segment.active { 
-        background: linear-gradient(270deg, var(--primary), #60a5fa, var(--primary));
-        background-size: 200% 200%;
-        animation: pulse-active-bar 1.5s infinite ease-in-out;
+        background: var(--primary); 
+        animation: pulse-active-bar 1.8s infinite ease-in-out;
     }
     .progress-bar-segment.completed { background: #10b981; }
 
