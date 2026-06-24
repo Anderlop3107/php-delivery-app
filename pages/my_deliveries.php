@@ -256,7 +256,7 @@ require __DIR__ . '/_header.php';
                     <?php if (!empty($row['order_description'])): ?>
                         <p style="margin-top: 6px; font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; font-weight: 500;">
                             <svg style="width:16px; height:16px; color: var(--primary); opacity: 0.7;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                            <strong>Referencia:</strong> <?= esc($row['order_description']) ?>
+                            <?= esc($row['order_description']) ?>
                         </p>
                     <?php endif; ?>
                     <div style="display: flex; gap: 10px; margin-top: 15px; justify-content: flex-end;">
