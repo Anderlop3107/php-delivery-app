@@ -57,9 +57,14 @@ require __DIR__ . '/_header.php';
         margin-bottom: 20px; 
         box-shadow: var(--shadow);
         border: 1px solid rgba(0,0,0,0.01);
-        transition: transform 0.2s, box-shadow 0.2s; 
+        border-left: 6px solid #cbd5e1;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
         overflow: hidden; 
     }
+    .status-card.state-pendiente { border-left-color: #94a3b8; }
+    .status-card.state-local { border-left-color: #f59e0b; }
+    .status-card.state-transit { border-left-color: var(--primary); }
+    .status-card.state-entregado { border-left-color: #10b981; }
     .status-card.delivered-anim { transform: scale(0.9); opacity: 0; height: 0; margin-bottom: 0; padding: 0; border: none; }
     
     .status-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
@@ -72,8 +77,22 @@ require __DIR__ . '/_header.php';
         font-weight: 800;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+    }
+    .status-pill-tech.status-pendiente {
+        background: rgba(148, 163, 184, 0.12);
+        color: #64748b;
+    }
+    .status-pill-tech.status-local {
+        background: rgba(245, 158, 11, 0.08);
+        color: #d97706;
+    }
+    .status-pill-tech.status-transit {
         background: var(--primary-soft);
         color: var(--primary);
+    }
+    .status-pill-tech.status-entregado {
+        background: rgba(16, 185, 129, 0.08);
+        color: #10b981;
     }
     
     .customer-info h4 { margin: 0; font-size: 19px; font-weight: 800; color: var(--text); }
@@ -82,7 +101,16 @@ require __DIR__ . '/_header.php';
     
     .delivery-progress-bento { display: flex; gap: 6px; margin-top: 24px; height: 6px; }
     .progress-bar-segment { flex: 1; background: #f1f5f9; border-radius: 10px; transition: background 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-    .progress-bar-segment.active { background: var(--primary); box-shadow: 0 0 10px rgba(37, 99, 235, 0.2); }
+    @keyframes pulse-active-bar {
+        0% { opacity: 0.7; }
+        50% { opacity: 1; }
+        100% { opacity: 0.7; }
+    }
+    .progress-bar-segment.active { 
+        background: var(--primary); 
+        box-shadow: 0 0 12px rgba(37, 99, 235, 0.45); 
+        animation: pulse-active-bar 2s infinite ease-in-out;
+    }
     .progress-bar-segment.completed { background: #10b981; }
 
     .step-text-display { margin-top: 12px; font-size: 13px; font-weight: 800; color: var(--primary); text-align: center; text-transform: uppercase; letter-spacing: 0.5px; }
@@ -120,8 +148,34 @@ require __DIR__ . '/_header.php';
     }
     
     .driver-actions { margin-top: 20px; display: grid; gap: 12px; }
-    .btn-action-main { background: var(--primary); color: #fff; border: none; border-radius: 16px; padding: 16px; font-weight: 800; font-size: 14px; cursor: pointer; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.15); }
-    .btn-action-gps { background: #1e293b; color: #fff; border: none; border-radius: 16px; padding: 16px; font-weight: 700; font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-action-main { 
+        background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%); 
+        color: #fff; border: none; border-radius: 18px; padding: 16px 20px; 
+        font-weight: 800; font-size: 15px; cursor: pointer; 
+        box-shadow: 0 8px 22px rgba(37, 99, 235, 0.2); 
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+    }
+    .btn-action-main:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 26px rgba(37, 99, 235, 0.3);
+    }
+    .btn-action-main:active {
+        transform: scale(0.97);
+    }
+    .btn-action-gps { 
+        background: #1e293b; color: #fff; border: none; border-radius: 18px; padding: 16px 20px; 
+        font-weight: 750; font-size: 14px; cursor: pointer; 
+        display: flex; align-items: center; justify-content: center; gap: 8px; 
+        box-shadow: 0 8px 22px rgba(30, 41, 59, 0.15); 
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+    }
+    .btn-action-gps:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 26px rgba(30, 41, 59, 0.25);
+    }
+    .btn-action-gps:active {
+        transform: scale(0.97);
+    }
 </style>
 
 <div class="pending-header">
@@ -159,11 +213,27 @@ require __DIR__ . '/_header.php';
             // Lógica de visibilidad estricta
             $ocultarCliente = ($s === 'pendiente' || $s === 'aceptado' || $s === 'repartidor_en_local');
             $ocultarLocal = ($s === 'en_camino_al_cliente' || $s === 'en_puerta');
+            // Determinar clases de estado para bordes y pills premium dinámicos
+            $cardStateClass = '';
+            $statusClass = '';
+            if ($s === 'pendiente') {
+                $cardStateClass = 'state-pendiente';
+                $statusClass = 'status-pendiente';
+            } elseif ($s === 'aceptado' || $s === 'repartidor_en_local') {
+                $cardStateClass = 'state-local';
+                $statusClass = 'status-local';
+            } elseif ($s === 'en_camino_al_cliente' || $s === 'en_puerta') {
+                $cardStateClass = 'state-transit';
+                $statusClass = 'status-transit';
+            } elseif ($s === 'entregado') {
+                $cardStateClass = 'state-entregado';
+                $statusClass = 'status-entregado';
+            }
         ?>
-            <div class="status-card" id="card-<?= $row['id'] ?>">
+            <div class="status-card <?= $cardStateClass ?>" id="card-<?= $row['id'] ?>">
                 <div class="status-top">
                     <span class="order-id">ID #<?= $row['id'] ?></span>
-                    <span class="status-pill-tech">
+                    <span class="status-pill-tech <?= $statusClass ?>">
                         <?= $current['label'] ?>
                     </span>
                 </div>
