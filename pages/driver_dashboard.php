@@ -100,41 +100,97 @@ require __DIR__ . '/_header.php';
     input:checked + .ios-slider { background-color: #10b981; }
     input:checked + .ios-slider:before { transform: translateX(30px); }
 
-    /* BROADCAST MODAL */
-    .broadcast-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(8px); z-index: 4000; display: none; align-items: center; justify-content: center; padding: 20px; }
+    /* BROADCAST MODAL PREMIUM REDESIGN */
+    .broadcast-overlay { 
+        position: fixed; top: 0; left: 0; right: 0; bottom: 0; 
+        background: rgba(15, 23, 42, 0.55); 
+        backdrop-filter: blur(12px) saturate(180%); 
+        z-index: 4000; display: none; align-items: center; justify-content: center; padding: 20px; 
+    }
     .broadcast-card { 
-        background: #fff; width: 100%; max-width: 400px; border-radius: 28px; 
-        padding: 30px 24px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); 
-        animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); 
+        background: #fff; width: 100%; max-width: 410px; border-radius: 32px; 
+        padding: 32px 28px; 
+        box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.6) inset; 
+        animation: modalPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); 
     }
     @keyframes modalPop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
 
     .shop-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
-    .shop-avatar { width: 50px; height: 50px; background: var(--primary-soft); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 24px; overflow: hidden; border: 1px solid rgba(0,0,0,0.05); }
+    .shop-avatar { 
+        width: 54px; height: 54px; 
+        background: linear-gradient(135deg, var(--primary-soft) 0%, rgba(37,99,235,0.15) 100%); 
+        border-radius: 16px; 
+        display: flex; align-items: center; justify-content: center; 
+        font-size: 26px; overflow: hidden; 
+        border: 1.5px solid rgba(37, 99, 235, 0.15); 
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.08);
+    }
     .shop-avatar img { width: 100%; height: 100%; object-fit: cover; }
-    .shop-info h3 { font-size: 18px; margin: 0; color: var(--text); }
-    .shop-info p { font-size: 12px; color: var(--muted); margin: 2px 0 0; font-weight: 600; }
+    .shop-info h3 { font-size: 19px; margin: 0; color: var(--text); font-weight: 800; letter-spacing: -0.3px; }
+    .shop-info p { font-size: 11px; color: var(--muted); margin: 2px 0 0; font-weight: 750; letter-spacing: 0.5px; }
 
-    #mini-route-map { height: 160px; border-radius: 20px; margin-bottom: 20px; border: 1px solid var(--border); }
+    #mini-route-map { height: 170px; border-radius: 22px; border: 1.5px solid var(--border); box-shadow: 0 8px 20px rgba(0,0,0,0.02); }
 
-    .money-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
-    .money-box { background: #f8fafc; padding: 15px; border-radius: 18px; border: 1px solid rgba(0,0,0,0.02); }
-    .money-box.earnings { background: var(--primary-soft); border-color: rgba(37, 99, 235, 0.1); }
-    .money-box small { display: block; font-size: 9px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 5px; }
-    .money-box.earnings small { color: var(--primary); }
-    .money-box b { font-size: 17px; color: var(--text); }
-    .money-box.earnings b { color: var(--primary); }
+    .money-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 28px; }
+    .money-box { 
+        background: #f8fafc; 
+        padding: 16px; 
+        border-radius: 20px; 
+        border: 1.5px solid rgba(0,0,0,0.03); 
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        min-height: 85px;
+        transition: all 0.2s ease;
+    }
+    .money-box:hover {
+        transform: translateY(-2px);
+    }
+    .money-box.earnings { 
+        background: rgba(16, 185, 129, 0.06); 
+        border-color: rgba(16, 185, 129, 0.15); 
+    }
+    .money-box.local-pay {
+        background: rgba(245, 158, 11, 0.06);
+        border-color: rgba(245, 158, 11, 0.15);
+    }
+    .money-box small { 
+        display: block; font-size: 9.5px; font-weight: 850; color: var(--muted); 
+        text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; 
+    }
+    .money-box.earnings small { color: #10b981; }
+    .money-box.local-pay small { color: #d97706; }
+    .money-box b { font-size: 19px; color: var(--text); font-weight: 800; letter-spacing: -0.5px; }
+    .money-box.earnings b { color: #10b981; }
+    .money-box.local-pay b { color: #d97706; }
 
     .btn-accept-now { 
-        width: 100%; background: var(--primary); color: #fff; border: none; border-radius: 18px; 
-        padding: 18px; font-weight: 800; font-size: 16px; display: flex; align-items: center; 
-        justify-content: center; gap: 10px; cursor: pointer; transition: transform 0.2s;
-        box-shadow: 0 12px 30px rgba(37, 99, 235, 0.3);
+        width: 100%; 
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); 
+        color: #fff; border: none; border-radius: 20px; 
+        padding: 18px; font-weight: 800; font-size: 16px; 
+        display: flex; align-items: center; 
+        justify-content: center; gap: 10px; cursor: pointer; transition: all 0.3s;
+        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25);
+        letter-spacing: 0.5px;
     }
-    .btn-accept-now:active { transform: scale(0.96); }
+    .btn-accept-now:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 14px 30px rgba(37, 99, 235, 0.35);
+    }
+    .btn-accept-now:active { transform: scale(0.97); }
+    
     .btn-ignore { 
-        width: 100%; margin-top: 15px; background: transparent; color: var(--muted); border: none; 
-        font-weight: 700; font-size: 13px; cursor: pointer; 
+        width: 100%; margin-top: 16px; background: transparent; color: var(--muted); border: none; 
+        font-weight: 700; font-size: 14px; cursor: pointer; transition: all 0.2s;
+        letter-spacing: 0.5px;
+    }
+    .btn-ignore:hover { color: var(--text); }
+
+    @keyframes pulse-dot {
+        0% { opacity: 0.4; }
+        50% { opacity: 1; }
+        100% { opacity: 0.4; }
     }
 </style>
 
@@ -185,7 +241,24 @@ require __DIR__ . '/_header.php';
             </div>
         </div>
 
-        <div id="mini-route-map"></div>
+        <div style="position: relative; margin-bottom: 20px;">
+            <div id="mini-route-map"></div>
+            <!-- Floating Live Status Pill -->
+            <div id="map-route-badge" style="
+                position: absolute; top: 12px; right: 12px;
+                background: rgba(15, 23, 42, 0.75); color: #fff;
+                backdrop-filter: blur(8px);
+                padding: 6px 12px; border-radius: 20px;
+                font-size: 11px; font-weight: 800;
+                display: none; align-items: center; gap: 6px;
+                box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+                border: 1px solid rgba(255,255,255,0.15);
+                z-index: 100;
+            ">
+                <span style="color: #10b981; animation: pulse-dot 1.5s infinite;">●</span>
+                <span id="route-badge-text">Calculando...</span>
+            </div>
+        </div>
 
         <div class="money-row">
             <div class="money-box" id="m-product-box">
@@ -199,7 +272,8 @@ require __DIR__ . '/_header.php';
         </div>
 
         <button id="btn-accept" class="btn-accept-now" onclick="acceptBroadcastedOrder()">
-            ACEPTAR PEDIDO
+            <span>ACEPTAR PEDIDO</span>
+            <svg style="width:20px; height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.8"><path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
         </button>
         <button class="btn-ignore" onclick="closeBroadcast()">IGNORAR</button>
     </div>
@@ -261,12 +335,17 @@ require __DIR__ . '/_header.php';
             logoContainer.innerHTML = '🏢';
         }
 
+        // Reset text of badge
+        const badge = document.getElementById('map-route-badge');
+        if (badge) badge.style.display = 'none';
+
         const productBox = document.getElementById('m-product-box');
         if (order.driver_pays) {
-            productBox.style.opacity = '1';
+            productBox.classList.add('local-pay');
             document.getElementById('m-product-label').innerText = 'PAGAS AL LOCAL';
             document.getElementById('m-product-amount').innerText = order.amount_product.toLocaleString('de-DE') + ' Gs.';
         } else {
+            productBox.classList.remove('local-pay');
             document.getElementById('m-product-label').innerText = 'PAGO AL LOCAL';
             document.getElementById('m-product-amount').innerText = 'SIN COBRO';
         }
@@ -299,7 +378,18 @@ require __DIR__ . '/_header.php';
             const query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${order.local_lng},${order.local_lat};${order.dest_lng},${order.dest_lat}?geometries=geojson&access_token=${mapboxgl.accessToken}`);
             const json = await query.json();
             if (json.routes && json.routes[0]) {
-                miniMap.addSource('route', { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': json.routes[0].geometry } });
+                const route = json.routes[0];
+                const km = (route.distance / 1000).toFixed(1);
+                const mins = Math.round(route.duration / 60);
+                
+                const badge = document.getElementById('map-route-badge');
+                const badgeText = document.getElementById('route-badge-text');
+                if (badge && badgeText) {
+                    badgeText.innerText = `${km} km · ${mins} min`;
+                    badge.style.display = 'flex';
+                }
+
+                miniMap.addSource('route', { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': route.geometry } });
                 miniMap.addLayer({ 'id': 'route', 'type': 'line', 'source': 'route', 'layout': { 'line-join': 'round', 'line-cap': 'round' }, 'paint': { 'line-color': '#2563eb', 'line-width': 4, 'line-opacity': 0.8 } });
                 const bounds = new mapboxgl.LngLatBounds([order.local_lng, order.local_lat], [order.dest_lng, order.dest_lat]);
                 miniMap.fitBounds(bounds, { padding: 30 });
