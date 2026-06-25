@@ -27,6 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
     $name = trim((string) ($_POST['name'] ?? ''));
     $phone = trim((string) ($_POST['phone'] ?? ''));
     $pass = (string) ($_POST['password'] ?? '');
+    $activeTab = $_POST['active_tab'] ?? 'cuenta';
 
     if ($name === '') $errors[] = 'El nombre es obligatorio.';
 
@@ -53,8 +54,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
                 [$business_name, $address, $business_reference, $latitude, $longitude, (int)$user['id']]
             );
         }
+
+        // Si el usuario es repartidor, procesar subida de documentos
+        if ($userData['role'] === 'repartidor') {
+            $docs = [
+                'doc_ci' => 'doc_ci_path',
+                'doc_licencia' => 'doc_licencia_path',
+                'doc_habilitacion' => 'doc_habilitacion_path',
+                'doc_cedula_verde' => 'doc_cedula_verde_path'
+            ];
+            
+            $uploadDir = __DIR__ . '/../uploads/documents/';
+            if (!is_dir($uploadDir)) {
+                mkdir($uploadDir, 0777, true);
+            }
+            
+            foreach ($docs as $fileKey => $colName) {
+                if (!empty($_FILES[$fileKey]['name'])) {
+                    $ext = pathinfo($_FILES[$fileKey]['name'], PATHINFO_EXTENSION);
+                    $fileName = 'doc_' . $fileKey . '_' . $user['id'] . '_' . time() . '.' . $ext;
+                    if (move_uploaded_file($_FILES[$fileKey]['tmp_name'], $uploadDir . $fileName)) {
+                        app_exec("UPDATE users SET {$colName} = ? WHERE id = ?", 'si', ['uploads/documents/' . $fileName, (int)$user['id']]);
+                    }
+                }
+            }
+        }
         
-        header('Location: profile.php?toast=updated'); exit;
+        header("Location: profile.php?toast=updated&tab=" . urlencode($activeTab)); exit;
     }
 }
 
@@ -352,6 +378,17 @@ require __DIR__ . '/_header.php';
         40% { left: 150%; }
         100% { left: 150%; }
     }
+    
+    /* Uploaded document state styling */
+    .upload-card-interactive.uploaded {
+        background: rgba(16, 185, 129, 0.05);
+        border: 1px solid rgba(16, 185, 129, 0.15);
+        color: #10b981;
+    }
+    .upload-card-interactive.uploaded .arrow-icon {
+        color: #10b981;
+        opacity: 0.7;
+    }
 </style>
 
 <div class="profile-hero">
@@ -390,7 +427,8 @@ require __DIR__ . '/_header.php';
     <?php endif; ?>
 </div>
 
-<form method="post">
+<form method="post" enctype="multipart/form-data">
+    <input type="hidden" name="active_tab" id="active-tab-input" value="cuenta">
     <!-- Tab 1: Cuenta -->
     <div id="tab-cuenta" class="tab-content active">
         <div class="card" style="border:none; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
@@ -487,37 +525,130 @@ require __DIR__ . '/_header.php';
     <?php else: ?>
         <div id="tab-documentos" class="tab-content">
             <div class="card" style="border:none; padding: 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.02);">
-                <div class="upload-card-interactive blue-shimmer" onclick="window.location.href='upload_id.php'">
-                    <div style="display: flex; align-items: center;">
-                        <span class="user-icon">👤</span>
-                        <span style="font-weight: 800; font-size: 15px;">Agregar Cédula de Identidad</span>
+                
+                <!-- Cédula de Identidad -->
+                <?php
+                $ci_saved = !empty($userData['doc_ci_path']);
+                $ci_url = $ci_saved ? esc(delivery_app_url($userData['doc_ci_path'])) : '';
+                ?>
+                <div class="upload-card-interactive <?= $ci_saved ? 'uploaded' : 'blue-shimmer' ?>" id="card-doc_ci" onclick="document.getElementById('input-doc_ci').click()">
+                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                        <div style="display: flex; align-items: center;">
+                            <span class="user-icon">👤</span>
+                            <div style="display: flex; flex-direction: column;">
+                                <span style="font-weight: 800; font-size: 15px; color: var(--text);">Cédula de Identidad</span>
+                                <span id="status-doc_ci" style="font-size: 12px; color: <?= $ci_saved ? '#10b981' : '#64748b' ?>; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                                    <?php if ($ci_saved): ?>
+                                        <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        ✓ Documento guardado
+                                    <?php else: ?>
+                                        No seleccionado
+                                    <?php endif; ?>
+                                </span>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <?php if ($ci_saved): ?>
+                                <a href="<?= $ci_url ?>" target="_blank" onclick="event.stopPropagation();" class="btn-ver-doc" style="background: rgba(37, 99, 235, 0.1); color: var(--primary); padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; text-decoration: none;">🔍 VER</a>
+                            <?php endif; ?>
+                            <span class="arrow-icon">></span>
+                        </div>
                     </div>
-                    <span class="arrow-icon">></span>
                 </div>
+                <input type="file" name="doc_ci" id="input-doc_ci" style="display:none;" onchange="handleFileSelected(this, 'status-doc_ci', 'card-doc_ci')">
 
-                <div class="upload-card-interactive blue-shimmer" onclick="window.location.href='upload_license.php'">
-                    <div style="display: flex; align-items: center;">
-                        <span class="user-icon">🚗</span>
-                        <span style="font-weight: 800; font-size: 15px;">Agregar registro de conducir</span>
+                <!-- Registro de Conducir -->
+                <?php
+                $licencia_saved = !empty($userData['doc_licencia_path']);
+                $licencia_url = $licencia_saved ? esc(delivery_app_url($userData['doc_licencia_path'])) : '';
+                ?>
+                <div class="upload-card-interactive <?= $licencia_saved ? 'uploaded' : 'blue-shimmer' ?>" id="card-doc_licencia" onclick="document.getElementById('input-doc_licencia').click()">
+                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                        <div style="display: flex; align-items: center;">
+                            <span class="user-icon">🚗</span>
+                            <div style="display: flex; flex-direction: column;">
+                                <span style="font-weight: 800; font-size: 15px; color: var(--text);">Registro de conducir</span>
+                                <span id="status-doc_licencia" style="font-size: 12px; color: <?= $licencia_saved ? '#10b981' : '#64748b' ?>; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                                    <?php if ($licencia_saved): ?>
+                                        <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        ✓ Documento guardado
+                                    <?php else: ?>
+                                        No seleccionado
+                                    <?php endif; ?>
+                                </span>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <?php if ($licencia_saved): ?>
+                                <a href="<?= $licencia_url ?>" target="_blank" onclick="event.stopPropagation();" class="btn-ver-doc" style="background: rgba(37, 99, 235, 0.1); color: var(--primary); padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; text-decoration: none;">🔍 VER</a>
+                            <?php endif; ?>
+                            <span class="arrow-icon">></span>
+                        </div>
                     </div>
-                    <span class="arrow-icon">></span>
                 </div>
+                <input type="file" name="doc_licencia" id="input-doc_licencia" style="display:none;" onchange="handleFileSelected(this, 'status-doc_licencia', 'card-doc_licencia')">
 
-                <div class="upload-card-interactive blue-shimmer" onclick="window.location.href='upload_habilitacion.php'">
-                    <div style="display: flex; align-items: center;">
-                        <span class="user-icon">📄</span>
-                        <span style="font-weight: 800; font-size: 15px;">Agregar Habilitación</span>
+                <!-- Habilitación -->
+                <?php
+                $habilitacion_saved = !empty($userData['doc_habilitacion_path']);
+                $habilitacion_url = $habilitacion_saved ? esc(delivery_app_url($userData['doc_habilitacion_path'])) : '';
+                ?>
+                <div class="upload-card-interactive <?= $habilitacion_saved ? 'uploaded' : 'blue-shimmer' ?>" id="card-doc_habilitacion" onclick="document.getElementById('input-doc_habilitacion').click()">
+                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                        <div style="display: flex; align-items: center;">
+                            <span class="user-icon">📄</span>
+                            <div style="display: flex; flex-direction: column;">
+                                <span style="font-weight: 800; font-size: 15px; color: var(--text);">Habilitación</span>
+                                <span id="status-doc_habilitacion" style="font-size: 12px; color: <?= $habilitacion_saved ? '#10b981' : '#64748b' ?>; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                                    <?php if ($habilitacion_saved): ?>
+                                        <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        ✓ Documento guardado
+                                    <?php else: ?>
+                                        No seleccionado
+                                    <?php endif; ?>
+                                </span>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <?php if ($habilitacion_saved): ?>
+                                <a href="<?= $habilitacion_url ?>" target="_blank" onclick="event.stopPropagation();" class="btn-ver-doc" style="background: rgba(37, 99, 235, 0.1); color: var(--primary); padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; text-decoration: none;">🔍 VER</a>
+                            <?php endif; ?>
+                            <span class="arrow-icon">></span>
+                        </div>
                     </div>
-                    <span class="arrow-icon">></span>
                 </div>
+                <input type="file" name="doc_habilitacion" id="input-doc_habilitacion" style="display:none;" onchange="handleFileSelected(this, 'status-doc_habilitacion', 'card-doc_habilitacion')">
 
-                <div class="upload-card-interactive blue-shimmer" onclick="window.location.href='upload_cedula_verde.php'">
-                    <div style="display: flex; align-items: center;">
-                        <span class="user-icon">🚙</span>
-                        <span style="font-weight: 800; font-size: 15px;">Agregar Cédula verde</span>
+                <!-- Cédula Verde -->
+                <?php
+                $cedula_verde_saved = !empty($userData['doc_cedula_verde_path']);
+                $cedula_verde_url = $cedula_verde_saved ? esc(delivery_app_url($userData['doc_cedula_verde_path'])) : '';
+                ?>
+                <div class="upload-card-interactive <?= $cedula_verde_saved ? 'uploaded' : 'blue-shimmer' ?>" id="card-doc_cedula_verde" onclick="document.getElementById('input-doc_cedula_verde').click()">
+                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                        <div style="display: flex; align-items: center;">
+                            <span class="user-icon">🚙</span>
+                            <div style="display: flex; flex-direction: column;">
+                                <span style="font-weight: 800; font-size: 15px; color: var(--text);">Cédula verde</span>
+                                <span id="status-doc_cedula_verde" style="font-size: 12px; color: <?= $cedula_verde_saved ? '#10b981' : '#64748b' ?>; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                                    <?php if ($cedula_verde_saved): ?>
+                                        <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        ✓ Documento guardado
+                                    <?php else: ?>
+                                        No seleccionado
+                                    <?php endif; ?>
+                                </span>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <?php if ($cedula_verde_saved): ?>
+                                <a href="<?= $cedula_verde_url ?>" target="_blank" onclick="event.stopPropagation();" class="btn-ver-doc" style="background: rgba(37, 99, 235, 0.1); color: var(--primary); padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; text-decoration: none;">🔍 VER</a>
+                            <?php endif; ?>
+                            <span class="arrow-icon">></span>
+                        </div>
                     </div>
-                    <span class="arrow-icon">></span>
                 </div>
+                <input type="file" name="doc_cedula_verde" id="input-doc_cedula_verde" style="display:none;" onchange="handleFileSelected(this, 'status-doc_cedula_verde', 'card-doc_cedula_verde')">
 
                 <button type="submit" class="btn btn-save-tech">💾 Guardar Cambios</button>
             </div>
@@ -542,7 +673,26 @@ require __DIR__ . '/_header.php';
     function switchTab(tab) {
         document.querySelectorAll('.segment-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-        event.currentTarget.classList.add('active');
+        
+        // Actualizar el campo oculto con la pestaña activa
+        const activeTabInput = document.getElementById('active-tab-input');
+        if (activeTabInput) {
+            activeTabInput.value = tab;
+        }
+
+        // Buscar y activar el botón de segmento programáticamente
+        let targetBtn = null;
+        document.querySelectorAll('.segment-btn').forEach(b => {
+            if (b.getAttribute('onclick') && b.getAttribute('onclick').includes("'" + tab + "'")) {
+                targetBtn = b;
+            }
+        });
+
+        if (targetBtn) {
+            targetBtn.classList.add('active');
+        } else if (typeof event !== 'undefined' && event && event.currentTarget) {
+            event.currentTarget.classList.add('active');
+        }
         
         // El tab id de documentos es tab-documentos, el de local es tab-local
         if (tab === 'local') {
@@ -564,7 +714,32 @@ require __DIR__ . '/_header.php';
         field.type = field.type === 'password' ? 'text' : 'password';
     }
 
+    function handleFileSelected(input, statusId, cardId) {
+        if (input.files && input.files.length > 0) {
+            const file = input.files[0];
+            const statusEl = document.getElementById(statusId);
+            const cardEl = document.getElementById(cardId);
+            
+            statusEl.innerHTML = `<span style="color: #2563eb; display: flex; align-items: center; gap: 4px;">
+                <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                📂 Listo: ${file.name}
+            </span>`;
+            
+            cardEl.classList.remove('blue-shimmer');
+            cardEl.classList.remove('uploaded');
+            cardEl.style.border = '1px dashed #2563eb';
+            cardEl.style.background = 'rgba(37, 99, 235, 0.03)';
+        }
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
+    
+    // Restaurar pestaña activa si se especificó en la URL
+    const tabParam = urlParams.get('tab');
+    if (tabParam) {
+        switchTab(tabParam);
+    }
+
     if (urlParams.has('toast')) {
         const modal = document.getElementById('success-modal');
         const titleEl = document.getElementById('success-modal-title');
