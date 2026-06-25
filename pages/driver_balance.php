@@ -219,7 +219,7 @@ require __DIR__ . '/_header.php';
         <span style="font-size: 11px; opacity: 0.7; text-transform: uppercase;" id="card-title">Ingresos de hoy</span>
         <div class="card-amount" id="card-amount">Gs. 0</div>
     </div>
-    <div class="card-bottom"><div class="card-date">FECHA: <?= date('d/m') ?></div></div>
+    <div class="card-bottom"><div class="card-date" id="card-date">FECHA: <?= date('d/m') ?></div></div>
 </div>
 
 <div class="summary-section">
@@ -287,6 +287,12 @@ require __DIR__ . '/_header.php';
         // 1. Actualizar Card Virtual
         document.getElementById('card-title').innerText = 'Ingresos ' + (period === 'hoy' ? 'de hoy' : period === 'semana' ? 'semanales' : 'mensuales');
         document.getElementById('card-amount').innerText = 'Gs. ' + formatCurrency(data.earnings);
+        
+        // Mostrar/ocultar fecha según el período seleccionado
+        const dateEl = document.getElementById('card-date');
+        if (dateEl) {
+            dateEl.style.display = (period === 'hoy') ? 'block' : 'none';
+        }
         
         // 2. Actualizar Textos
         document.getElementById('summary-period-label').innerText = 'Detalles de entregas (' + data.label + ')';
