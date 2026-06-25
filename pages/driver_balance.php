@@ -13,13 +13,13 @@ $earnings = app_one("
 ", "i", [(int)$user['id']]);
 $total_earnings = (float)($earnings['total'] ?? 0);
 
-// 2. Datos para el gráfico (Historial total del repartidor)
+// 2. Datos para el gráfico (Entregas diarias del repartidor)
 $stats = app_one("
     SELECT 
         COUNT(CASE WHEN status = 'entregado' THEN 1 END) as entregados,
         COUNT(CASE WHEN status IN ('cancelado', 'rechazado') THEN 1 END) as cancelados
     FROM deliveries 
-    WHERE repartidor_user_id = ?
+    WHERE repartidor_user_id = ? AND DATE(created_at) = DATE(NOW())
 ", "i", [(int)$user['id']]);
 
 $total_entregados = (int)($stats['entregados'] ?? 0);
@@ -182,4 +182,4 @@ require __DIR__ . '/_header.php';
     </div>
 </div>
 
-<?php require __DIR__ . '/_header.php'; ?>
+<?php require __DIR__ . '/_footer.php'; ?>
