@@ -580,98 +580,126 @@ require __DIR__ . '/_header.php';
 
                 <!-- Registro de Conducir -->
                 <?php
-                $licencia_saved = !empty($userData['doc_licencia_path']);
-                $licencia_url = $licencia_saved ? esc(delivery_app_url($userData['doc_licencia_path'])) : '';
+                $has_licencia_front = !empty($userData['doc_licencia_path']);
+                $has_licencia_back = !empty($userData['doc_licencia_back_path']);
+                
+                $licencia_status_class = 'blue-shimmer';
+                if ($has_licencia_front && $has_licencia_back) {
+                    $licencia_status_class = 'uploaded';
+                } elseif ($has_licencia_front || $has_licencia_back) {
+                    $licencia_status_class = 'incomplete';
+                }
                 ?>
-                <div class="upload-card-interactive <?= $licencia_saved ? 'uploaded' : 'blue-shimmer' ?>" id="card-doc_licencia" onclick="document.getElementById('input-doc_licencia').click()">
+                <div class="upload-card-interactive <?= $licencia_status_class ?>" id="card-doc_licencia" onclick="window.location.href='upload_license.php'">
                     <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                         <div style="display: flex; align-items: center;">
                             <span class="user-icon">🚗</span>
                             <div style="display: flex; flex-direction: column;">
                                 <span style="font-weight: 800; font-size: 15px; color: var(--text);">Registro de conducir</span>
-                                <span id="status-doc_licencia" style="font-size: 12px; color: <?= $licencia_saved ? '#10b981' : '#64748b' ?>; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
-                                    <?php if ($licencia_saved): ?>
-                                        <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        ✓ Documento guardado
+                                <span id="status-doc_licencia" style="font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                                    <?php if ($has_licencia_front && $has_licencia_back): ?>
+                                        <span style="color: #10b981; display: flex; align-items: center; gap: 4px;">
+                                            <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                            ✓ Documento guardado
+                                        </span>
+                                    <?php elseif ($has_licencia_front || $has_licencia_back): ?>
+                                        <span style="color: #d97706; display: flex; align-items: center; gap: 4px;">
+                                            <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                            ⚠️ Incompleto (Falta un lado)
+                                        </span>
                                     <?php else: ?>
-                                        No seleccionado
+                                        <span style="color: #64748b;">No seleccionado</span>
                                     <?php endif; ?>
                                 </span>
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <?php if ($licencia_saved): ?>
-                                <a href="<?= $licencia_url ?>" target="_blank" onclick="event.stopPropagation();" class="btn-ver-doc" style="background: rgba(37, 99, 235, 0.1); color: var(--primary); padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; text-decoration: none;">🔍 VER</a>
-                            <?php endif; ?>
                             <span class="arrow-icon">></span>
                         </div>
                     </div>
                 </div>
-                <input type="file" name="doc_licencia" id="input-doc_licencia" style="display:none;" onchange="handleFileSelected(this, 'status-doc_licencia', 'card-doc_licencia')">
 
                 <!-- Habilitación -->
                 <?php
-                $habilitacion_saved = !empty($userData['doc_habilitacion_path']);
-                $habilitacion_url = $habilitacion_saved ? esc(delivery_app_url($userData['doc_habilitacion_path'])) : '';
+                $has_habilitacion_front = !empty($userData['doc_habilitacion_path']);
+                $has_habilitacion_back = !empty($userData['doc_habilitacion_back_path']);
+                
+                $habilitacion_status_class = 'blue-shimmer';
+                if ($has_habilitacion_front && $has_habilitacion_back) {
+                    $habilitacion_status_class = 'uploaded';
+                } elseif ($has_habilitacion_front || $has_habilitacion_back) {
+                    $habilitacion_status_class = 'incomplete';
+                }
                 ?>
-                <div class="upload-card-interactive <?= $habilitacion_saved ? 'uploaded' : 'blue-shimmer' ?>" id="card-doc_habilitacion" onclick="document.getElementById('input-doc_habilitacion').click()">
+                <div class="upload-card-interactive <?= $habilitacion_status_class ?>" id="card-doc_habilitacion" onclick="window.location.href='upload_habilitacion.php'">
                     <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                         <div style="display: flex; align-items: center;">
                             <span class="user-icon">📄</span>
                             <div style="display: flex; flex-direction: column;">
                                 <span style="font-weight: 800; font-size: 15px; color: var(--text);">Habilitación</span>
-                                <span id="status-doc_habilitacion" style="font-size: 12px; color: <?= $habilitacion_saved ? '#10b981' : '#64748b' ?>; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
-                                    <?php if ($habilitacion_saved): ?>
-                                        <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        ✓ Documento guardado
+                                <span id="status-doc_habilitacion" style="font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                                    <?php if ($has_habilitacion_front && $has_habilitacion_back): ?>
+                                        <span style="color: #10b981; display: flex; align-items: center; gap: 4px;">
+                                            <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                            ✓ Documento guardado
+                                        </span>
+                                    <?php elseif ($has_habilitacion_front || $has_habilitacion_back): ?>
+                                        <span style="color: #d97706; display: flex; align-items: center; gap: 4px;">
+                                            <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                            ⚠️ Incompleto (Falta un lado)
+                                        </span>
                                     <?php else: ?>
-                                        No seleccionado
+                                        <span style="color: #64748b;">No seleccionado</span>
                                     <?php endif; ?>
                                 </span>
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <?php if ($habilitacion_saved): ?>
-                                <a href="<?= $habilitacion_url ?>" target="_blank" onclick="event.stopPropagation();" class="btn-ver-doc" style="background: rgba(37, 99, 235, 0.1); color: var(--primary); padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; text-decoration: none;">🔍 VER</a>
-                            <?php endif; ?>
                             <span class="arrow-icon">></span>
                         </div>
                     </div>
                 </div>
-                <input type="file" name="doc_habilitacion" id="input-doc_habilitacion" style="display:none;" onchange="handleFileSelected(this, 'status-doc_habilitacion', 'card-doc_habilitacion')">
 
                 <!-- Cédula Verde -->
                 <?php
-                $cedula_verde_saved = !empty($userData['doc_cedula_verde_path']);
-                $cedula_verde_url = $cedula_verde_saved ? esc(delivery_app_url($userData['doc_cedula_verde_path'])) : '';
+                $has_cedula_verde_front = !empty($userData['doc_cedula_verde_path']);
+                $has_cedula_verde_back = !empty($userData['doc_cedula_verde_back_path']);
+                
+                $cedula_verde_status_class = 'blue-shimmer';
+                if ($has_cedula_verde_front && $has_cedula_verde_back) {
+                    $cedula_verde_status_class = 'uploaded';
+                } elseif ($has_cedula_verde_front || $has_cedula_verde_back) {
+                    $cedula_verde_status_class = 'incomplete';
+                }
                 ?>
-                <div class="upload-card-interactive <?= $cedula_verde_saved ? 'uploaded' : 'blue-shimmer' ?>" id="card-doc_cedula_verde" onclick="document.getElementById('input-doc_cedula_verde').click()">
+                <div class="upload-card-interactive <?= $cedula_verde_status_class ?>" id="card-doc_cedula_verde" onclick="window.location.href='upload_cedula_verde.php'">
                     <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                         <div style="display: flex; align-items: center;">
                             <span class="user-icon">🚙</span>
                             <div style="display: flex; flex-direction: column;">
                                 <span style="font-weight: 800; font-size: 15px; color: var(--text);">Cédula verde</span>
-                                <span id="status-doc_cedula_verde" style="font-size: 12px; color: <?= $cedula_verde_saved ? '#10b981' : '#64748b' ?>; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
-                                    <?php if ($cedula_verde_saved): ?>
-                                        <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        ✓ Documento guardado
+                                <span id="status-doc_cedula_verde" style="font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                                    <?php if ($has_cedula_verde_front && $has_cedula_verde_back): ?>
+                                        <span style="color: #10b981; display: flex; align-items: center; gap: 4px;">
+                                            <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                            ✓ Documento guardado
+                                        </span>
+                                    <?php elseif ($has_cedula_verde_front || $has_cedula_verde_back): ?>
+                                        <span style="color: #d97706; display: flex; align-items: center; gap: 4px;">
+                                            <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                            ⚠️ Incompleto (Falta un lado)
+                                        </span>
                                     <?php else: ?>
-                                        No seleccionado
+                                        <span style="color: #64748b;">No seleccionado</span>
                                     <?php endif; ?>
                                 </span>
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <?php if ($cedula_verde_saved): ?>
-                                <a href="<?= $cedula_verde_url ?>" target="_blank" onclick="event.stopPropagation();" class="btn-ver-doc" style="background: rgba(37, 99, 235, 0.1); color: var(--primary); padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; text-decoration: none;">🔍 VER</a>
-                            <?php endif; ?>
                             <span class="arrow-icon">></span>
                         </div>
                     </div>
                 </div>
-                <input type="file" name="doc_cedula_verde" id="input-doc_cedula_verde" style="display:none;" onchange="handleFileSelected(this, 'status-doc_cedula_verde', 'card-doc_cedula_verde')">
-
-                <button type="submit" class="btn btn-save-tech">💾 Guardar Cambios</button>
             </div>
         </div>
     <?php endif; ?>
