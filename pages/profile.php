@@ -389,6 +389,17 @@ require __DIR__ . '/_header.php';
         color: #10b981;
         opacity: 0.7;
     }
+    
+    /* Incomplete document state styling */
+    .upload-card-interactive.incomplete {
+        background: rgba(245, 158, 11, 0.05);
+        border: 1px solid rgba(245, 158, 11, 0.15);
+        color: #d97706;
+    }
+    .upload-card-interactive.incomplete .arrow-icon {
+        color: #d97706;
+        opacity: 0.7;
+    }
 </style>
 
 <div class="profile-hero">
@@ -528,34 +539,44 @@ require __DIR__ . '/_header.php';
                 
                 <!-- Cédula de Identidad -->
                 <?php
-                $ci_saved = !empty($userData['doc_ci_path']);
-                $ci_url = $ci_saved ? esc(delivery_app_url($userData['doc_ci_path'])) : '';
+                $has_ci_front = !empty($userData['doc_ci_path']);
+                $has_ci_back = !empty($userData['doc_ci_back_path']);
+                
+                $ci_status_class = 'blue-shimmer';
+                if ($has_ci_front && $has_ci_back) {
+                    $ci_status_class = 'uploaded';
+                } elseif ($has_ci_front || $has_ci_back) {
+                    $ci_status_class = 'incomplete';
+                }
                 ?>
-                <div class="upload-card-interactive <?= $ci_saved ? 'uploaded' : 'blue-shimmer' ?>" id="card-doc_ci" onclick="document.getElementById('input-doc_ci').click()">
+                <div class="upload-card-interactive <?= $ci_status_class ?>" id="card-doc_ci" onclick="window.location.href='upload_id.php'">
                     <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                         <div style="display: flex; align-items: center;">
                             <span class="user-icon">👤</span>
                             <div style="display: flex; flex-direction: column;">
                                 <span style="font-weight: 800; font-size: 15px; color: var(--text);">Cédula de Identidad</span>
-                                <span id="status-doc_ci" style="font-size: 12px; color: <?= $ci_saved ? '#10b981' : '#64748b' ?>; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
-                                    <?php if ($ci_saved): ?>
-                                        <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        ✓ Documento guardado
+                                <span id="status-doc_ci" style="font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                                    <?php if ($has_ci_front && $has_ci_back): ?>
+                                        <span style="color: #10b981; display: flex; align-items: center; gap: 4px;">
+                                            <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                            ✓ Documento guardado
+                                        </span>
+                                    <?php elseif ($has_ci_front || $has_ci_back): ?>
+                                        <span style="color: #d97706; display: flex; align-items: center; gap: 4px;">
+                                            <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                                            ⚠️ Incompleto (Falta un lado)
+                                        </span>
                                     <?php else: ?>
-                                        No seleccionado
+                                        <span style="color: #64748b;">No seleccionado</span>
                                     <?php endif; ?>
                                 </span>
                             </div>
                         </div>
                         <div style="display: flex; align-items: center; gap: 10px;">
-                            <?php if ($ci_saved): ?>
-                                <a href="<?= $ci_url ?>" target="_blank" onclick="event.stopPropagation();" class="btn-ver-doc" style="background: rgba(37, 99, 235, 0.1); color: var(--primary); padding: 6px 12px; border-radius: 10px; font-size: 12px; font-weight: 700; text-decoration: none;">🔍 VER</a>
-                            <?php endif; ?>
                             <span class="arrow-icon">></span>
                         </div>
                     </div>
                 </div>
-                <input type="file" name="doc_ci" id="input-doc_ci" style="display:none;" onchange="handleFileSelected(this, 'status-doc_ci', 'card-doc_ci')">
 
                 <!-- Registro de Conducir -->
                 <?php
