@@ -172,11 +172,7 @@ require __DIR__ . '/_header.php';
         100% { transform: scale(1.15); opacity: 0; }
     }
 
-    .donut-center {
-        position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    }
-    .donut-center span { font-size: 26px; font-weight: 800; color: var(--text); line-height: 1; }
-    .donut-center b { font-size: 9px; color: var(--muted); text-transform: uppercase; font-weight: 800; margin-top: 4px; }
+
 
     /* Legend Vertical */
     .v-legend { display: flex; flex-direction: column; gap: 20px; flex: 1; }
@@ -238,10 +234,7 @@ require __DIR__ . '/_header.php';
             <!-- Cancelados -->
             <circle cx="50" cy="50" r="38" class="donut-seg seg-canceled" id="seg-canceled" style="stroke-dasharray: 0 238.76104167282; stroke-dashoffset: 0;"></circle>
         </svg>
-        <div class="donut-center">
-            <span id="donut-center-val">0</span>
-            <b id="donut-center-label">Meta: 5</b>
-        </div>
+
     </div>
 
     <div class="v-legend">
@@ -336,9 +329,7 @@ require __DIR__ . '/_header.php';
         segCanceled.style.strokeDasharray = `${val_c} ${circum}`;
         segCanceled.style.strokeDashoffset = -val_e;
         
-        // 4. Actualizar textos centrales del Donut
-        document.getElementById('donut-center-val').innerText = data.entregados;
-        document.getElementById('donut-center-label').innerText = 'Meta: ' + goal;
+
         
         // 5. Actualizar animación de brillo (Pulse)
         const glowEl = document.getElementById('goal-glow');
