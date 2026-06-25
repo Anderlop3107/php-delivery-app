@@ -72,33 +72,50 @@ require __DIR__ . '/_header.php';
     .balance-title { text-align: center; margin-bottom: 20px; }
     .balance-title h1 { font-size: 20px; font-weight: 800; color: var(--text); margin: 0; }
 
-    /* Segmented Control Bento Style */
+    /* Premium Segmented Control */
     .segmented-control-tech {
         display: flex;
-        background: #f1f5f9;
-        padding: 6px;
-        border-radius: 18px;
+        background: rgba(241, 245, 249, 0.85);
+        padding: 5px;
+        border-radius: 20px;
         margin-bottom: 25px;
-        border: 1px solid rgba(0,0,0,0.02);
+        border: 1px solid rgba(226, 232, 240, 0.8);
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.02);
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
     }
     .segment-btn {
         flex: 1;
-        padding: 10px;
+        padding: 12px 10px;
         border: 0;
         background: transparent;
         font-weight: 800;
-        font-size: 13px;
-        color: #94a3b8;
+        font-size: 11px;
+        color: #64748b;
         cursor: pointer;
-        border-radius: 14px;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 16px;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
         text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: 0.8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+    }
+    .segment-btn:active {
+        transform: scale(0.95);
     }
     .segment-btn.active {
-        background: #fff;
+        background: #ffffff;
         color: var(--primary);
-        box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        font-weight: 850;
+        box-shadow: 0 8px 16px -4px rgba(37, 99, 235, 0.12), 0 4px 6px -2px rgba(0,0,0,0.02);
+    }
+    .segment-btn svg {
+        transition: transform 0.25s ease;
+    }
+    .segment-btn.active svg {
+        transform: scale(1.1);
     }
 
     /* Virtual Card */
@@ -176,9 +193,18 @@ require __DIR__ . '/_header.php';
 </div>
 
 <div class="segmented-control-tech">
-    <button type="button" class="segment-btn active" onclick="changePeriod('hoy')">Hoy</button>
-    <button type="button" class="segment-btn" onclick="changePeriod('semana')">Semana</button>
-    <button type="button" class="segment-btn" onclick="changePeriod('mes')">Mes</button>
+    <button type="button" class="segment-btn active" onclick="changePeriod('hoy', this)">
+        <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        Hoy
+    </button>
+    <button type="button" class="segment-btn" onclick="changePeriod('semana', this)">
+        <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+        Semana
+    </button>
+    <button type="button" class="segment-btn" onclick="changePeriod('mes', this)">
+        <svg style="width: 14px; height: 14px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 012-2h2a2 2 0 012 2v5a2 2 0 01-2 2h-2a2 2 0 01-2-2v-5zm-7 5a2 2 0 012-2h2a2 2 0 012 2v5a2 2 0 01-2 2h-2a2 2 0 01-2-2v-5z" /></svg>
+        Mes
+    </button>
 </div>
 
 <div class="virtual-card">
@@ -244,12 +270,12 @@ require __DIR__ . '/_header.php';
         return new Intl.NumberFormat('es-PY', { minimumFractionDigits: 0 }).format(val);
     }
 
-    function changePeriod(period) {
-        document.querySelectorAll('.segmented-control-tech .segment-btn').forEach(btn => {
-            btn.classList.remove('active');
+    function changePeriod(period, btn) {
+        document.querySelectorAll('.segmented-control-tech .segment-btn').forEach(b => {
+            b.classList.remove('active');
         });
-        if (event && event.currentTarget) {
-            event.currentTarget.classList.add('active');
+        if (btn) {
+            btn.classList.add('active');
         }
         updatePeriod(period);
     }
