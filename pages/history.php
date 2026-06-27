@@ -104,6 +104,38 @@ require __DIR__ . '/_header.php';
     .calendar-day-bento.in-range { background: var(--primary-soft); color: var(--primary); border-radius: 0; }
     .calendar-day-bento.today { color: var(--primary); border: 2px solid var(--primary-soft); border-radius: 8px; }
 
+    /* Bento Export Buttons */
+    .export-btn-bento {
+        padding: 8px 14px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 800;
+        text-decoration: none;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border: 1px solid rgba(0,0,0,0.03);
+    }
+    .export-btn-bento:not(.pdf) {
+        background: rgba(16, 185, 129, 0.08);
+        color: #10b981;
+    }
+    .export-btn-bento:not(.pdf):active {
+        background: rgba(16, 185, 129, 0.15);
+        transform: scale(0.96);
+    }
+    .export-btn-bento.pdf {
+        background: rgba(239, 68, 68, 0.08);
+        color: #ef4444;
+    }
+    .export-btn-bento.pdf:active {
+        background: rgba(239, 68, 68, 0.15);
+        transform: scale(0.96);
+    }
+
     /* History List Items */
     .order-card-bento { 
         background: #fff; border-radius: var(--card-radius); padding: 20px; margin-bottom: 12px; 
@@ -249,6 +281,15 @@ require __DIR__ . '/_header.php';
                 <option value="<?= $num ?>" <?= $month == $num ? 'selected' : '' ?>><?= $name ?></option>
             <?php endforeach; ?>
         </select>
+        
+        <div style="display: flex; gap: 8px;">
+            <a href="export_csv.php?start_date=<?= urlencode($startDate) ?>&end_date=<?= urlencode($endDate) ?>" class="export-btn-bento" title="Exportar a Excel (CSV)">
+                📊 Excel
+            </a>
+            <a href="export_pdf.php?start_date=<?= urlencode($startDate) ?>&end_date=<?= urlencode($endDate) ?>" target="_blank" class="export-btn-bento pdf" title="Exportar a PDF / Imprimir">
+                📄 PDF
+            </a>
+        </div>
     </div>
 
     <div class="calendar-grid-bento">

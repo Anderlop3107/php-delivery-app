@@ -459,6 +459,47 @@ require __DIR__ . '/_header.php';
     let checkInterval = null;
     let currentBroadcastId = null;
     let miniMap = null;
+    let locationInterval = null;
+    let currentLat = null;
+    let currentLng = null;
+
+    function startLocationUpdates() {
+        sendCurrentLocation();
+        if (locationInterval) clearInterval(locationInterval);
+        locationInterval = setInterval(sendCurrentLocation, 20000);
+    }
+
+    function stopLocationUpdates() {
+        if (locationInterval) {
+            clearInterval(locationInterval);
+            locationInterval = null;
+        }
+    }
+
+    function sendCurrentLocation() {
+        if (!navigator.geolocation) return;
+        navigator.geolocation.getCurrentPosition(async (pos) => {
+            currentLat = pos.coords.latitude;
+            currentLng = pos.coords.longitude;
+            try {
+                const formData = new FormData();
+                formData.append('latitude', currentLat);
+                formData.append('longitude', currentLng);
+                await fetch('api_update_location.php', {
+                    method: 'POST',
+                    body: formData
+                });
+            } catch (e) {
+                console.error("Error al actualizar ubicación:", e);
+            }
+        }, (err) => {
+            console.warn("No se pudo obtener la geolocalización:", err);
+        }, {
+            enableHighAccuracy: true,
+            timeout: 10000,
+            maximumAge: 0
+        });
+    }
 
     function handleScannerToggle(isOnline) {
         const radar = document.getElementById('radar-ui');
@@ -468,11 +509,13 @@ require __DIR__ . '/_header.php';
             radar.classList.remove('paused');
             text.innerText = 'Buscando pedidos...';
             text.classList.add('active');
+            startLocationUpdates();
             startPolling();
         } else {
             radar.classList.add('paused');
             text.innerText = 'Desconectado';
             text.classList.remove('active');
+            stopLocationUpdates();
             stopPolling();
             closeBroadcast();
         }

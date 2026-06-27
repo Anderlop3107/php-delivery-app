@@ -15,15 +15,22 @@ if ($orderId <= 0) {
     exit;
 }
 
-// Intentamos asignar el pedido al repartidor actual (solo si sigue pendiente y sin dueño)
+// Intentamos asignar el pedido al repartidor actual (respetando reservas)
 $updated = app_exec("
     UPDATE deliveries 
-    SET repartidor_user_id = ?, status = 'aceptado', updated_at = NOW()
-    WHERE id = ? AND status = 'pendiente' AND repartidor_user_id IS NULL
-", 'ii', [(int)$user['id'], $orderId]);
+    SET repartidor_user_id = ?, 
+        status = 'aceptado', 
+        reservado_para_repartidor_id = NULL, 
+        reserva_expira_en = NULL, 
+        updated_at = NOW()
+    WHERE id = ? 
+      AND status = 'pendiente' 
+      AND repartidor_user_id IS NULL
+      AND (reservado_para_repartidor_id IS NULL OR reservado_para_repartidor_id = ? OR reserva_expira_en < NOW())
+", 'iiii', [(int)$user['id'], $orderId, (int)$user['id']]);
 
 if ($updated > 0) {
     echo json_encode(['success' => true]);
 } else {
-    echo json_encode(['success' => false, 'message' => 'El pedido ya fue tomado por otro repartidor.']);
+    echo json_encode(['success' => false, 'message' => 'El pedido ya no está disponible o la reserva expiró.']);
 }
