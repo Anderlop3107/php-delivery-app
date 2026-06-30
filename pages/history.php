@@ -283,11 +283,8 @@ require __DIR__ . '/_header.php';
         </select>
         
         <div style="display: flex; gap: 8px;">
-            <a href="export_csv.php?start_date=<?= urlencode($startDate) ?>&end_date=<?= urlencode($endDate) ?>" class="export-btn-bento" title="Exportar a Excel (CSV)">
-                📊 Excel
-            </a>
             <a href="export_pdf.php?start_date=<?= urlencode($startDate) ?>&end_date=<?= urlencode($endDate) ?>" target="_blank" class="export-btn-bento pdf" title="Exportar a PDF / Imprimir">
-                📄 PDF
+                📄 Exportar PDF
             </a>
         </div>
     </div>
