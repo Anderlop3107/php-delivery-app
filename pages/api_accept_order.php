@@ -27,7 +27,7 @@ $updated = app_exec("
       AND status = 'pendiente' 
       AND repartidor_user_id IS NULL
       AND (reservado_para_repartidor_id IS NULL OR reservado_para_repartidor_id = ? OR reserva_expira_en < NOW())
-", 'iiii', [(int)$user['id'], $orderId, (int)$user['id']]);
+", 'iii', [(int)$user['id'], $orderId, (int)$user['id']]);
 
 if ($updated > 0) {
     echo json_encode(['success' => true]);
