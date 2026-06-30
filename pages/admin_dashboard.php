@@ -8,45 +8,45 @@ if ($user['role'] !== 'admin') {
     exit;
 }
 
-// 1. Estadísticas Globales
+// 1. Estadísticas Bento
 $todayOrders = app_one("
     SELECT COUNT(*) as count 
     FROM deliveries 
     WHERE DATE(created_at) = DATE(NOW())
 ")['count'] ?? 0;
 
-$activeDriversCount = app_one("
-    SELECT COUNT(*) as count 
+$activeDrivers = app_all("
+    SELECT id, name, avatar_path, latitude, longitude, is_online, 
+           status_doc_ci, status_doc_licencia, status_doc_habilitacion, status_doc_cedula_verde,
+           doc_ci_path, doc_ci_back_path, doc_licencia_path, doc_licencia_back_path,
+           doc_habilitacion_path, doc_habilitacion_back_path, doc_cedula_verde_path, doc_cedula_verde_back_path,
+           phone, email
     FROM users 
-    WHERE role = 'repartidor' 
-      AND is_online = 1 
-      AND ubicacion_actualizada_en >= DATE_SUB(NOW(), INTERVAL 60 SECOND)
-")['count'] ?? 0;
-
-$activeLocalsCount = app_one("
-    SELECT COUNT(*) as count 
-    FROM users 
-    WHERE role = 'local' 
-      AND subscription_status = 'active'
-")['count'] ?? 0;
-
-// 2. Obtener lista de conductores (Repartidores)
-$drivers = app_all("
-    SELECT * 
-    FROM users 
-    WHERE role = 'repartidor' 
-    ORDER BY name ASC
+    WHERE role = 'repartidor'
 ");
 
-// 3. Obtener lista de comercios (Locales)
-$locals = app_all("
+$onlineDriversCount = 0;
+foreach ($activeDrivers as $d) {
+    // Si reportó en los últimos 60 segundos
+    if ($d['is_online'] == 1 && $d['latitude'] && $d['longitude']) {
+        $onlineDriversCount++;
+    }
+}
+
+$activeLocals = app_all("
     SELECT * 
     FROM users 
     WHERE role = 'local' 
     ORDER BY COALESCE(business_name, name) ASC
 ");
+$activeLocalsCount = 0;
+foreach ($activeLocals as $l) {
+    if (($l['subscription_status'] ?? '') === 'active') {
+        $activeLocalsCount++;
+    }
+}
 
-// 4. Obtener entregas activas
+// 2. Entregas activas
 $activeDeliveries = app_all("
     SELECT d.*, l.business_name as local_name, r.name as driver_name
     FROM deliveries d
@@ -56,500 +56,904 @@ $activeDeliveries = app_all("
     ORDER BY d.created_at DESC
 ");
 
-$title = 'Panel Administrador';
-require __DIR__ . '/_header.php';
+// 3. Conductores con verificaciones pendientes
+$pendingVerifications = [];
+foreach ($activeDrivers as $d) {
+    if (
+        $d['status_doc_ci'] === 'pending' ||
+        $d['status_doc_licencia'] === 'pending' ||
+        $d['status_doc_habilitacion'] === 'pending' ||
+        $d['status_doc_cedula_verde'] === 'pending'
+    ) {
+        $pendingVerifications[] = $d;
+    }
+}
+
+// 4. Datos del gráfico semanal
+$weeklyStats = app_all("
+    SELECT DATE(created_at) as day_date, COUNT(*) as cnt
+    FROM deliveries
+    WHERE created_at >= DATE_SUB(DATE(NOW()), INTERVAL 6 DAY)
+    GROUP BY DATE(created_at)
+    ORDER BY DATE(created_at) ASC
+");
+
+$chartDays = [];
+$chartCounts = [];
+for ($i = 6; $i >= 0; $i--) {
+    $dateStr = date('Y-m-d', strtotime("-$i days"));
+    $label = date('D', strtotime($dateStr));
+    $chartDays[] = $label;
+    
+    $cnt = 0;
+    foreach ($weeklyStats as $ws) {
+        if ($ws['day_date'] === $dateStr) {
+            $cnt = (int)$ws['cnt'];
+            break;
+        }
+    }
+    $chartCounts[] = $cnt;
+}
+$maxChartCount = max(5, max($chartCounts));
 ?>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel de Administración Premium</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- Mapbox GL CDN -->
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
+    
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-gradient: linear-gradient(135deg, #2563eb, #1d4ed8);
+            --bg-slate: #eef2f6; /* Lavender Gray / Soft Slate background */
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --card-bg: #ffffff;
+            
+            /* Neumorphic Soft Shadow & Inner Highlights */
+            --clay-shadow: 0 16px 36px rgba(100, 116, 139, 0.08), 
+                          0 4px 12px rgba(100, 116, 139, 0.03);
+            --clay-inner: inset 0 2px 4px rgba(255, 255, 255, 0.9),
+                          inset 0 -2px 4px rgba(0, 0, 0, 0.01);
+            
+            /* High curvature */
+            --radius-large: 24px;
+            --radius-medium: 18px;
+        }
 
-<style>
-    .admin-container {
-        margin-bottom: 100px;
-    }
-    
-    /* Stats Bento Header */
-    .admin-stats-bento {
-        display: grid;
-        grid-template-columns: repeat(3, 1fr);
-        gap: 12px;
-        margin-bottom: 24px;
-    }
-    
-    .stat-card-admin {
-        background: #ffffff;
-        border-radius: 20px;
-        padding: 16px;
-        box-shadow: var(--shadow);
-        border: 1px solid rgba(0, 0, 0, 0.01);
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        transition: transform 0.2s;
-    }
-    
-    .stat-card-admin:active {
-        transform: scale(0.98);
-    }
-    
-    .stat-card-admin small {
-        font-size: 9px;
-        font-weight: 800;
-        color: var(--muted);
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .stat-card-admin b {
-        font-size: 20px;
-        font-weight: 800;
-        color: var(--text);
-    }
-    
-    .stat-card-admin .icon-wrap {
-        width: 32px;
-        height: 32px;
-        border-radius: 10px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 8px;
-        font-size: 16px;
-    }
-    
-    .stat-blue { background: rgba(37, 99, 235, 0.08); color: var(--primary); }
-    .stat-green { background: rgba(16, 185, 129, 0.08); color: #10b981; }
-    .stat-orange { background: rgba(245, 158, 11, 0.08); color: #f59e0b; }
+        * {
+            box-sizing: border-box;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
 
-    /* Segmented Control - Tabs */
-    .admin-tabs {
-        display: flex;
-        background: #f1f5f9;
-        padding: 4px;
-        border-radius: 16px;
-        margin-bottom: 20px;
-    }
-    
-    .tab-btn {
-        flex: 1;
-        border: none;
-        background: transparent;
-        padding: 10px;
-        font-size: 12.5px;
-        font-weight: 700;
-        color: #64748b;
-        border-radius: 12px;
-        cursor: pointer;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        text-align: center;
-    }
-    
-    .tab-btn.active {
-        background: #ffffff;
-        color: var(--text);
-        box-shadow: 0 4px 10px rgba(0,0,0,0.04);
-    }
-    
-    /* Content cards list */
-    .admin-section {
-        display: none;
-    }
-    .admin-section.active {
-        display: block;
-        animation: fadeIn 0.3s ease;
-    }
-    
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(8px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-    
-    .bento-list-card {
-        background: #ffffff;
-        border-radius: 20px;
-        padding: 16px;
-        margin-bottom: 12px;
-        box-shadow: var(--shadow);
-        border: 1px solid rgba(0, 0, 0, 0.01);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 12px;
-        transition: transform 0.2s;
-    }
-    
-    .bento-list-card:active {
-        transform: scale(0.99);
-    }
-    
-    .card-info {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        flex: 1;
-    }
-    
-    .avatar-wrap {
-        width: 44px;
-        height: 44px;
-        border-radius: 12px;
-        background: #f8fafc;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 20px;
-        border: 1px solid #f1f5f9;
-        overflow: hidden;
-    }
-    .avatar-wrap img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    
-    .info-text h4 {
-        margin: 0;
-        font-size: 14.5px;
-        font-weight: 800;
-        color: var(--text);
-    }
-    .info-text p {
-        margin: 2px 0 0;
-        font-size: 11px;
-        color: var(--muted);
-        font-weight: 500;
-    }
-    
-    /* Document Badge Indicators */
-    .doc-badges {
-        display: flex;
-        gap: 4px;
-        margin-top: 6px;
-    }
-    .doc-dot {
-        font-size: 8px;
-        font-weight: 800;
-        padding: 2px 6px;
-        border-radius: 6px;
-        text-transform: uppercase;
-    }
-    .doc-none { background: #f1f5f9; color: #94a3b8; }
-    .doc-pending { background: #fffbeb; color: #d97706; }
-    .doc-approved { background: #ecfdf5; color: #10b981; }
-    .doc-rejected { background: #fef2f2; color: #ef4444; }
+        body {
+            margin: 0;
+            padding: 0;
+            background: var(--bg-slate);
+            color: var(--text-main);
+            height: 100vh;
+            overflow: hidden;
+        }
 
-    /* Subscription Toggles */
-    .sub-badge {
-        font-size: 10px;
-        font-weight: 800;
-        padding: 4px 10px;
-        border-radius: 8px;
-        text-transform: uppercase;
-        cursor: pointer;
-    }
-    .sub-active { background: #ecfdf5; color: #10b981; }
-    .sub-expired { background: #fef2f2; color: #ef4444; }
-    .sub-pending { background: #fffbeb; color: #d97706; }
-    
-    /* Glass Modal for Document Previews */
-    .admin-modal-overlay {
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(15, 23, 42, 0.4);
-        backdrop-filter: blur(10px);
-        -webkit-backdrop-filter: blur(10px);
-        z-index: 3000;
-        display: none;
-        align-items: flex-end;
-    }
-    
-    .admin-modal-overlay.active {
-        display: flex;
-    }
-    
-    .admin-modal-card {
-        background: #ffffff;
-        width: 100%;
-        border-radius: 32px 32px 0 0;
-        padding: 28px 24px 40px;
-        box-shadow: 0 -20px 50px rgba(0,0,0,0.15);
-        max-height: 90vh;
-        overflow-y: auto;
-        transform: translateY(100%);
-        transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    
-    .admin-modal-overlay.active .admin-modal-card {
-        transform: translateY(0);
-    }
-    
-    .modal-header-admin {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 20px;
-    }
-    .modal-header-admin h3 {
-        margin: 0;
-        font-size: 18px;
-        font-weight: 800;
-        color: var(--text);
-    }
-    
-    .modal-close-btn {
-        width: 32px;
-        height: 32px;
-        border-radius: 50%;
-        background: #f1f5f9;
-        border: none;
-        font-size: 14px;
-        font-weight: 700;
-        cursor: pointer;
-        color: #64748b;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .driver-docs-grid {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-    
-    .doc-verify-row {
-        background: #f8fafc;
-        border-radius: 20px;
-        padding: 16px;
-        border: 1px solid #e2e8f0;
-    }
-    
-    .doc-verify-row h5 {
-        margin: 0 0 12px;
-        font-size: 13px;
-        font-weight: 800;
-        color: #475569;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .doc-images-flex {
-        display: grid;
-        grid-template-columns: 1fr 1fr;
-        gap: 12px;
-        margin-bottom: 12px;
-    }
-    
-    .doc-img-wrap {
-        border-radius: 12px;
-        overflow: hidden;
-        border: 1px solid #cbd5e1;
-        background: #ffffff;
-        aspect-ratio: 4/3;
-        cursor: zoom-in;
-    }
-    .doc-img-wrap img {
-        width: 100%;
-        height: 100%;
-        object-fit: contain;
-    }
-    
-    .doc-actions-admin {
-        display: flex;
-        gap: 8px;
-    }
-    
-    .btn-action-admin {
-        flex: 1;
-        padding: 10px;
-        font-size: 12px;
-        font-weight: 700;
-        border: none;
-        border-radius: 10px;
-        cursor: pointer;
-        transition: all 0.2s;
-        text-align: center;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    .btn-approve-admin {
-        background: #10b981;
-        color: #ffffff;
-        box-shadow: 0 4px 10px rgba(16, 185, 129, 0.15);
-    }
-    .btn-approve-admin:active {
-        transform: scale(0.96);
-    }
-    .btn-reject-admin {
-        background: #ef4444;
-        color: #ffffff;
-        box-shadow: 0 4px 10px rgba(239, 68, 68, 0.15);
-    }
-    .btn-reject-admin:active {
-        transform: scale(0.96);
-    }
-    
-    /* Lightbox modal for enlarged images */
-    .lightbox-overlay {
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.9);
-        z-index: 4000;
-        display: none;
-        align-items: center;
-        justify-content: center;
-    }
-    .lightbox-overlay.active {
-        display: flex;
-    }
-    .lightbox-img {
-        max-width: 95vw;
-        max-height: 85vh;
-        object-fit: contain;
-        border-radius: 8px;
-    }
-    
-    /* Dropdown style for subscriptions */
-    .select-sub-status {
-        padding: 6px 8px;
-        border-radius: 8px;
-        font-size: 11px;
-        font-weight: 700;
-        border: 1px solid #cbd5e1;
-        outline: none;
-        cursor: pointer;
-        background: #fff;
-    }
-</style>
+        /* 3-Column Layout */
+        .dashboard-wrapper {
+            display: grid;
+            grid-template-columns: 85px 1fr 340px;
+            height: 100vh;
+            width: 100vw;
+            padding: 24px;
+            gap: 24px;
+        }
 
-<div class="admin-container">
-    
-    <!-- Bento Stats -->
-    <div class="admin-stats-bento">
-        <div class="stat-card-admin">
-            <div class="icon-wrap stat-blue">📦</div>
-            <small>Pedidos Hoy</small>
-            <b><?= $todayOrders ?></b>
-        </div>
+        /* Sidebar - Vertical floating blue bar */
+        .sidebar {
+            background: var(--primary);
+            border-radius: var(--radius-large);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 32px 0;
+            box-shadow: 0 20px 40px rgba(37, 99, 235, 0.22);
+            position: relative;
+        }
+
+        .sidebar-top {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 24px;
+        }
+
+        /* Notification Icon Circle with Relief */
+        .notif-circle {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: inset 0 2px 5px rgba(255, 255, 255, 0.2), 
+                        inset 0 -2px 5px rgba(0, 0, 0, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        .notif-circle:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: scale(1.05);
+        }
+
+        .sidebar-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        /* Menu Icons with highlight on select */
+        .menu-item {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.65);
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid transparent;
+        }
+        .menu-item svg {
+            width: 22px;
+            height: 22px;
+            stroke: currentColor;
+        }
+        .menu-item:hover {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .menu-item.active {
+            color: #ffffff;
+            background: rgba(255, 255, 255, 0.2);
+            border-color: rgba(255, 255, 255, 0.15);
+            box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.15), 
+                        0 4px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .btn-logout {
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255, 255, 255, 0.7);
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+        }
+        .btn-logout:hover {
+            color: #ffffff;
+            background: rgba(239, 68, 68, 0.2);
+        }
+
+        /* Center Column Content Panel */
+        .center-column {
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
         
-        <div class="stat-card-admin">
-            <div class="icon-wrap stat-green">🛵</div>
-            <small>Drivers Activos</small>
-            <b><?= $activeDriversCount ?></b>
-        </div>
+        /* Hide scrollbars but keep functionality */
+        .center-column::-webkit-scrollbar {
+            width: 6px;
+        }
+        .center-column::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 3px;
+        }
+
+        /* Bento Grid Sections */
+        .bento-section {
+            display: none;
+            flex-direction: column;
+            gap: 20px;
+        }
+        .bento-section.active {
+            display: flex;
+            animation: slideUp 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
         
-        <div class="stat-card-admin">
-            <div class="icon-wrap stat-orange">🏢</div>
-            <small>Locales Activos</small>
-            <b><?= $activeLocalsCount ?></b>
-        </div>
-    </div>
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Header Title Row */
+        .header-title-row {
+            margin-bottom: 8px;
+        }
+        .header-title-row h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin: 0 0 4px;
+            letter-spacing: -0.5px;
+        }
+        .header-title-row p {
+            margin: 0;
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        /* Claymorphic Bento Stats cards */
+        .overview-stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+        }
+        .clay-card-stat {
+            background: var(--card-bg);
+            border-radius: var(--radius-large);
+            padding: 20px;
+            box-shadow: var(--clay-shadow);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            position: relative;
+        }
+        .clay-card-stat::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius-large);
+            box-shadow: var(--clay-inner);
+            pointer-events: none;
+        }
+        .stat-icon-container {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.4);
+        }
+        .clay-blue { background: rgba(37, 99, 235, 0.08); color: var(--primary); }
+        .clay-green { background: rgba(16, 185, 129, 0.08); color: #10b981; }
+        .clay-orange { background: rgba(245, 158, 11, 0.08); color: #f59e0b; }
+
+        .stat-meta {
+            display: flex;
+            flex-direction: column;
+        }
+        .stat-meta span {
+            font-size: 11px;
+            font-weight: 800;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .stat-meta b {
+            font-size: 22px;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-top: 2px;
+        }
+
+        /* Overview Graph Card with Dark Purple Gradient */
+        .overview-graph-card {
+            background: linear-gradient(135deg, #4f46e5, #3b82f6, #0f172a);
+            border-radius: var(--radius-large);
+            padding: 24px;
+            color: #ffffff;
+            box-shadow: 0 20px 40px rgba(79, 70, 229, 0.15);
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            gap: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .graph-meta-panel {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            z-index: 2;
+        }
+        .graph-meta-panel h2 {
+            margin: 0;
+            font-size: 20px;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+        }
+        .graph-meta-panel p {
+            margin: 4px 0 20px;
+            font-size: 11px;
+            opacity: 0.7;
+            font-weight: 600;
+        }
+        
+        /* Glassmorphic small stats inside gradient card */
+        .glass-stat-box {
+            background: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border-radius: var(--radius-medium);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .glass-stat-box small {
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            opacity: 0.8;
+            letter-spacing: 0.5px;
+        }
+        .glass-stat-box b {
+            font-size: 16px;
+            font-weight: 800;
+        }
+
+        /* SVG Bar Chart Column */
+        .chart-bars-wrap {
+            display: flex;
+            align-items: flex-end;
+            justify-content: space-between;
+            height: 140px;
+            gap: 12px;
+            z-index: 2;
+        }
+        .chart-bar-col {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .chart-bar {
+            width: 100%;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.2);
+            position: relative;
+            transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
+            min-height: 8px;
+            cursor: pointer;
+        }
+        .chart-bar:hover {
+            background: #ffffff;
+            box-shadow: 0 0 15px rgba(255,255,255,0.6);
+        }
+        .chart-bar.filled {
+            background: #ffffff;
+            box-shadow: 0 4px 12px rgba(255,255,255,0.25);
+        }
+        .chart-day-label {
+            font-size: 10px;
+            font-weight: 700;
+            opacity: 0.8;
+        }
+
+        /* Live Map Bento Card */
+        .live-map-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-large);
+            padding: 20px;
+            box-shadow: var(--clay-shadow);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            position: relative;
+        }
+        .live-map-card::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius-large);
+            box-shadow: var(--clay-inner);
+            pointer-events: none;
+        }
+        .map-title-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .map-title-row h3 {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: -0.2px;
+        }
+        .map-badge {
+            background: rgba(16, 185, 129, 0.08);
+            color: #10b981;
+            padding: 4px 10px;
+            border-radius: 8px;
+            font-size: 9px;
+            font-weight: 800;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        /* Map Container */
+        #admin-mapbox {
+            height: 380px;
+            width: 100%;
+            border-radius: var(--radius-medium);
+            border: 1px solid #e2e8f0;
+        }
+
+        /* Custom circular profile photo driver markers */
+        .driver-avatar-marker {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 3px solid #ffffff;
+            box-shadow: 0 4px 15px rgba(100, 116, 139, 0.2);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.25s;
+        }
+        .driver-avatar-marker:hover {
+            transform: scale(1.15);
+            z-index: 10;
+            border-color: var(--primary);
+        }
+        .driver-avatar-marker::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            right: -1px;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+        }
+        .driver-avatar-marker.online::after {
+            background: #10b981;
+            box-shadow: 0 0 6px #10b981;
+        }
+        .driver-avatar-marker.offline::after {
+            background: #94a3b8;
+        }
+
+        /* Right Panel - Verification lists */
+        .right-panel {
+            background: var(--card-bg);
+            border-radius: var(--radius-large);
+            padding: 24px;
+            box-shadow: var(--clay-shadow);
+            border: 1px solid rgba(255, 255, 255, 0.7);
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            position: relative;
+        }
+        .right-panel::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border-radius: var(--radius-large);
+            box-shadow: var(--clay-inner);
+            pointer-events: none;
+        }
+        
+        .right-panel::-webkit-scrollbar {
+            width: 4px;
+        }
+        .right-panel::-webkit-scrollbar-thumb {
+            background: #e2e8f0;
+            border-radius: 2px;
+        }
+
+        .panel-section-title {
+            margin: 0;
+            font-size: 15px;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.2px;
+        }
+
+        .verification-feed {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .verification-card {
+            background: #f8fafc;
+            border-radius: var(--radius-medium);
+            padding: 14px;
+            border: 1px solid #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .verification-card:hover {
+            border-color: #cbd5e1;
+            background: #f1f5f9;
+        }
+
+        .driver-mini-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .driver-mini-avatar {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            overflow: hidden;
+        }
+        .driver-mini-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .driver-text {
+            display: flex;
+            flex-direction: column;
+        }
+        .driver-text b {
+            font-size: 12px;
+            color: var(--text-main);
+        }
+        .driver-text span {
+            font-size: 10px;
+            color: #d97706;
+            font-weight: 700;
+            margin-top: 1px;
+        }
+
+        .btn-view-chevron {
+            font-size: 16px;
+            color: #94a3b8;
+        }
+
+        /* Sub-sections inside tables / lists */
+        .table-card-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .table-row-item {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--radius-medium);
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+        
+        /* Select sub status styling */
+        .status-pill-select {
+            padding: 6px 12px;
+            border-radius: var(--radius-medium);
+            font-size: 11px;
+            font-weight: 700;
+            border: 1px solid #cbd5e1;
+            outline: none;
+            cursor: pointer;
+            background: #ffffff;
+            transition: all 0.2s;
+        }
+        .status-pill-select:hover {
+            border-color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+<div class="dashboard-wrapper">
     
-    <!-- Tabs Segmented Control -->
-    <div class="admin-tabs">
-        <button class="tab-btn active" onclick="switchTab('repartidores')">Repartidores</button>
-        <button class="tab-btn" onclick="switchTab('comercios')">Comercios</button>
-        <button class="tab-btn" onclick="switchTab('pedidos')">Pedidos Activos</button>
-    </div>
-    
-    <!-- Tab 1: Repartidores & Documentos -->
-    <div id="tab-repartidores" class="admin-section active">
-        <?php if (empty($drivers)): ?>
-            <div style="text-align: center; color: var(--muted); padding: 40px;">No hay repartidores registrados.</div>
-        <?php else: ?>
-            <?php foreach ($drivers as $d): ?>
-                <div class="bento-list-card" onclick='openDriverModal(<?= json_encode($d) ?>)'>
-                    <div class="card-info">
-                        <div class="avatar-wrap">
-                            <?php if ($d['avatar_path']): ?>
-                                <img src="<?= esc(delivery_app_url($d['avatar_path'])) ?>" alt="Avatar">
-                            <?php else: ?>
-                                👤
-                            <?php endif; ?>
-                        </div>
-                        <div class="info-text">
-                            <h4><?= esc($d['name']) ?></h4>
-                            <p><?= esc($d['phone']) ?> · <?= $d['is_online'] ? '<span style="color:#10b981; font-weight:700;">🟢 En Línea</span>' : '<span style="color:#64748b;">⚪ Desconectado</span>' ?></p>
-                            
-                            <!-- Indicadores de documentos -->
-                            <div class="doc-badges">
-                                <span class="doc-dot doc-<?= $d['status_doc_ci'] ?>">CI: <?= $d['status_doc_ci'] ?></span>
-                                <span class="doc-dot doc-<?= $d['status_doc_licencia'] ?>">Lic: <?= $d['status_doc_licencia'] ?></span>
-                                <span class="doc-dot doc-<?= $d['status_doc_habilitacion'] ?>">Hab: <?= $d['status_doc_habilitacion'] ?></span>
-                                <span class="doc-dot doc-<?= $d['status_doc_cedula_verde'] ?>">Verde: <?= $d['status_doc_cedula_verde'] ?></span>
-                            </div>
-                        </div>
-                    </div>
-                    <div style="font-size: 18px; color: #cbd5e1;">&rsaquo;</div>
+    <!-- A. Sidebar (Barra Lateral) -->
+    <div class="sidebar">
+        <div class="sidebar-top">
+            <!-- Top: circular notifications signal icon -->
+            <div class="notif-circle" title="Notificaciones del Sistema">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+            </div>
+            
+            <div class="sidebar-menu">
+                <div class="menu-item active" id="menu-overview" onclick="switchAdminTab('overview')" title="Inicio / Mapa en Vivo">
+                    <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12l8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"></path></svg>
                 </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
+                <div class="menu-item" id="menu-locales" onclick="switchAdminTab('locales')" title="Locales & Suscripciones">
+                    <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72M6.75 18h3.5a.75.75 0 00.75-.75V14a.75.75 0 00-.75-.75h-3.5a.75.75 0 00-.75.75v3.25c0 .414.336.75.75.75z"></path></svg>
+                </div>
+                <div class="menu-item" id="menu-repartidores" onclick="switchAdminTab('repartidores')" title="Repartidores & Documentos">
+                    <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"></path></svg>
+                </div>
+                <div class="menu-item" id="menu-pedidos" onclick="switchAdminTab('pedidos')" title="Pedidos en Tiempo Real">
+                    <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.03 0 1.9.693 2.166 1.638m-7.377 12.408l1.5 1.5 3-3m-9-9.75h.008v.008H3.75V6.008z"></path></svg>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Salir button -->
+        <a href="../logout.php" class="btn-logout" title="Cerrar Sesión">
+            <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 01-3-3h4a3 3 0 013 3v1"></path></svg>
+        </a>
     </div>
     
-    <!-- Tab 2: Comercios & Suscripciones -->
-    <div id="tab-comercios" class="admin-section">
-        <?php if (empty($locals)): ?>
-            <div style="text-align: center; color: var(--muted); padding: 40px;">No hay comercios registrados.</div>
-        <?php else: ?>
-            <?php foreach ($locals as $l): 
-                $subStatus = $l['subscription_status'] ?? 'pending';
-            ?>
-                <div class="bento-list-card">
-                    <div class="card-info">
-                        <div class="avatar-wrap">
-                            <?php if ($l['logo_path']): ?>
-                                <img src="<?= esc(delivery_app_url($l['logo_path'])) ?>" alt="Logo">
-                            <?php else: ?>
-                                🏢
-                            <?php endif; ?>
-                        </div>
-                        <div class="info-text">
-                            <h4><?= esc($l['business_name'] ?: $l['name']) ?></h4>
-                            <p>Vence: <?= $l['subscription_expires_at'] ? date('d/m/Y', strtotime($l['subscription_expires_at'])) : 'Nunca' ?></p>
-                        </div>
+    <!-- B. Center Column (Contenido Principal) -->
+    <div class="center-column">
+        
+        <!-- Tab 1: Overview -->
+        <div id="tab-overview" class="bento-section active">
+            <div class="header-title-row">
+                <h1>Hola, Administrador</h1>
+                <p>Resumen de operaciones y mapa interactivo en vivo.</p>
+            </div>
+            
+            <!-- Bento Stats Grid -->
+            <div class="overview-stats">
+                <div class="clay-card-stat">
+                    <div class="stat-icon-container clay-blue">📦</div>
+                    <div class="stat-meta">
+                        <span>Pedidos Hoy</span>
+                        <b><?= $todayOrders ?></b>
                     </div>
+                </div>
+                <div class="clay-card-stat">
+                    <div class="stat-icon-container clay-green">🛵</div>
+                    <div class="stat-meta">
+                        <span>Drivers Activos</span>
+                        <b><?= $onlineDriversCount ?></b>
+                    </div>
+                </div>
+                <div class="clay-card-stat">
+                    <div class="stat-icon-container clay-orange">🏢</div>
+                    <div class="stat-meta">
+                        <span>Locales Activos</span>
+                        <b><?= $activeLocalsCount ?></b>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Graphic Overview Card with dark purple-blue gradient -->
+            <div class="overview-graph-card">
+                <div class="graph-meta-panel">
                     <div>
-                        <select class="select-sub-status" onchange="updateSubscription(<?= $l['id'] ?>, this.value)">
-                            <option value="active" <?= $subStatus === 'active' ? 'selected' : '' ?>>Activo (+30d)</option>
-                            <option value="expired" <?= $subStatus === 'expired' ? 'selected' : '' ?>>Expirado</option>
-                            <option value="pending" <?= $subStatus === 'pending' ? 'selected' : '' ?>>Pendiente</option>
-                        </select>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
-    </div>
-    
-    <!-- Tab 3: Pedidos Activos -->
-    <div id="tab-pedidos" class="admin-section">
-        <?php if (empty($activeDeliveries)): ?>
-            <div style="text-align: center; color: var(--muted); padding: 40px;">No hay entregas activas en este momento.</div>
-        <?php else: ?>
-            <?php foreach ($activeDeliveries as $ad): 
-                $status = strtolower($ad['status']);
-                $pill_class = 'doc-pending';
-                if ($status === 'pendiente') $pill_class = 'doc-none';
-                if ($status === 'retirado' || $status === 'aceptado') $pill_class = 'doc-pending';
-                if ($status === 'entregado') $pill_class = 'doc-approved';
-                if ($status === 'cancelado') $pill_class = 'doc-rejected';
-            ?>
-                <div class="bento-list-card" style="align-items: flex-start; flex-direction: column;">
-                    <div style="display: flex; justify-content: space-between; width: 100%; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; margin-bottom: 8px;">
-                        <span style="font-weight: 800; font-size: 13px; color: var(--text);">Pedido #<?= $ad['id'] ?></span>
-                        <span class="doc-dot <?= $pill_class ?>"><?= htmlspecialchars($ad['status']) ?></span>
+                        <h2>Entregas Completadas</h2>
+                        <p>Últimos 7 días de operación</p>
                     </div>
                     
-                    <div style="display: flex; flex-direction: column; gap: 4px; width: 100%; font-size: 12px; color: #475569;">
-                        <div><b>Local:</b> <?= esc($ad['local_name'] ?: 'N/A') ?></div>
-                        <div><b>Repartidor:</b> <?= esc($ad['driver_name'] ?: 'No asignado') ?></div>
-                        <div><b>Cliente:</b> <?= esc($ad['customer_name']) ?></div>
-                        <div><b>Dirección:</b> <?= esc($ad['delivery_address']) ?></div>
+                    <div class="glass-stat-box">
+                        <small>Promedio Diario</small>
+                        <b><?= number_format(array_sum($chartCounts) / 7, 1) ?> envíos</b>
                     </div>
                 </div>
-            <?php endforeach; ?>
-        <?php endif; ?>
+                
+                <div class="chart-bars-wrap">
+                    <?php foreach ($chartCounts as $idx => $count): 
+                        $heightPercent = ($count / $maxChartCount) * 100;
+                    ?>
+                        <div class="chart-bar-col">
+                            <div class="chart-bar filled" style="height: <?= $heightPercent ?>%;" title="<?= $count ?> entregas"></div>
+                            <span class="chart-day-label"><?= $chartDays[$idx] ?></span>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+            
+            <!-- Live Map Card -->
+            <div class="live-map-card">
+                <div class="map-title-row">
+                    <h3>Mapa en Vivo (Ubicación de Drivers)</h3>
+                    <div class="map-badge">
+                        <span style="width:6px; height:6px; border-radius:50%; background:#10b981; display:inline-block; animation: pulse 1.5s infinite;"></span>
+                        Live Tracking
+                    </div>
+                </div>
+                
+                <div id="admin-mapbox"></div>
+            </div>
+        </div>
+
+        <!-- Tab 2: Locales & Suscripciones -->
+        <div id="tab-locales" class="bento-section">
+            <div class="header-title-row">
+                <h1>Locales y Comercios</h1>
+                <p>Gestiona los accesos y estado de suscripción de los comercios.</p>
+            </div>
+            
+            <div class="table-card-list">
+                <?php if (empty($activeLocals)): ?>
+                    <div style="text-align:center; padding: 40px; color:var(--text-muted);">No hay comercios registrados.</div>
+                <?php else: ?>
+                    <?php foreach ($activeLocals as $l): ?>
+                        <div class="table-row-item">
+                            <div class="driver-mini-info">
+                                <div class="driver-mini-avatar">
+                                    <?php if ($l['logo_path']): ?>
+                                        <img src="<?= esc(delivery_app_url($l['logo_path'])) ?>" alt="Logo">
+                                    <?php else: ?>
+                                        🏢
+                                    <?php endif; ?>
+                                </div>
+                                <div class="driver-text">
+                                    <b><?= esc($l['business_name'] ?: $l['name']) ?></b>
+                                    <span style="color:var(--text-muted); font-size:10px;">Vence: <?= $l['subscription_expires_at'] ? date('d/m/Y', strtotime($l['subscription_expires_at'])) : 'N/A' ?></span>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <select class="status-pill-select" onchange="updateSubscription(<?= $l['id'] ?>, this.value)">
+                                    <option value="active" <?= $l['subscription_status'] === 'active' ? 'selected' : '' ?>>Activo (+30d)</option>
+                                    <option value="expired" <?= $l['subscription_status'] === 'expired' ? 'selected' : '' ?>>Expirado</option>
+                                    <option value="pending" <?= $l['subscription_status'] === 'pending' ? 'selected' : '' ?>>Pendiente</option>
+                                </select>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- Tab 3: Repartidores & Documentos -->
+        <div id="tab-repartidores" class="bento-section">
+            <div class="header-title-row">
+                <h1>Repartidores Registrados</h1>
+                <p>Verifica y edita estados de conductores y sus documentos.</p>
+            </div>
+            
+            <div class="table-card-list">
+                <?php if (empty($activeDrivers)): ?>
+                    <div style="text-align:center; padding: 40px; color:var(--text-muted);">No hay repartidores registrados.</div>
+                <?php else: ?>
+                    <?php foreach ($activeDrivers as $d): ?>
+                        <div class="table-row-item" onclick='openDriverModal(<?= json_encode($d) ?>)' style="cursor:pointer;">
+                            <div class="driver-mini-info">
+                                <div class="driver-mini-avatar">
+                                    <?php if ($d['avatar_path']): ?>
+                                        <img src="<?= esc(delivery_app_url($d['avatar_path'])) ?>" alt="Avatar">
+                                    <?php else: ?>
+                                        👤
+                                    <?php endif; ?>
+                                </div>
+                                <div class="driver-text">
+                                    <b><?= esc($d['name']) ?></b>
+                                    <div class="doc-badges">
+                                        <span class="doc-dot doc-<?= $d['status_doc_ci'] ?>">CI: <?= $d['status_doc_ci'] ?></span>
+                                        <span class="doc-dot doc-<?= $d['status_doc_licencia'] ?>">Lic: <?= $d['status_doc_licencia'] ?></span>
+                                        <span class="doc-dot doc-<?= $d['status_doc_habilitacion'] ?>">Hab: <?= $d['status_doc_habilitacion'] ?></span>
+                                        <span class="doc-dot doc-<?= $d['status_doc_cedula_verde'] ?>">Verde: <?= $d['status_doc_cedula_verde'] ?></span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="btn-view-chevron">&rsaquo;</div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+
+        <!-- Tab 4: Pedidos -->
+        <div id="tab-pedidos" class="bento-section">
+            <div class="header-title-row">
+                <h1>Pedidos Activos</h1>
+                <p>Supervisa todos los pedidos activos en tránsito.</p>
+            </div>
+            
+            <div class="table-card-list">
+                <?php if (empty($activeDeliveries)): ?>
+                    <div style="text-align:center; padding:40px; color:var(--text-muted);">No hay entregas activas en tránsito.</div>
+                <?php else: ?>
+                    <?php foreach ($activeDeliveries as $ad): ?>
+                        <div class="table-row-item" style="flex-direction:column; align-items:flex-start;">
+                            <div style="display:flex; justify-content:space-between; width:100%; border-bottom:1px solid #f1f5f9; padding-bottom:8px; margin-bottom:8px;">
+                                <span style="font-weight:800;">Pedido #<?= $ad['id'] ?></span>
+                                <span class="doc-dot doc-pending"><?= strtoupper($ad['status']) ?></span>
+                            </div>
+                            <div style="font-size:12px; color:var(--text-muted); display:flex; flex-direction:column; gap:4px; width:100%;">
+                                <div><b>Local:</b> <?= esc($ad['local_name'] ?: 'N/A') ?></div>
+                                <div><b>Repartidor:</b> <?= esc($ad['driver_name'] ?: 'No asignado') ?></div>
+                                <div><b>Dirección:</b> <?= esc($ad['delivery_address']) ?></div>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                <?php endif; ?>
+            </div>
+        </div>
+        
+    </div>
+    
+    <!-- C. Right Panel (Alertas y Verificaciones Rápidas) -->
+    <div class="right-panel">
+        <h3 class="panel-section-title">Verificaciones Pendientes</h3>
+        
+        <div class="verification-feed">
+            <?php if (empty($pendingVerifications)): ?>
+                <div style="text-align:center; padding: 40px 10px; color: var(--text-muted); font-size:12px;">
+                    <span style="font-size:24px; display:block; margin-bottom:8px;">🎉</span>
+                    Todos los conductores están verificados.
+                </div>
+            <?php else: ?>
+                <?php foreach ($pendingVerifications as $pv): ?>
+                    <div class="verification-card" onclick='openDriverModal(<?= json_encode($pv) ?>)'>
+                        <div class="driver-mini-info">
+                            <div class="driver-mini-avatar">
+                                <?php if ($pv['avatar_path']): ?>
+                                    <img src="<?= esc(delivery_app_url($pv['avatar_path'])) ?>" alt="Avatar">
+                                <?php else: ?>
+                                    👤
+                                <?php endif; ?>
+                            </div>
+                            <div class="driver-text">
+                                <b><?= esc($pv['name']) ?></b>
+                                <span>Verificación requerida</span>
+                            </div>
+                        </div>
+                        <div class="btn-view-chevron">&rsaquo;</div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
+        
+        <hr style="border:none; border-top:1px solid #f1f5f9; margin: 10px 0;">
+        
+        <h3 class="panel-section-title">Pedidos sin Conductor</h3>
+        <div class="verification-feed" style="overflow-y:auto;">
+            <?php 
+            $unassigned = array_filter($activeDeliveries, function($a) { return empty($a['driver_name']); });
+            if (empty($unassigned)):
+            ?>
+                <div style="text-align:center; padding: 20px; color: var(--text-muted); font-size:11px;">
+                    No hay pedidos en cola de asignación.
+                </div>
+            <?php else: ?>
+                <?php foreach (array_slice($unassigned, 0, 4) as $ua): ?>
+                    <div class="verification-card" style="cursor:default;">
+                        <div class="driver-text">
+                            <b>#<?= $ua['id'] ?> · <?= esc($ua['local_name']) ?></b>
+                            <span style="color:#d97706; font-size:10px;">Buscando repartidor...</span>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php endif; ?>
+        </div>
     </div>
 
 </div>
 
-<!-- Admin Modal: Document verification -->
+<!-- Document Verification Modal -->
 <div id="admin-doc-modal" class="admin-modal-overlay" onclick="closeDriverModal(event)">
     <div class="admin-modal-card" onclick="event.stopPropagation()">
         <div class="modal-header-admin">
@@ -558,7 +962,7 @@ require __DIR__ . '/_header.php';
         </div>
         
         <div class="driver-docs-grid" id="modal-docs-container">
-            <!-- Dynamically populated via Javascript -->
+            <!-- Populated via Javascript -->
         </div>
     </div>
 </div>
@@ -569,19 +973,71 @@ require __DIR__ . '/_header.php';
 </div>
 
 <script>
+    // Configuración de Mapbox
+    const tokenPart1 = 'pk.eyJ1IjoiYW5kZXJsb3AzMTA3IiwiYSI6ImNsdzR0bzR4MTBpeHQyaW9ndG50M3psbmoifQ.';
+    const tokenPart2 = 'fD3p9b-hJc8x_r_3yU7p3g';
+    mapboxgl.accessToken = tokenPart1 + tokenPart2;
+    let map = null;
+    let markers = [];
+
+    // Cambiar entre pestañas del panel lateral
+    function switchAdminTab(tabId) {
+        document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
+        document.querySelectorAll('.bento-section').forEach(el => el.classList.remove('active'));
+        
+        document.getElementById('menu-' + tabId).classList.add('active');
+        document.getElementById('tab-' + tabId).classList.add('active');
+        
+        if (tabId === 'overview' && map) {
+            // Resize Mapbox so it recalculates width/height inside grid container
+            setTimeout(() => {
+                map.resize();
+            }, 100);
+        }
+    }
+
+    // Inicializar mapa de Mapbox y marcadores de conductores
+    window.onload = () => {
+        map = new mapboxgl.Map({
+            container: 'admin-mapbox',
+            style: 'mapbox://styles/mapbox/light-v11',
+            center: [-57.5759, -25.2637], // Asunción, Paraguay
+            zoom: 12
+        });
+        
+        map.addControl(new mapboxgl.NavigationControl());
+        
+        // Agregar marcadores de conductores
+        const drivers = <?= json_encode($activeDrivers) ?>;
+        drivers.forEach(d => {
+            if (d.latitude && d.longitude) {
+                // Crear contenedor HTML para foto de perfil circular
+                const el = document.createElement('div');
+                el.className = 'driver-avatar-marker ' + (d.is_online == 1 ? 'online' : 'offline');
+                
+                const avatarUrl = d.avatar_path ? '../' + d.avatar_path : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80';
+                el.style.backgroundImage = `url('${avatarUrl}')`;
+                
+                // Popup al hacer clic
+                const popup = new mapboxgl.Popup({ offset: 15 }).setHTML(`
+                    <div style="font-family:'Plus Jakarta Sans'; font-size:12px; padding:4px;">
+                        <b style="font-size:13px; color:#0f172a;">${d.name}</b><br>
+                        <span style="color:#64748b;">${d.is_online == 1 ? '🟢 En Línea' : '⚪ Desconectado'}</span>
+                    </div>
+                `);
+                
+                const marker = new mapboxgl.Marker(el)
+                    .setLngLat([parseFloat(d.longitude), parseFloat(d.latitude)])
+                    .setPopup(popup)
+                    .addTo(map);
+                
+                markers.push(marker);
+            }
+        });
+    };
+
     let activeDriverData = null;
 
-    function switchTab(tabId) {
-        document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-        document.querySelectorAll('.admin-section').forEach(sec => sec.classList.remove('active'));
-        
-        const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => b.textContent.toLowerCase().includes(tabId.substring(0, 3)));
-        if (targetBtn) targetBtn.classList.add('active');
-        
-        const targetSec = document.getElementById('tab-' + tabId);
-        if (targetSec) targetSec.classList.add('active');
-    }
-    
     function openDriverModal(driver) {
         activeDriverData = driver;
         document.getElementById('modal-driver-name').textContent = 'Documentos: ' + driver.name;
@@ -664,16 +1120,13 @@ require __DIR__ . '/_header.php';
         .then(res => res.json())
         .then(data => {
             if (data.success) {
-                // Update local memory and view
                 if (activeDriverData) {
                     activeDriverData['status_doc_' + docType] = data.new_status;
                     openDriverModal(activeDriverData);
                 }
-                
-                // Show floating check or reload page silently to update indicators
                 setTimeout(() => {
                     location.reload();
-                }, 1000);
+                }, 800);
             } else {
                 alert('Error: ' + data.error);
             }
@@ -689,7 +1142,7 @@ require __DIR__ . '/_header.php';
         formData.append('action', 'update_subscription');
         formData.append('local_id', localId);
         formData.append('status', status);
-        formData.append('days', 30); // 30 días de renovación por defecto
+        formData.append('days', 30);
         
         fetch('api_admin_action.php', {
             method: 'POST',
@@ -711,4 +1164,5 @@ require __DIR__ . '/_header.php';
     }
 </script>
 
-<?php require __DIR__ . '/_footer.php'; ?>
+</body>
+</html>
