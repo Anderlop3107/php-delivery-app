@@ -20,7 +20,8 @@ $activeDrivers = app_all("
            status_doc_ci, status_doc_licencia, status_doc_habilitacion, status_doc_cedula_verde,
            doc_ci_path, doc_ci_back_path, doc_licencia_path, doc_licencia_back_path,
            doc_habilitacion_path, doc_habilitacion_back_path, doc_cedula_verde_path, doc_cedula_verde_back_path,
-           phone, email
+           phone, email,
+           (SELECT COUNT(*) FROM deliveries WHERE repartidor_user_id = users.id AND status NOT IN ('entregado', 'cancelado')) as active_delivery_count
     FROM users 
     WHERE role = 'repartidor'
 ");
@@ -536,8 +537,22 @@ $maxChartCount = max(5, max($chartCounts));
             background: #10b981;
             box-shadow: 0 0 6px #10b981;
         }
+        .driver-avatar-marker.delivering::after {
+            background: #f59e0b;
+            box-shadow: 0 0 8px #f59e0b;
+            animation: markerPulse 1.5s infinite;
+        }
+        .driver-avatar-marker.delivering {
+            border-color: #f59e0b;
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+        }
         .driver-avatar-marker.offline::after {
             background: #94a3b8;
+        }
+        @keyframes markerPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
         }
 
         /* Right Panel - Verification lists */
@@ -1040,19 +1055,26 @@ $maxChartCount = max(5, max($chartCounts));
         // Agregar marcadores de conductores
         const drivers = <?= json_encode($activeDrivers) ?>;
         drivers.forEach(d => {
-            if (d.latitude && d.longitude) {
-                // Crear contenedor HTML para foto de perfil circular
+            // MOSTRAR SÓLO SI EL DELIVERY ESTÁ ACTIVO (is_online == 1) Y TIENE COORDENADAS
+            if (d.is_online == 1 && d.latitude && d.longitude) {
                 const el = document.createElement('div');
-                el.className = 'driver-avatar-marker ' + (d.is_online == 1 ? 'online' : 'offline');
+                
+                // Identificar si tiene un pedido activo para ponerle la clase 'delivering'
+                const isDelivering = parseInt(d.active_delivery_count || 0) > 0;
+                el.className = 'driver-avatar-marker ' + (isDelivering ? 'delivering' : 'online');
                 
                 const avatarUrl = d.avatar_path ? '../' + d.avatar_path : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80';
                 el.style.backgroundImage = `url('${avatarUrl}')`;
                 
-                // Popup al hacer clic
+                // Popup al hacer clic identificando estado de pedido
+                let statusLabel = '🟢 En Línea y Disponible';
+                if (isDelivering) {
+                    statusLabel = '🟠 Llevando Pedido (En Curso)';
+                }
                 const popup = new mapboxgl.Popup({ offset: 15 }).setHTML(`
                     <div style="font-family:'Plus Jakarta Sans'; font-size:12px; padding:4px;">
                         <b style="font-size:13px; color:#0f172a;">${d.name}</b><br>
-                        <span style="color:#64748b;">${d.is_online == 1 ? '🟢 En Línea' : '⚪ Desconectado'}</span>
+                        <span style="color:#64748b;">${statusLabel}</span>
                     </div>
                 `);
                 
