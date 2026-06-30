@@ -1025,6 +1025,56 @@ $maxChartCount = max(5, max($chartCounts));
         .catch(err => console.error("Error al actualizar filtro:", err));
     }
 
+    function refreshMapMarkers() {
+        if (!map) return;
+        
+        const formData = new FormData();
+        formData.append('action', 'get_active_drivers');
+        
+        fetch('api_admin_action.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                // Eliminar marcadores existentes
+                markers.forEach(m => m.remove());
+                markers = [];
+                
+                // Agregar nuevos marcadores de conductores activos
+                data.drivers.forEach(d => {
+                    const el = document.createElement('div');
+                    
+                    const isDelivering = parseInt(d.active_delivery_count || 0) > 0;
+                    el.className = 'driver-avatar-marker ' + (isDelivering ? 'delivering' : 'online');
+                    
+                    const avatarUrl = d.avatar_path ? '<?= delivery_app_url() ?>/' + d.avatar_path : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80';
+                    el.style.backgroundImage = `url('${avatarUrl}')`;
+                    
+                    let statusLabel = '🟢 En Línea y Disponible';
+                    if (isDelivering) {
+                        statusLabel = '🟠 Llevando Pedido (En Curso)';
+                    }
+                    const popup = new mapboxgl.Popup({ offset: 15 }).setHTML(`
+                        <div style="font-family:'Plus Jakarta Sans'; font-size:12px; padding:4px;">
+                            <b style="font-size:13px; color:#0f172a;">${d.name}</b><br>
+                            <span style="color:#64748b;">${statusLabel}</span>
+                        </div>
+                    `);
+                    
+                    const marker = new mapboxgl.Marker(el)
+                        .setLngLat([parseFloat(d.longitude), parseFloat(d.latitude)])
+                        .setPopup(popup)
+                        .addTo(map);
+                    
+                    markers.push(marker);
+                });
+            }
+        })
+        .catch(err => console.error("Error al actualizar marcadores del mapa:", err));
+    }
+
     // Cambiar entre pestañas del panel lateral
     function switchAdminTab(tabId) {
         document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
@@ -1052,40 +1102,9 @@ $maxChartCount = max(5, max($chartCounts));
         
         map.addControl(new mapboxgl.NavigationControl());
         
-        // Agregar marcadores de conductores
-        const drivers = <?= json_encode($activeDrivers) ?>;
-        drivers.forEach(d => {
-            // MOSTRAR SÓLO SI EL DELIVERY ESTÁ ACTIVO (is_online == 1) Y TIENE COORDENADAS
-            if (d.is_online == 1 && d.latitude && d.longitude) {
-                const el = document.createElement('div');
-                
-                // Identificar si tiene un pedido activo para ponerle la clase 'delivering'
-                const isDelivering = parseInt(d.active_delivery_count || 0) > 0;
-                el.className = 'driver-avatar-marker ' + (isDelivering ? 'delivering' : 'online');
-                
-                const avatarUrl = d.avatar_path ? '<?= delivery_app_url() ?>/' + d.avatar_path : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80';
-                el.style.backgroundImage = `url('${avatarUrl}')`;
-                
-                // Popup al hacer clic identificando estado de pedido
-                let statusLabel = '🟢 En Línea y Disponible';
-                if (isDelivering) {
-                    statusLabel = '🟠 Llevando Pedido (En Curso)';
-                }
-                const popup = new mapboxgl.Popup({ offset: 15 }).setHTML(`
-                    <div style="font-family:'Plus Jakarta Sans'; font-size:12px; padding:4px;">
-                        <b style="font-size:13px; color:#0f172a;">${d.name}</b><br>
-                        <span style="color:#64748b;">${statusLabel}</span>
-                    </div>
-                `);
-                
-                const marker = new mapboxgl.Marker(el)
-                    .setLngLat([parseFloat(d.longitude), parseFloat(d.latitude)])
-                    .setPopup(popup)
-                    .addTo(map);
-                
-                markers.push(marker);
-            }
-        });
+        // Cargar marcadores iniciales y configurar auto-refresco en tiempo real (cada 8 segundos)
+        refreshMapMarkers();
+        setInterval(refreshMapMarkers, 8000);
 
         // Inicializar ApexCharts Spline Chart: FLUJO DE ACTIVIDAD
         const chartOptions = {
