@@ -1175,8 +1175,8 @@ $maxChartCount = max(5, max($chartCounts));
             plotOptions: {
                 bar: {
                     horizontal: true,
-                    barHeight: '55%',
-                    borderRadius: 6
+                    barHeight: '30%',
+                    borderRadius: 4
                 }
             },
             colors: ['#2563eb'],
@@ -1225,8 +1225,8 @@ $maxChartCount = max(5, max($chartCounts));
             plotOptions: {
                 bar: {
                     horizontal: false,
-                    columnWidth: '45%',
-                    borderRadius: 6
+                    columnWidth: '22%',
+                    borderRadius: 4
                 }
             },
             colors: ['#10b981'],
