@@ -414,6 +414,23 @@ $maxChartCount = max(5, max($chartCounts));
             margin-top: 2px;
         }
 
+        .donut-filter-select {
+            background: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 4px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #475569;
+            outline: none;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+        }
+        .donut-filter-select:hover {
+            background: #e2e8f0;
+        }
+
         /* Overview Graph Card with Warm/Cream Gradient */
         .overview-graph-card {
             background: linear-gradient(135deg, #fdf6ec 0%, #ffffff 100%);
@@ -741,6 +758,11 @@ $maxChartCount = max(5, max($chartCounts));
                 <div class="live-map-card" style="margin-bottom: 0; justify-content: space-between; display: flex; flex-direction: column;">
                     <div class="map-title-row">
                         <h3>Rendimiento de Entregas</h3>
+                        <select id="filter-rendimiento" class="donut-filter-select" onchange="updateDonutFilter(this.value)">
+                            <option value="day">Hoy</option>
+                            <option value="week" selected>Esta Semana</option>
+                            <option value="month">Este Mes</option>
+                        </select>
                     </div>
                     <div id="rendimiento-entregas-chart" style="width: 100%; min-height: 250px; display: flex; align-items: center; justify-content: center;"></div>
                 </div>
@@ -968,6 +990,25 @@ $maxChartCount = max(5, max($chartCounts));
     mapboxgl.accessToken = tokenPart1 + tokenPart2;
     let map = null;
     let markers = [];
+    let donutChart = null;
+
+    function updateDonutFilter(range) {
+        const formData = new FormData();
+        formData.append('action', 'get_delivery_performance');
+        formData.append('range', range);
+        
+        fetch('api_admin_action.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && donutChart) {
+                donutChart.updateSeries([data.completados, data.cancelados, data.en_curso]);
+            }
+        })
+        .catch(err => console.error("Error al actualizar filtro:", err));
+    }
 
     // Cambiar entre pestañas del panel lateral
     function switchAdminTab(tabId) {
@@ -1153,7 +1194,7 @@ $maxChartCount = max(5, max($chartCounts));
             }
         };
 
-        const donutChart = new ApexCharts(document.querySelector("#rendimiento-entregas-chart"), donutOptions);
+        donutChart = new ApexCharts(document.querySelector("#rendimiento-entregas-chart"), donutOptions);
         donutChart.render();
 
         // Inicializar ApexCharts Donut Chart: TOP LOCALES

@@ -100,6 +100,36 @@ if ($action === 'update_subscription') {
     exit;
 }
 
+if ($action === 'get_delivery_performance') {
+    $range = $_POST['range'] ?? 'week';
+    
+    $whereClause = "1=1";
+    if ($range === 'day') {
+        $whereClause = "DATE(created_at) = DATE(NOW())";
+    } elseif ($range === 'week') {
+        $whereClause = "created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+    } elseif ($range === 'month') {
+        $whereClause = "created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+    }
+    
+    $stats = app_one("
+        SELECT 
+            COUNT(CASE WHEN status = 'entregado' THEN 1 END) as completados,
+            COUNT(CASE WHEN status = 'cancelado' THEN 1 END) as cancelados,
+            COUNT(CASE WHEN status NOT IN ('entregado', 'cancelado') THEN 1 END) as en_curso
+        FROM deliveries
+        WHERE $whereClause
+    ");
+    
+    echo json_encode([
+        'success' => true,
+        'completados' => (int)($stats['completados'] ?? 0),
+        'cancelados' => (int)($stats['cancelados'] ?? 0),
+        'en_curso' => (int)($stats['en_curso'] ?? 0)
+    ]);
+    exit;
+}
+
 http_response_code(400);
 echo json_encode(['error' => 'Acción no especificada o no soportada.']);
 exit;
