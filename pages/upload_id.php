@@ -19,12 +19,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         mkdir($uploadDir, 0777, true);
     }
     
+    $uploadedAny = false;
     // Subir Parte Frontal
     if (!empty($_FILES['doc_ci_front']['name'])) {
         $ext = pathinfo($_FILES['doc_ci_front']['name'], PATHINFO_EXTENSION);
         $fileNameFront = 'doc_ci_front_' . $user['id'] . '_' . time() . '.' . $ext;
         if (move_uploaded_file($_FILES['doc_ci_front']['tmp_name'], $uploadDir . $fileNameFront)) {
             app_exec("UPDATE users SET doc_ci_path = ? WHERE id = ?", 'si', ['uploads/documents/' . $fileNameFront, (int)$user['id']]);
+            $uploadedAny = true;
         }
     }
     
@@ -34,7 +36,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $fileNameBack = 'doc_ci_back_' . $user['id'] . '_' . time() . '.' . $ext;
         if (move_uploaded_file($_FILES['doc_ci_back']['tmp_name'], $uploadDir . $fileNameBack)) {
             app_exec("UPDATE users SET doc_ci_back_path = ? WHERE id = ?", 'si', ['uploads/documents/' . $fileNameBack, (int)$user['id']]);
+            $uploadedAny = true;
         }
+    }
+
+    if ($uploadedAny) {
+        app_exec("UPDATE users SET status_doc_ci = 'pending' WHERE id = ?", 'i', [(int)$user['id']]);
     }
     
     header('Location: profile.php?toast=updated&tab=documentos');
