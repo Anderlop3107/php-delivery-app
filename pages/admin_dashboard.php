@@ -220,17 +220,18 @@ $maxChartCount = max(5, max($chartCounts));
             width: 22px;
             height: 22px;
             stroke: currentColor;
+            fill: none;
+            stroke-width: 2.2;
         }
         .menu-item:hover {
             color: #ffffff;
             background: rgba(255, 255, 255, 0.1);
         }
         .menu-item.active {
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.2);
-            border-color: rgba(255, 255, 255, 0.15);
-            box-shadow: inset 0 2px 4px rgba(255, 255, 255, 0.15), 
-                        0 4px 10px rgba(0, 0, 0, 0.05);
+            color: #0f172a; /* Black color icon */
+            background: #ffffff; /* White background */
+            border-color: rgba(255, 255, 255, 0.95);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
         }
 
         .btn-logout {
