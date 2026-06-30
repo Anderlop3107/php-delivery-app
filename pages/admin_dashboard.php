@@ -68,6 +68,45 @@ $activeDeliveries = app_all("
     ORDER BY d.created_at DESC
 ");
 
+// Top Comercios (Demanda) y Repartidores Estrella
+$topLocals = app_all("
+    SELECT COALESCE(u.business_name, u.name) as name, COUNT(d.id) as count
+    FROM deliveries d
+    JOIN users u ON u.id = d.local_user_id
+    GROUP BY d.local_user_id
+    ORDER BY count DESC
+    LIMIT 5
+");
+$topDrivers = app_all("
+    SELECT u.name, COUNT(d.id) as count
+    FROM deliveries d
+    JOIN users u ON u.id = d.repartidor_user_id
+    WHERE d.status = 'entregado'
+    GROUP BY d.repartidor_user_id
+    ORDER BY count DESC
+    LIMIT 5
+");
+
+// Previews de datos ficticios si la base de datos está vacía para pruebas
+if (empty($topLocals)) {
+    $topLocals = [
+        ['name' => 'Pizza Hut', 'count' => 15],
+        ['name' => 'Burger King', 'count' => 12],
+        ['name' => 'Lomitos El Gordito', 'count' => 8],
+        ['name' => 'Farmacia Catedral', 'count' => 6],
+        ['name' => 'Supermercado Stock', 'count' => 4]
+    ];
+}
+if (empty($topDrivers)) {
+    $topDrivers = [
+        ['name' => 'Juan Perez', 'count' => 14],
+        ['name' => 'Carlos Gomez', 'count' => 11],
+        ['name' => 'Maria Benitez', 'count' => 9],
+        ['name' => 'Lucas Silva', 'count' => 6],
+        ['name' => 'Jose Cardozo', 'count' => 4]
+    ];
+}
+
 // 3. Conductores con verificaciones pendientes
 $pendingVerifications = [];
 foreach ($activeDrivers as $d) {
@@ -719,6 +758,27 @@ $maxChartCount = max(5, max($chartCounts));
                 </div>
 
             </div>
+
+            <!-- Grid de Top Locales y Top Drivers -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: stretch; margin-top: 20px;">
+                
+                <!-- Card: Top Comercios -->
+                <div class="live-map-card" style="margin-bottom: 0; justify-content: space-between; display: flex; flex-direction: column;">
+                    <div class="map-title-row">
+                        <h3>Top 5 Comercios (Más Demandados)</h3>
+                    </div>
+                    <div id="top-locales-chart" style="width: 100%; min-height: 250px;"></div>
+                </div>
+
+                <!-- Card: Repartidores Estrella -->
+                <div class="live-map-card" style="margin-bottom: 0; justify-content: space-between; display: flex; flex-direction: column;">
+                    <div class="map-title-row">
+                        <h3>Repartidores Estrella (Top Entregas)</h3>
+                    </div>
+                    <div id="top-repartidores-chart" style="width: 100%; min-height: 250px;"></div>
+                </div>
+
+            </div>
         </div>
 
         <!-- Tab 2: Locales & Suscripciones -->
@@ -1100,6 +1160,106 @@ $maxChartCount = max(5, max($chartCounts));
 
         const donutChart = new ApexCharts(document.querySelector("#rendimiento-entregas-chart"), donutOptions);
         donutChart.render();
+
+        // Inicializar ApexCharts Donut Chart: TOP LOCALES
+        const topLocalsOptions = {
+            series: [{
+                name: 'Pedidos',
+                data: <?= json_encode(array_column($topLocals, 'count')) ?>
+            }],
+            chart: {
+                type: 'bar',
+                height: 240,
+                toolbar: { show: false }
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: true,
+                    barHeight: '55%',
+                    borderRadius: 6
+                }
+            },
+            colors: ['#2563eb'],
+            xaxis: {
+                categories: <?= json_encode(array_column($topLocals, 'name')) ?>,
+                labels: {
+                    style: {
+                        colors: '#94a3b8',
+                        fontSize: '10px',
+                        fontFamily: 'Plus Jakarta Sans, sans-serif',
+                        fontWeight: 600
+                    }
+                }
+            },
+            yaxis: {
+                labels: {
+                    style: {
+                        colors: '#475569',
+                        fontSize: '10px',
+                        fontFamily: 'Plus Jakarta Sans, sans-serif',
+                        fontWeight: 700
+                    }
+                }
+            },
+            grid: {
+                borderColor: 'rgba(148, 163, 184, 0.1)',
+                xaxis: { lines: { show: true } },
+                yaxis: { lines: { show: false } }
+            },
+            tooltip: { theme: 'light' }
+        };
+        const topLocalsChart = new ApexCharts(document.querySelector("#top-locales-chart"), topLocalsOptions);
+        topLocalsChart.render();
+
+        // Inicializar ApexCharts Donut Chart: REPARTIDORES ESTRELLA
+        const topDriversOptions = {
+            series: [{
+                name: 'Entregas',
+                data: <?= json_encode(array_column($topDrivers, 'count')) ?>
+            }],
+            chart: {
+                type: 'bar',
+                height: 240,
+                toolbar: { show: false }
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: false,
+                    columnWidth: '45%',
+                    borderRadius: 6
+                }
+            },
+            colors: ['#10b981'],
+            xaxis: {
+                categories: <?= json_encode(array_column($topDrivers, 'name')) ?>,
+                labels: {
+                    style: {
+                        colors: '#94a3b8',
+                        fontSize: '9px',
+                        fontFamily: 'Plus Jakarta Sans, sans-serif',
+                        fontWeight: 600
+                    }
+                }
+            },
+            yaxis: {
+                labels: {
+                    style: {
+                        colors: '#94a3b8',
+                        fontSize: '10px',
+                        fontFamily: 'Plus Jakarta Sans, sans-serif',
+                        fontWeight: 600
+                    }
+                }
+            },
+            grid: {
+                borderColor: 'rgba(148, 163, 184, 0.1)',
+                xaxis: { lines: { show: false } },
+                yaxis: { lines: { show: true } }
+            },
+            tooltip: { theme: 'light' }
+        };
+        const topDriversChart = new ApexCharts(document.querySelector("#top-repartidores-chart"), topDriversOptions);
+        topDriversChart.render();
     };
 
     let activeDriverData = null;
