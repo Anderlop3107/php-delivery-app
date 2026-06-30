@@ -16,6 +16,12 @@ if ($userData['role'] === 'repartidor') {
     exit;
 }
 
+// Redirect if admin
+if ($userData['role'] === 'admin') {
+    header('Location: ' . delivery_app_url('pages/admin_dashboard.php'));
+    exit;
+}
+
 // Lógica de datos reales para los gráficos
 $stats = app_one("
     SELECT 
