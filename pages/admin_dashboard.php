@@ -16,7 +16,7 @@ $todayOrders = app_one("
 ")['count'] ?? 0;
 
 $activeDrivers = app_all("
-    SELECT id, name, avatar_path, latitude, longitude, is_online, 
+    SELECT id, name, logo_path as avatar_path, latitude, longitude, is_online, 
            status_doc_ci, status_doc_licencia, status_doc_habilitacion, status_doc_cedula_verde,
            doc_ci_path, doc_ci_back_path, doc_licencia_path, doc_licencia_back_path,
            doc_habilitacion_path, doc_habilitacion_back_path, doc_cedula_verde_path, doc_cedula_verde_back_path,
@@ -1063,7 +1063,7 @@ $maxChartCount = max(5, max($chartCounts));
                 const isDelivering = parseInt(d.active_delivery_count || 0) > 0;
                 el.className = 'driver-avatar-marker ' + (isDelivering ? 'delivering' : 'online');
                 
-                const avatarUrl = d.avatar_path ? '../' + d.avatar_path : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80';
+                const avatarUrl = d.avatar_path ? '<?= delivery_app_url('') ?>' + d.avatar_path : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80';
                 el.style.backgroundImage = `url('${avatarUrl}')`;
                 
                 // Popup al hacer clic identificando estado de pedido
