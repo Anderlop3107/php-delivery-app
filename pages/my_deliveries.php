@@ -340,19 +340,7 @@ require __DIR__ . '/_header.php';
     <div style="width: 36px; height: 4.5px; background: var(--primary); border-radius: 10px; margin-top: 10px; box-shadow: 0 3px 10px rgba(37, 99, 235, 0.25);"></div>
 </div>
 
-<?php if ($isDriver && !empty($activeRows)): ?>
-    <!-- Contenedor del Mapa de Ruta Completo -->
-    <div style="background: #ffffff; border-radius: 24px; box-shadow: var(--shadow); border: 1px solid rgba(0,0,0,0.02); padding: 16px; margin-bottom: 24px; overflow: hidden; position: relative;">
-        <h3 style="font-size: 15px; font-weight: 800; color: var(--text); margin: 0 0 12px; display: flex; align-items: center; gap: 8px;">
-            🗺️ Hoja de Ruta Activa
-        </h3>
-        <div id="driver-route-map" style="width: 100%; height: 260px; border-radius: 18px; background: #e2e8f0; overflow: hidden; border: 1px solid rgba(0,0,0,0.05);"></div>
-        <div style="margin-top: 12px; font-size: 11px; color: var(--muted); font-weight: 600; display: flex; justify-content: space-between; align-items: center;">
-            <span>Orden optimizado de entrega por cercanía</span>
-            <span id="route-distance-duration" style="font-weight: 800; color: var(--primary); font-size: 12px;">Calculando ruta...</span>
-        </div>
-    </div>
-<?php endif; ?>
+
 
 <div class="pending-list" id="orders-list">
     <?php if (empty($activeRows)): ?>
@@ -691,95 +679,98 @@ require __DIR__ . '/_header.php';
                 });
             <?php endif; endforeach; ?>
 
-            // Inicializar mapa
-            const map = new mapboxgl.Map({
-                container: 'driver-route-map',
-                style: 'mapbox://styles/mapbox/streets-v12',
-                center: driverCoords,
-                zoom: 13
-            });
-
-            map.on('load', async () => {
-                const bounds = new mapboxgl.LngLatBounds();
-                
-                waypoints.forEach((wp, index) => {
-                    const el = document.createElement('div');
-                    el.style.width = '28px';
-                    el.style.height = '28px';
-                    el.style.borderRadius = '50%';
-                    el.style.display = 'flex';
-                    el.style.alignItems = 'center';
-                    el.style.justifyContent = 'center';
-                    el.style.boxShadow = '0 4px 10px rgba(0,0,0,0.15)';
-                    el.style.border = '2px solid #ffffff';
-                    
-                    if (index === 0) {
-                        el.style.background = '#2563eb'; // Azul repartidor
-                        el.innerHTML = '🛵';
-                    } else {
-                        el.style.background = wp.label === '🏢' ? '#f59e0b' : '#10b981'; // Naranja / Verde
-                        el.innerHTML = `<b style="color:#ffffff; font-size:11px;">${index}</b>`;
-                    }
-                    
-                    new mapboxgl.Marker({ element: el })
-                        .setLngLat([wp.lng, wp.lat])
-                        .setPopup(new mapboxgl.Popup({ offset: 10 }).setHTML(`<div style="padding: 4px; font-family: sans-serif; font-size:12px; font-weight:700;">${wp.title}</div>`))
-                        .addTo(map);
-                        
-                    bounds.extend([wp.lng, wp.lat]);
+            // Inicializar mapa si el contenedor existe
+            const mapContainer = document.getElementById('driver-route-map');
+            if (mapContainer) {
+                const map = new mapboxgl.Map({
+                    container: 'driver-route-map',
+                    style: 'mapbox://styles/mapbox/streets-v12',
+                    center: driverCoords,
+                    zoom: 13
                 });
 
-                map.fitBounds(bounds, { padding: 40 });
-
-                if (waypoints.length > 1) {
-                    const coordsString = waypoints.map(wp => `${wp.lng},${wp.lat}`).join(';');
-                    const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordsString}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
+                map.on('load', async () => {
+                    const bounds = new mapboxgl.LngLatBounds();
                     
-                    try {
-                        const resp = await fetch(url);
-                        const json = await resp.json();
-                        if (json.routes && json.routes[0]) {
-                            const route = json.routes[0];
-                            const km = (route.distance / 1000).toFixed(1);
-                            const mins = Math.round(route.duration / 60);
-                            
-                            const distDurEl = document.getElementById('route-distance-duration');
-                            if (distDurEl) distDurEl.innerText = `${km} km · ${mins} min`;
-
-                            map.addSource('route', {
-                                'type': 'geojson',
-                                'data': {
-                                    'type': 'Feature',
-                                    'properties': {},
-                                    'geometry': route.geometry
-                                }
-                            });
-
-                            map.addLayer({
-                                'id': 'route',
-                                'type': 'line',
-                                'source': 'route',
-                                'layout': {
-                                    'line-join': 'round',
-                                    'line-cap': 'round'
-                                },
-                                'paint': {
-                                    'line-color': '#2563eb',
-                                    'line-width': 4,
-                                    'line-opacity': 0.8
-                                }
-                            });
+                    waypoints.forEach((wp, index) => {
+                        const el = document.createElement('div');
+                        el.style.width = '28px';
+                        el.style.height = '28px';
+                        el.style.borderRadius = '50%';
+                        el.style.display = 'flex';
+                        el.style.alignItems = 'center';
+                        el.style.justifyContent = 'center';
+                        el.style.boxShadow = '0 4px 10px rgba(0,0,0,0.15)';
+                        el.style.border = '2px solid #ffffff';
+                        
+                        if (index === 0) {
+                            el.style.background = '#2563eb'; // Azul repartidor
+                            el.innerHTML = '🛵';
+                        } else {
+                            el.style.background = wp.label === '🏢' ? '#f59e0b' : '#10b981'; // Naranja / Verde
+                            el.innerHTML = `<b style="color:#ffffff; font-size:11px;">${index}</b>`;
                         }
-                    } catch (e) {
-                        console.error(e);
+                        
+                        new mapboxgl.Marker({ element: el })
+                            .setLngLat([wp.lng, wp.lat])
+                            .setPopup(new mapboxgl.Popup({ offset: 10 }).setHTML(`<div style="padding: 4px; font-family: sans-serif; font-size:12px; font-weight:700;">${wp.title}</div>`))
+                            .addTo(map);
+                            
+                        bounds.extend([wp.lng, wp.lat]);
+                    });
+
+                    map.fitBounds(bounds, { padding: 40 });
+
+                    if (waypoints.length > 1) {
+                        const coordsString = waypoints.map(wp => `${wp.lng},${wp.lat}`).join(';');
+                        const url = `https://api.mapbox.com/directions/v5/mapbox/driving/${coordsString}?geometries=geojson&access_token=${mapboxgl.accessToken}`;
+                        
+                        try {
+                            const resp = await fetch(url);
+                            const json = await resp.json();
+                            if (json.routes && json.routes[0]) {
+                                const route = json.routes[0];
+                                const km = (route.distance / 1000).toFixed(1);
+                                const mins = Math.round(route.duration / 60);
+                                
+                                const distDurEl = document.getElementById('route-distance-duration');
+                                if (distDurEl) distDurEl.innerText = `${km} km · ${mins} min`;
+
+                                map.addSource('route', {
+                                    'type': 'geojson',
+                                    'data': {
+                                        'type': 'Feature',
+                                        'properties': {},
+                                        'geometry': route.geometry
+                                    }
+                                });
+
+                                map.addLayer({
+                                    'id': 'route',
+                                    'type': 'line',
+                                    'source': 'route',
+                                    'layout': {
+                                        'line-join': 'round',
+                                        'line-cap': 'round'
+                                    },
+                                    'paint': {
+                                        'line-color': '#2563eb',
+                                        'line-width': 4,
+                                        'line-opacity': 0.8
+                                    }
+                                });
+                            }
+                        } catch (e) {
+                            console.error(e);
+                            const distDurEl = document.getElementById('route-distance-duration');
+                            if (distDurEl) distDurEl.innerText = 'Ruta indisponible';
+                        }
+                    } else {
                         const distDurEl = document.getElementById('route-distance-duration');
-                        if (distDurEl) distDurEl.innerText = 'Ruta indisponible';
+                        if (distDurEl) distDurEl.innerText = '';
                     }
-                } else {
-                    const distDurEl = document.getElementById('route-distance-duration');
-                    if (distDurEl) distDurEl.innerText = '';
-                }
-            });
+                });
+            }
         });
     </script>
 <?php endif; ?>
