@@ -130,6 +130,20 @@ if ($action === 'get_delivery_performance') {
     exit;
 }
 
+if ($action === 'get_active_drivers') {
+    $activeDrivers = app_all("
+        SELECT id, name, logo_path as avatar_path, latitude, longitude, is_online, 
+               (SELECT COUNT(*) FROM deliveries WHERE repartidor_user_id = users.id AND status NOT IN ('entregado', 'cancelado')) as active_delivery_count
+        FROM users 
+        WHERE role = 'repartidor' AND is_online = 1 AND latitude IS NOT NULL AND longitude IS NOT NULL
+    ");
+    echo json_encode([
+        'success' => true,
+        'drivers' => $activeDrivers
+    ]);
+    exit;
+}
+
 http_response_code(400);
 echo json_encode(['error' => 'Acción no especificada o no soportada.']);
 exit;

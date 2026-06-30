@@ -505,6 +505,13 @@ require __DIR__ . '/_header.php';
         const radar = document.getElementById('radar-ui');
         const text = document.getElementById('main-status-text');
 
+        const formData = new FormData();
+        formData.append('is_online', isOnline ? '1' : '0');
+        fetch('api_toggle_status.php', {
+            method: 'POST',
+            body: formData
+        }).catch(err => console.error("Error toggling status:", err));
+
         if (isOnline) {
             radar.classList.remove('paused');
             text.innerText = 'Buscando pedidos...';
