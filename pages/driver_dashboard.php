@@ -365,6 +365,9 @@ require __DIR__ . '/_header.php';
         </div>
         <h2 class="welcome-title-tech">¡Hola!, <?= explode(' ', esc($userData['name']))[0] ?></h2>
         <p class="subtitle-tech">Conéctate para recibir pedidos</p>
+        <div id="simulated-location-warning" style="display: none; background: #fffbeb; border: 1px solid #fef3c7; color: #b45309; padding: 8px 12px; border-radius: 12px; font-size: 11px; font-weight: 700; margin-top: 10px; text-align: center;">
+            ⚠️ GPS bloqueado por HTTP. Usando ubicación simulada.
+        </div>
     </div>
 
     <!-- ÁREA DEL RADAR -->
@@ -459,9 +462,8 @@ require __DIR__ . '/_header.php';
     let checkInterval = null;
     let currentBroadcastId = null;
     let miniMap = null;
-    let locationInterval = null;
-    let currentLat = null;
-    let currentLng = null;
+    let mockLat = <?= (float)($userData['latitude'] ?: -25.2637) ?>;
+    let mockLng = <?= (float)($userData['longitude'] ?: -57.5759) ?>;
 
     function startLocationUpdates() {
         sendCurrentLocation();
@@ -477,28 +479,54 @@ require __DIR__ . '/_header.php';
     }
 
     function sendCurrentLocation() {
-        if (!navigator.geolocation) return;
+        if (!navigator.geolocation) {
+            // Geolocation bloqueada o no soportada (ej: HTTP en red local)
+            const warningEl = document.getElementById('simulated-location-warning');
+            if (warningEl) warningEl.style.display = 'block';
+            
+            // Simular caminata/movimiento aleatorio fino
+            mockLat += (Math.random() - 0.5) * 0.0006;
+            mockLng += (Math.random() - 0.5) * 0.0006;
+            updateLocationOnServer(mockLat, mockLng);
+            return;
+        }
+
         navigator.geolocation.getCurrentPosition(async (pos) => {
             currentLat = pos.coords.latitude;
             currentLng = pos.coords.longitude;
-            try {
-                const formData = new FormData();
-                formData.append('latitude', currentLat);
-                formData.append('longitude', currentLng);
-                await fetch('api_update_location.php', {
-                    method: 'POST',
-                    body: formData
-                });
-            } catch (e) {
-                console.error("Error al actualizar ubicación:", e);
-            }
+            mockLat = currentLat;
+            mockLng = currentLng;
+            const warningEl = document.getElementById('simulated-location-warning');
+            if (warningEl) warningEl.style.display = 'none';
+            updateLocationOnServer(currentLat, currentLng);
         }, (err) => {
             console.warn("No se pudo obtener la geolocalización:", err);
+            const warningEl = document.getElementById('simulated-location-warning');
+            if (warningEl) warningEl.style.display = 'block';
+            
+            // Simular movimiento como fallback si da error
+            mockLat += (Math.random() - 0.5) * 0.0006;
+            mockLng += (Math.random() - 0.5) * 0.0006;
+            updateLocationOnServer(mockLat, mockLng);
         }, {
             enableHighAccuracy: true,
             timeout: 10000,
             maximumAge: 0
         });
+    }
+
+    async function updateLocationOnServer(lat, lng) {
+        try {
+            const formData = new FormData();
+            formData.append('latitude', lat);
+            formData.append('longitude', lng);
+            await fetch('api_update_location.php', {
+                method: 'POST',
+                body: formData
+            });
+        } catch (e) {
+            console.error("Error al actualizar ubicación:", e);
+        }
     }
 
     function handleScannerToggle(isOnline) {
