@@ -734,21 +734,9 @@ $maxChartCount = max(5, max($chartCounts));
                 <div id="flujo-actividad-chart" style="width: 100%; min-height: 250px;"></div>
             </div>
             
-            <!-- Grid del Mapa y el Grafico de Dona -->
-            <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; align-items: stretch;">
+            <!-- Grid de 3 Columnas: Dona, Top Comercios, Repartidores Estrella -->
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; align-items: stretch; margin-top: 20px;">
                 
-                <!-- Live Map Card -->
-                <div class="live-map-card" style="margin-bottom: 0;">
-                    <div class="map-title-row">
-                        <h3>Mapa en Vivo (Ubicación de Drivers)</h3>
-                        <div class="map-badge">
-                            <span style="width:6px; height:6px; border-radius:50%; background:#10b981; display:inline-block; animation: pulse 1.5s infinite;"></span>
-                            Live Tracking
-                        </div>
-                    </div>
-                    <div id="admin-mapbox" style="height: 380px;"></div>
-                </div>
-
                 <!-- Donut Chart Card: RENDIMIENTO DE ENTREGAS -->
                 <div class="live-map-card" style="margin-bottom: 0; justify-content: space-between; display: flex; flex-direction: column;">
                     <div class="map-title-row">
@@ -757,11 +745,6 @@ $maxChartCount = max(5, max($chartCounts));
                     <div id="rendimiento-entregas-chart" style="width: 100%; min-height: 250px; display: flex; align-items: center; justify-content: center;"></div>
                 </div>
 
-            </div>
-
-            <!-- Grid de Top Locales y Top Drivers -->
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: stretch; margin-top: 20px;">
-                
                 <!-- Card: Top Comercios -->
                 <div class="live-map-card" style="margin-bottom: 0; justify-content: space-between; display: flex; flex-direction: column;">
                     <div class="map-title-row">
@@ -778,6 +761,18 @@ $maxChartCount = max(5, max($chartCounts));
                     <div id="top-repartidores-chart" style="width: 100%; min-height: 250px;"></div>
                 </div>
 
+            </div>
+
+            <!-- Live Map Card (Full Width at the bottom) -->
+            <div class="live-map-card" style="margin-top: 20px;">
+                <div class="map-title-row">
+                    <h3>Mapa en Vivo (Ubicación de Drivers)</h3>
+                    <div class="map-badge">
+                        <span style="width:6px; height:6px; border-radius:50%; background:#10b981; display:inline-block; animation: pulse 1.5s infinite;"></span>
+                        Live Tracking
+                    </div>
+                </div>
+                <div id="admin-mapbox" style="height: 420px; width: 100%;"></div>
             </div>
         </div>
 
