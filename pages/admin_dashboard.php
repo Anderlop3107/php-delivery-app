@@ -1063,7 +1063,7 @@ $maxChartCount = max(5, max($chartCounts));
                 const isDelivering = parseInt(d.active_delivery_count || 0) > 0;
                 el.className = 'driver-avatar-marker ' + (isDelivering ? 'delivering' : 'online');
                 
-                const avatarUrl = d.avatar_path ? '<?= delivery_app_url('') ?>' + d.avatar_path : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80';
+                const avatarUrl = d.avatar_path ? '<?= delivery_app_url() ?>/' + d.avatar_path : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80';
                 el.style.backgroundImage = `url('${avatarUrl}')`;
                 
                 // Popup al hacer clic identificando estado de pedido
