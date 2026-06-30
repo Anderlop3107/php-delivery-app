@@ -976,8 +976,8 @@ $maxChartCount = max(5, max($chartCounts));
 
 <script>
     // Configuración de Mapbox
-    const tokenPart1 = 'pk.eyJ1IjoiYW5kZXJsb3AzMTA3IiwiYSI6ImNsdzR0bzR4MTBpeHQyaW9ndG50M3psbmoifQ.';
-    const tokenPart2 = 'fD3p9b-hJc8x_r_3yU7p3g';
+    const tokenPart1 = 'pk.eyJ1IjoiYW5kZXJsb3AiLCJhIjoiY21uMGJ1ZXhzMGkxMDJycHRuYzEwcmp4NCJ9.';
+    const tokenPart2 = 'Jn4uXN5yX4DFIImQjw_R4w';
     mapboxgl.accessToken = tokenPart1 + tokenPart2;
     let map = null;
     let markers = [];
