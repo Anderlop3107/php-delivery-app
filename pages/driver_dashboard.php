@@ -462,6 +462,9 @@ require __DIR__ . '/_header.php';
     let checkInterval = null;
     let currentBroadcastId = null;
     let miniMap = null;
+    let locationInterval = null;
+    let currentLat = null;
+    let currentLng = null;
     let mockLat = <?= (float)($userData['latitude'] ?: -25.2637) ?>;
     let mockLng = <?= (float)($userData['longitude'] ?: -57.5759) ?>;
 
