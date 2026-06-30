@@ -108,32 +108,34 @@ require __DIR__ . '/_header.php';
     .export-btn-bento {
         padding: 8px 14px;
         border-radius: 12px;
-        font-size: 11px;
-        font-weight: 800;
+        font-size: 12px;
+        font-weight: 600; /* Fine typography */
         text-decoration: none;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
+        letter-spacing: -0.1px;
         display: inline-flex;
         align-items: center;
-        gap: 6px;
+        gap: 8px;
         transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        border: 1px solid rgba(0,0,0,0.03);
+        border: 1px solid #cbd5e1; /* Soft slate border */
+        background: #ffffff;
+        color: #475569; /* Sleek slate color */
+        box-shadow: 0 1px 3px rgba(0,0,0,0.02);
     }
-    .export-btn-bento:not(.pdf) {
-        background: rgba(16, 185, 129, 0.08);
-        color: #10b981;
+    .export-btn-bento svg {
+        color: #64748b; /* Lighter icon color */
+        transition: color 0.2s;
     }
-    .export-btn-bento:not(.pdf):active {
-        background: rgba(16, 185, 129, 0.15);
-        transform: scale(0.96);
+    .export-btn-bento:hover {
+        background: #f8fafc;
+        border-color: #94a3b8;
+        color: var(--primary);
     }
-    .export-btn-bento.pdf {
-        background: rgba(239, 68, 68, 0.08);
-        color: #ef4444;
+    .export-btn-bento:hover svg {
+        color: var(--primary);
     }
-    .export-btn-bento.pdf:active {
-        background: rgba(239, 68, 68, 0.15);
-        transform: scale(0.96);
+    .export-btn-bento:active {
+        transform: scale(0.97);
+        background: #f1f5f9;
     }
 
     /* History List Items */
@@ -283,8 +285,13 @@ require __DIR__ . '/_header.php';
         </select>
         
         <div style="display: flex; gap: 8px;">
-            <a href="export_pdf.php?start_date=<?= urlencode($startDate) ?>&end_date=<?= urlencode($endDate) ?>" target="_blank" class="export-btn-bento pdf" title="Exportar a PDF / Imprimir">
-                📄 Exportar PDF
+            <a href="export_pdf.php?start_date=<?= urlencode($startDate) ?>&end_date=<?= urlencode($endDate) ?>" target="_blank" class="export-btn-bento" title="Exportar a PDF / Imprimir">
+                <svg style="width: 14px; height: 14px; stroke: currentColor;" fill="none" stroke-width="2.2" viewBox="0 0 24 24" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M6 9V2h12v7"></path>
+                    <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+                    <rect x="6" y="14" width="12" height="8"></rect>
+                </svg>
+                <span>Exportar PDF</span>
             </a>
         </div>
     </div>
