@@ -112,6 +112,9 @@ $maxChartCount = max(5, max($chartCounts));
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.css" rel="stylesheet">
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
     
+    <!-- ApexCharts CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    
     <style>
         :root {
             --primary: #2563eb;
@@ -360,100 +363,25 @@ $maxChartCount = max(5, max($chartCounts));
             margin-top: 2px;
         }
 
-        /* Overview Graph Card with Dark Purple Gradient */
+        /* Overview Graph Card with Warm/Cream Gradient */
         .overview-graph-card {
-            background: linear-gradient(135deg, #4f46e5, #3b82f6, #0f172a);
-            border-radius: var(--radius-large);
+            background: linear-gradient(135deg, #fdf6ec 0%, #ffffff 100%);
+            border-radius: 28px;
             padding: 24px;
-            color: #ffffff;
-            box-shadow: 0 20px 40px rgba(79, 70, 229, 0.15);
-            display: grid;
-            grid-template-columns: 240px 1fr;
-            gap: 24px;
+            box-shadow: 0 20px 40px rgba(100, 110, 140, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.7);
             position: relative;
-            overflow: hidden;
-        }
-        
-        .graph-meta-panel {
             display: flex;
             flex-direction: column;
-            justify-content: space-between;
-            z-index: 2;
-        }
-        .graph-meta-panel h2 {
-            margin: 0;
-            font-size: 20px;
-            font-weight: 800;
-            letter-spacing: -0.5px;
-        }
-        .graph-meta-panel p {
-            margin: 4px 0 20px;
-            font-size: 11px;
-            opacity: 0.7;
-            font-weight: 600;
-        }
-        
-        /* Glassmorphic small stats inside gradient card */
-        .glass-stat-box {
-            background: rgba(255, 255, 255, 0.07);
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
-            border-radius: var(--radius-medium);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            padding: 12px 16px;
-            display: flex;
-            flex-direction: column;
-            gap: 2px;
-        }
-        .glass-stat-box small {
-            font-size: 9px;
-            font-weight: 700;
-            text-transform: uppercase;
-            opacity: 0.8;
-            letter-spacing: 0.5px;
-        }
-        .glass-stat-box b {
-            font-size: 16px;
-            font-weight: 800;
-        }
-
-        /* SVG Bar Chart Column */
-        .chart-bars-wrap {
-            display: flex;
-            align-items: flex-end;
-            justify-content: space-between;
-            height: 140px;
             gap: 12px;
-            z-index: 2;
         }
-        .chart-bar-col {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
-        }
-        .chart-bar {
-            width: 100%;
-            border-radius: 6px;
-            background: rgba(255, 255, 255, 0.2);
-            position: relative;
-            transition: all 1s cubic-bezier(0.4, 0, 0.2, 1);
-            min-height: 8px;
-            cursor: pointer;
-        }
-        .chart-bar:hover {
-            background: #ffffff;
-            box-shadow: 0 0 15px rgba(255,255,255,0.6);
-        }
-        .chart-bar.filled {
-            background: #ffffff;
-            box-shadow: 0 4px 12px rgba(255,255,255,0.25);
-        }
-        .chart-day-label {
-            font-size: 10px;
-            font-weight: 700;
-            opacity: 0.8;
+        .graph-title-admin {
+            font-size: 11px;
+            font-weight: 800;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 1.8px;
+            margin-bottom: 4px;
         }
 
         /* Live Map Bento Card */
@@ -749,30 +677,10 @@ $maxChartCount = max(5, max($chartCounts));
                 </div>
             </div>
             
-            <!-- Graphic Overview Card with dark purple-blue gradient -->
+            <!-- Spline Chart Card: FLUJO DE ACTIVIDAD -->
             <div class="overview-graph-card">
-                <div class="graph-meta-panel">
-                    <div>
-                        <h2>Entregas Completadas</h2>
-                        <p>Últimos 7 días de operación</p>
-                    </div>
-                    
-                    <div class="glass-stat-box">
-                        <small>Promedio Diario</small>
-                        <b><?= number_format(array_sum($chartCounts) / 7, 1) ?> envíos</b>
-                    </div>
-                </div>
-                
-                <div class="chart-bars-wrap">
-                    <?php foreach ($chartCounts as $idx => $count): 
-                        $heightPercent = ($count / $maxChartCount) * 100;
-                    ?>
-                        <div class="chart-bar-col">
-                            <div class="chart-bar filled" style="height: <?= $heightPercent ?>%;" title="<?= $count ?> entregas"></div>
-                            <span class="chart-day-label"><?= $chartDays[$idx] ?></span>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
+                <div class="graph-title-admin">FLUJO DE ACTIVIDAD TEMPORAL</div>
+                <div id="flujo-actividad-chart" style="width: 100%; min-height: 250px;"></div>
             </div>
             
             <!-- Live Map Card -->
@@ -1036,6 +944,86 @@ $maxChartCount = max(5, max($chartCounts));
                 markers.push(marker);
             }
         });
+
+        // Inicializar ApexCharts Spline Chart: FLUJO DE ACTIVIDAD
+        const chartOptions = {
+            series: [{
+                name: 'Actividad',
+                data: [11, 4, 12, 6, 5]
+            }],
+            chart: {
+                height: 220,
+                type: 'line',
+                toolbar: {
+                    show: false
+                }
+            },
+            stroke: {
+                width: 4,
+                curve: 'smooth',
+                colors: ['#2563eb']
+            },
+            markers: {
+                size: 6,
+                colors: ['#2563eb'],
+                strokeColors: '#ffffff',
+                strokeWidth: 3,
+                hover: {
+                    size: 8
+                }
+            },
+            xaxis: {
+                categories: ["abr 16", "abr 17", "abr 22", "abr 23", "abr 24"],
+                labels: {
+                    style: {
+                        colors: '#94a3b8',
+                        fontSize: '10px',
+                        fontFamily: 'Plus Jakarta Sans, sans-serif',
+                        fontWeight: 600
+                    }
+                },
+                axisBorder: {
+                    show: false
+                },
+                axisTicks: {
+                    show: false
+                }
+            },
+            yaxis: {
+                min: 0,
+                max: 12,
+                tickAmount: 4,
+                labels: {
+                    style: {
+                        colors: '#94a3b8',
+                        fontSize: '10px',
+                        fontFamily: 'Plus Jakarta Sans, sans-serif',
+                        fontWeight: 600
+                    }
+                }
+            },
+            grid: {
+                show: true,
+                borderColor: 'rgba(148, 163, 184, 0.1)',
+                strokeDashArray: 5,
+                xaxis: {
+                    lines: {
+                        show: false
+                    }
+                },
+                yaxis: {
+                    lines: {
+                        show: true
+                    }
+                }
+            },
+            tooltip: {
+                theme: 'light'
+            }
+        };
+
+        const flowChart = new ApexCharts(document.querySelector("#flujo-actividad-chart"), chartOptions);
+        flowChart.render();
     };
 
     let activeDriverData = null;
