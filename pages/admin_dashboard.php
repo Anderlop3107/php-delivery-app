@@ -46,6 +46,18 @@ foreach ($activeLocals as $l) {
     }
 }
 
+// Estadísticas del Donut: Rendimiento de Entregas
+$deliveryStats = app_one("
+    SELECT 
+        COUNT(CASE WHEN status = 'entregado' THEN 1 END) as completados,
+        COUNT(CASE WHEN status = 'cancelado' THEN 1 END) as cancelados,
+        COUNT(CASE WHEN status NOT IN ('entregado', 'cancelado') THEN 1 END) as en_curso
+    FROM deliveries
+");
+$completadosCount = (int)($deliveryStats['completados'] ?? 0);
+$canceladosCount = (int)($deliveryStats['cancelados'] ?? 0);
+$enCursoCount = (int)($deliveryStats['en_curso'] ?? 0);
+
 // 2. Entregas activas
 $activeDeliveries = app_all("
     SELECT d.*, l.business_name as local_name, r.name as driver_name
@@ -683,17 +695,29 @@ $maxChartCount = max(5, max($chartCounts));
                 <div id="flujo-actividad-chart" style="width: 100%; min-height: 250px;"></div>
             </div>
             
-            <!-- Live Map Card -->
-            <div class="live-map-card">
-                <div class="map-title-row">
-                    <h3>Mapa en Vivo (Ubicación de Drivers)</h3>
-                    <div class="map-badge">
-                        <span style="width:6px; height:6px; border-radius:50%; background:#10b981; display:inline-block; animation: pulse 1.5s infinite;"></span>
-                        Live Tracking
-                    </div>
-                </div>
+            <!-- Grid del Mapa y el Grafico de Dona -->
+            <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 20px; align-items: stretch;">
                 
-                <div id="admin-mapbox"></div>
+                <!-- Live Map Card -->
+                <div class="live-map-card" style="margin-bottom: 0;">
+                    <div class="map-title-row">
+                        <h3>Mapa en Vivo (Ubicación de Drivers)</h3>
+                        <div class="map-badge">
+                            <span style="width:6px; height:6px; border-radius:50%; background:#10b981; display:inline-block; animation: pulse 1.5s infinite;"></span>
+                            Live Tracking
+                        </div>
+                    </div>
+                    <div id="admin-mapbox" style="height: 380px;"></div>
+                </div>
+
+                <!-- Donut Chart Card: RENDIMIENTO DE ENTREGAS -->
+                <div class="live-map-card" style="margin-bottom: 0; justify-content: space-between; display: flex; flex-direction: column;">
+                    <div class="map-title-row">
+                        <h3>Rendimiento de Entregas</h3>
+                    </div>
+                    <div id="rendimiento-entregas-chart" style="width: 100%; min-height: 250px; display: flex; align-items: center; justify-content: center;"></div>
+                </div>
+
             </div>
         </div>
 
@@ -1024,6 +1048,58 @@ $maxChartCount = max(5, max($chartCounts));
 
         const flowChart = new ApexCharts(document.querySelector("#flujo-actividad-chart"), chartOptions);
         flowChart.render();
+
+        // Inicializar ApexCharts Donut Chart: RENDIMIENTO DE ENTREGAS
+        const donutOptions = {
+            series: [<?= $completadosCount ?>, <?= $canceladosCount ?>, <?= $enCursoCount ?>],
+            labels: ['Entregados', 'Cancelados', 'En Curso'],
+            chart: {
+                type: 'donut',
+                height: 240
+            },
+            colors: ['#10b981', '#ef4444', '#f59e0b'],
+            legend: {
+                position: 'bottom',
+                fontSize: '11px',
+                fontFamily: 'Plus Jakarta Sans, sans-serif',
+                fontWeight: 600,
+                labels: {
+                    colors: '#475569'
+                }
+            },
+            dataLabels: {
+                enabled: true,
+                style: {
+                    fontSize: '11px',
+                    fontFamily: 'Plus Jakarta Sans, sans-serif',
+                    fontWeight: 700
+                }
+            },
+            plotOptions: {
+                pie: {
+                    donut: {
+                        size: '65%',
+                        labels: {
+                            show: true,
+                            total: {
+                                show: true,
+                                label: 'Total',
+                                fontSize: '12px',
+                                fontFamily: 'Plus Jakarta Sans, sans-serif',
+                                fontWeight: 700,
+                                color: '#64748b',
+                                formatter: function (w) {
+                                    return w.globals.seriesTotals.reduce((a, b) => a + b, 0)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        };
+
+        const donutChart = new ApexCharts(document.querySelector("#rendimiento-entregas-chart"), donutOptions);
+        donutChart.render();
     };
 
     let activeDriverData = null;
