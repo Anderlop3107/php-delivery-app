@@ -807,8 +807,8 @@ require __DIR__ . '/_header.php';
 
     function showOrderTakenModal() {
         document.getElementById('order-taken-modal').style.display = 'flex';
-        // Reproducir sonido de rechazo
-        const rejectAudio = new Audio('<?= esc(delivery_app_url("uploads/sounds/notification.mp3")) ?>');
+        // Reproducir sonido de pedido tomado
+        const rejectAudio = new Audio('<?= esc(delivery_app_url("assets/sounds/order_taken.mp3")) ?>');
         rejectAudio.volume = 0.8;
         rejectAudio.play().catch(err => console.log("Audio rejected:", err));
     }
