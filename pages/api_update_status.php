@@ -54,6 +54,20 @@ if ($user['role'] === 'repartidor') {
 $success = update_delivery_status($orderId, $newStatus, (int)$user['id']);
 
 if ($success) {
+    // Si es repartidor y ahora tiene 2 o más pedidos activos, lo forzamos a offline
+    if ($user['role'] === 'repartidor') {
+        $row = app_one("
+            SELECT COUNT(*) as count
+            FROM deliveries
+            WHERE repartidor_user_id = ?
+              AND status NOT IN ('entregado', 'cancelado', 'rechazado')
+        ", 'i', [(int)$user['id']]);
+        $activeCount = (int)($row['count'] ?? 0);
+        
+        if ($activeCount >= 2) {
+            app_exec("UPDATE users SET is_online = 0 WHERE id = ?", 'i', [(int)$user['id']]);
+        }
+    }
     echo json_encode(['success' => true]);
 } else {
     echo json_encode(['success' => false, 'message' => 'Error al actualizar el estado']);
