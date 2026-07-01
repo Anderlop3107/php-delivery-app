@@ -17,21 +17,8 @@ if (!$user || $user['role'] !== 'repartidor') {
 $matchedOrders = obtener_pedidos_disponibles_para_repartidor((int)$user['id']);
 
 $finalOrder = null;
-foreach ($matchedOrders as $candidate) {
-    // Intentar bloquear el pedido temporalmente para este repartidor por 15 segundos
-    $reserved = app_exec("
-        UPDATE deliveries 
-        SET reservado_para_repartidor_id = ?, 
-            reserva_expira_en = DATE_ADD(NOW(), INTERVAL 15 SECOND)
-        WHERE id = ? 
-          AND status = 'pendiente'
-          AND (reservado_para_repartidor_id IS NULL OR reservado_para_repartidor_id = ? OR reserva_expira_en < NOW())
-    ", 'iii', [(int)$user['id'], (int)$candidate['id'], (int)$user['id']]);
-
-    if ($reserved > 0) {
-        $finalOrder = $candidate;
-        break; // Hemos reservado exitosamente el pedido
-    }
+if (!empty($matchedOrders)) {
+    $finalOrder = $matchedOrders[0];
 }
 
 if ($finalOrder) {
