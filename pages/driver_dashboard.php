@@ -456,6 +456,38 @@ require __DIR__ . '/_header.php';
     </div>
 </div>
 
+<!-- Modal Pedido Tomado por Otro -->
+<div id="order-taken-modal" style="
+    display: none; position: fixed; inset: 0; z-index: 9999;
+    background: rgba(15,23,42,0.55); backdrop-filter: blur(10px);
+    align-items: center; justify-content: center;
+">
+    <div style="
+        background: #fff; border-radius: 28px; padding: 36px 28px 28px;
+        width: 88vw; max-width: 360px; text-align: center;
+        box-shadow: 0 24px 60px rgba(0,0,0,0.2);
+        animation: scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    ">
+        <div style="
+            width: 72px; height: 72px; border-radius: 50%;
+            background: #fef3c7; margin: 0 auto 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 36px;
+        ">⚡</div>
+        <h3 style="margin: 0 0 8px; font-size: 20px; font-weight: 800; color: #1e293b;">Pedido Tomado</h3>
+        <p style="margin: 0 0 24px; font-size: 14px; color: #64748b; font-weight: 500; line-height: 1.5;">
+            Otro repartidor fue más rápido y tomó este pedido. ¡Sigue activo para el próximo!
+        </p>
+        <button onclick="closeOrderTakenModal()" style="
+            width: 100%; padding: 16px; border: none; border-radius: 16px;
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: #fff; font-size: 15px; font-weight: 800; cursor: pointer;
+            box-shadow: 0 8px 20px rgba(245,158,11,0.3);
+        ">Entendido, seguir buscando</button>
+    </div>
+</div>
+
+
 <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiYW5kZXJsb3AiLCJhIjoiY21uMGJ1ZXhzMGkxMDJycHRuYzEwcmp4NCJ9.Jn4uXN5yX4DFIImQjw_R4w';
     
@@ -567,10 +599,13 @@ require __DIR__ . '/_header.php';
                 const res = await resp.json();
                 
                 if (res.has_orders && res.order.id !== currentBroadcastId) {
+                    // Cerrar modal de "tomado" si estaba visible
+                    const takenModal = document.getElementById('order-taken-modal');
+                    if (takenModal) takenModal.style.display = 'none';
                     showBroadcast(res.order);
                 } else if (!res.has_orders && currentBroadcastId) {
-                    // El pedido fue tomado por otro conductor — cerrar modal automáticamente
-                    showToast('⚡ Pedido tomado por otro repartidor', 'warning');
+                    // El pedido fue tomado por otro conductor — mostrar modal
+                    document.getElementById('order-taken-modal').style.display = 'flex';
                     closeBroadcast();
                 }
             } catch (e) {}
@@ -728,32 +763,51 @@ require __DIR__ . '/_header.php';
 
     let acceptTimeout = null;
 
-    function showAcceptSuccessModal() {
+    async function showAcceptSuccessModal() {
         // Detener sonido de broadcast
         stopBroadcastSound();
         
         // Cerrar modal de broadcast
         document.getElementById('broadcast-modal').style.display = 'none';
 
-        // Mostrar modal de éxito
-        const modal = document.getElementById('accept-success-modal');
-        if (modal) modal.style.display = 'flex';
-
         // Reproducir sonido de éxito
         const successAudio = new Audio('<?= esc(delivery_app_url("uploads/sounds/success.mp3")) ?>');
-        successAudio.play().catch(err => {
-            console.log("Audio play blocked or failed:", err);
-        });
+        successAudio.play().catch(err => console.log("Audio play blocked:", err));
 
-        // Redirección automática en 5 segundos
-        acceptTimeout = setTimeout(() => {
+        // Verificar cuántos pedidos activos tiene el conductor
+        try {
+            const resp = await fetch('api_check_new_orders.php?_t=' + Date.now());
+            const res = await resp.json();
+            // El matching solo retorna pedidos si el conductor tiene capacidad (<2 activos)
+            // Si ya no puede tomar más (>=2), redirige a my_deliveries
+            const activeResp = await fetch('api_driver_active_count.php?_t=' + Date.now());
+            const activeData = await activeResp.json();
+            const activeCount = activeData.count ?? 0;
+
+            if (activeCount >= 2) {
+                // Conductor lleno — redirigir a hoja de ruta
+                const modal = document.getElementById('accept-success-modal');
+                if (modal) modal.style.display = 'flex';
+                acceptTimeout = setTimeout(() => { window.location.href = 'my_deliveries.php'; }, 4000);
+            } else {
+                // Conductor puede tomar otro pedido — mostrar éxito y seguir en radar
+                showToast('✅ ¡Pedido aceptado! Puedes tomar otro más.', 'success');
+                resetSlider();
+                // El radar sigue activo, no se redirige
+            }
+        } catch(e) {
+            // Fallback: redirigir a my_deliveries
             window.location.href = 'my_deliveries.php';
-        }, 5000);
+        }
     }
 
     function closeAcceptSuccessModal() {
         if (acceptTimeout) clearTimeout(acceptTimeout);
         window.location.href = 'my_deliveries.php';
+    }
+
+    function closeOrderTakenModal() {
+        document.getElementById('order-taken-modal').style.display = 'none';
     }
 
     async function acceptBroadcastedOrder() {
@@ -775,9 +829,9 @@ require __DIR__ . '/_header.php';
             if (res.success) {
                 showAcceptSuccessModal();
             } else {
-                // Pedido tomado por otro — cerrar modal con mensaje amigable
+                // Pedido tomado por otro — mostrar modal amigable
                 closeBroadcast();
-                showToast('⚡ ' + (res.message || 'Pedido tomado por otro repartidor'), 'warning');
+                document.getElementById('order-taken-modal').style.display = 'flex';
             }
         } catch (e) {
             showToast('❌ Error de conexión al aceptar el pedido', 'error');
