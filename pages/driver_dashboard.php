@@ -473,7 +473,7 @@ require __DIR__ . '/_header.php';
             background: rgba(37, 99, 235, 0.1); margin: 0 auto 20px;
             display: flex; align-items: center; justify-content: center;
             font-size: 36px;
-        ">🛵</div>
+        ">❌</div>
         <h3 style="margin: 0 0 8px; font-size: 22px; font-weight: 800; color: #1e293b;">Pedido tomado</h3>
         <p style="margin: 0 0 28px; font-size: 15px; color: #64748b; font-weight: 500; line-height: 1.5;">
             ¡Sigue activo para el próximo pedido!
@@ -604,8 +604,8 @@ require __DIR__ . '/_header.php';
                     if (takenModal) takenModal.style.display = 'none';
                     showBroadcast(res.order);
                 } else if (!res.has_orders && currentBroadcastId) {
-                    // El pedido fue tomado por otro conductor — mostrar modal
-                    document.getElementById('order-taken-modal').style.display = 'flex';
+                    // El pedido fue tomado por otro conductor — mostrar modal con sonido
+                    showOrderTakenModal();
                     closeBroadcast();
                 }
             } catch (e) {}
@@ -805,6 +805,14 @@ require __DIR__ . '/_header.php';
         document.getElementById('order-taken-modal').style.display = 'none';
     }
 
+    function showOrderTakenModal() {
+        document.getElementById('order-taken-modal').style.display = 'flex';
+        // Reproducir sonido de rechazo
+        const rejectAudio = new Audio('<?= esc(delivery_app_url("uploads/sounds/notification.mp3")) ?>');
+        rejectAudio.volume = 0.8;
+        rejectAudio.play().catch(err => console.log("Audio rejected:", err));
+    }
+
     async function acceptBroadcastedOrder() {
         if (!currentBroadcastId) return;
         
@@ -824,9 +832,9 @@ require __DIR__ . '/_header.php';
             if (res.success) {
                 showAcceptSuccessModal();
             } else {
-                // Pedido tomado por otro — mostrar modal amigable
+                // Pedido tomado por otro — mostrar modal con sonido
                 closeBroadcast();
-                document.getElementById('order-taken-modal').style.display = 'flex';
+                showOrderTakenModal();
             }
         } catch (e) {
             showToast('❌ Error de conexión al aceptar el pedido', 'error');
