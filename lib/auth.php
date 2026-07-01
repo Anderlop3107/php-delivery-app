@@ -50,6 +50,10 @@ function app_login(string $email, string $password): bool
         'subscription_blocked' => false,
     ];
 
+    if ($user['role'] === 'repartidor') {
+        app_exec("UPDATE users SET is_online = 1 WHERE id = ?", 'i', [(int)$user['id']]);
+    }
+
     return true;
 }
 

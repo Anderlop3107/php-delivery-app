@@ -29,6 +29,19 @@ $updated = app_exec("
 ", 'ii', [(int)$user['id'], $orderId]);
 
 if ($updated > 0) {
+    // Verificar si el repartidor alcanzó el límite de 2 pedidos activos
+    $row = app_one("
+        SELECT COUNT(*) as count
+        FROM deliveries
+        WHERE repartidor_user_id = ?
+          AND status NOT IN ('entregado', 'cancelado', 'rechazado')
+    ", 'i', [(int)$user['id']]);
+    $activeCount = (int)($row['count'] ?? 0);
+    
+    if ($activeCount >= 2) {
+        app_exec("UPDATE users SET is_online = 0 WHERE id = ?", 'i', [(int)$user['id']]);
+    }
+    
     echo json_encode(['success' => true]);
 } else {
     // El pedido ya fue tomado por otro conductor

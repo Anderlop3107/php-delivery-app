@@ -6,6 +6,15 @@ require_role(['repartidor']);
 $sessionUser = current_user();
 $userData = app_one("SELECT * FROM users WHERE id = ?", "i", [(int)$sessionUser['id']]);
 
+// Verificar pedidos activos actuales
+$activeCountRow = app_one("
+    SELECT COUNT(*) as count
+    FROM deliveries
+    WHERE repartidor_user_id = ?
+      AND status NOT IN ('entregado', 'cancelado', 'rechazado')
+", "i", [(int)$sessionUser['id']]);
+$activeCount = (int)($activeCountRow['count'] ?? 0);
+
 $title = 'Escáner de Pedidos';
 require __DIR__ . '/_header.php';
 ?>
@@ -382,7 +391,7 @@ require __DIR__ . '/_header.php';
     <!-- ÁREA DEL TOGGLE -->
     <div class="availability-toggle-box">
         <label class="ios-switch">
-            <input type="checkbox" id="main-status-toggle" onchange="handleScannerToggle(this.checked)">
+            <input type="checkbox" id="main-status-toggle" onchange="handleScannerToggle(this.checked)" <?= ($userData['is_online'] == 1 && $activeCount < 2) ? 'checked' : '' ?>>
             <span class="ios-slider"></span>
         </label>
         <div class="status-label-text" id="main-status-text">Desconectado</div>
@@ -564,16 +573,18 @@ require __DIR__ . '/_header.php';
         }
     }
 
-    function handleScannerToggle(isOnline) {
+    function handleScannerToggle(isOnline, skipDbUpdate = false) {
         const radar = document.getElementById('radar-ui');
         const text = document.getElementById('main-status-text');
 
-        const formData = new FormData();
-        formData.append('is_online', isOnline ? '1' : '0');
-        fetch('api_toggle_status.php', {
-            method: 'POST',
-            body: formData
-        }).catch(err => console.error("Error toggling status:", err));
+        if (!skipDbUpdate) {
+            const formData = new FormData();
+            formData.append('is_online', isOnline ? '1' : '0');
+            fetch('api_toggle_status.php', {
+                method: 'POST',
+                body: formData
+            }).catch(err => console.error("Error toggling status:", err));
+        }
 
         if (isOnline) {
             radar.classList.remove('paused');
@@ -878,6 +889,14 @@ require __DIR__ . '/_header.php';
 
     // Inicializar lógica de arrastre para el slider
     document.addEventListener("DOMContentLoaded", () => {
+        // Inicializar estado del toggle basado en el checkbox PHP
+        const statusToggle = document.getElementById('main-status-toggle');
+        if (statusToggle && statusToggle.checked) {
+            handleScannerToggle(true, true);
+        } else {
+            handleScannerToggle(false, true);
+        }
+
         const handle = document.getElementById('swipe-handle');
         const track = document.getElementById('swipe-container');
         const bgFill = document.getElementById('swipe-bg-fill');
