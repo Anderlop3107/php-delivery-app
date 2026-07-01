@@ -65,12 +65,16 @@ if ($isDriver && !empty($activeRows)) {
             if ($isPickupA && $isPickupB) {
                 $distA = calcular_distancia_haversine($driverLat, $driverLng, (float)$a['local_lat'], (float)$a['local_lng']);
                 $distB = calcular_distancia_haversine($driverLat, $driverLng, (float)$b['local_lat'], (float)$b['local_lng']);
+                // Desempate: si misma distancia (mismo local), el pedido más antiguo va primero
+                if (abs($distA - $distB) < 0.001) return strtotime($a['created_at']) <=> strtotime($b['created_at']);
                 return $distA <=> $distB;
             }
 
             // Regla 3: Si ambos están en entrega, ir al domicilio del cliente más cercano
             $distA = calcular_distancia_haversine($driverLat, $driverLng, (float)$a['delivery_latitude'], (float)$a['delivery_longitude']);
             $distB = calcular_distancia_haversine($driverLat, $driverLng, (float)$b['delivery_latitude'], (float)$b['delivery_longitude']);
+            // Desempate: pedido más antiguo va primero
+            if (abs($distA - $distB) < 0.001) return strtotime($a['created_at']) <=> strtotime($b['created_at']);
             return $distA <=> $distB;
         });
     }
