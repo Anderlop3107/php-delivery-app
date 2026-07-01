@@ -86,7 +86,7 @@ function obtener_pedidos_disponibles_para_repartidor(int $repartidorId): array
         WHERE d.status = 'pendiente' 
           AND d.repartidor_user_id IS NULL
         ORDER BY d.created_at DESC
-    ", "i", [$repartidorId]);
+    ");
 
     $matchedDeliveries = [];
 
