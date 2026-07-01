@@ -568,6 +568,10 @@ require __DIR__ . '/_header.php';
                 
                 if (res.has_orders && res.order.id !== currentBroadcastId) {
                     showBroadcast(res.order);
+                } else if (!res.has_orders && currentBroadcastId) {
+                    // El pedido fue tomado por otro conductor — cerrar modal automáticamente
+                    showToast('⚡ Pedido tomado por otro repartidor', 'warning');
+                    closeBroadcast();
                 }
             } catch (e) {}
         }, 3000);
@@ -771,12 +775,12 @@ require __DIR__ . '/_header.php';
             if (res.success) {
                 showAcceptSuccessModal();
             } else {
-                alert(res.message);
-                resetSlider();
+                // Pedido tomado por otro — cerrar modal con mensaje amigable
                 closeBroadcast();
+                showToast('⚡ ' + (res.message || 'Pedido tomado por otro repartidor'), 'warning');
             }
         } catch (e) {
-            alert('Error al aceptar el pedido');
+            showToast('❌ Error de conexión al aceptar el pedido', 'error');
             resetSlider();
         }
     }
@@ -798,6 +802,21 @@ require __DIR__ . '/_header.php';
         currentBroadcastId = null;
         resetSlider();
         stopBroadcastSound();
+    }
+
+    function showToast(message, type = 'info') {
+        const colors = { warning: '#f59e0b', error: '#ef4444', success: '#10b981', info: '#3b82f6' };
+        const toast = document.createElement('div');
+        toast.style.cssText = `
+            position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+            background: ${colors[type] || colors.info}; color: #fff;
+            padding: 12px 20px; border-radius: 14px; font-size: 14px; font-weight: 700;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25); z-index: 99999;
+            animation: toastIn 0.3s ease; white-space: nowrap; max-width: 90vw;
+        `;
+        toast.innerText = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3500);
     }
 
     // Inicializar lógica de arrastre para el slider

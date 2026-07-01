@@ -85,7 +85,6 @@ function obtener_pedidos_disponibles_para_repartidor(int $repartidorId): array
         JOIN users u ON d.local_user_id = u.id
         WHERE d.status = 'pendiente' 
           AND d.repartidor_user_id IS NULL
-          AND (d.reservado_para_repartidor_id IS NULL OR d.reservado_para_repartidor_id = ? OR d.reserva_expira_en < NOW())
         ORDER BY d.created_at DESC
     ", "i", [$repartidorId]);
 
