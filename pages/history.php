@@ -338,6 +338,12 @@ require __DIR__ . '/_header.php';
             </div>
             <div class="order-amount-bento">
                 <b><?= number_format($row['delivery_cost'], 0, ',', '.') ?> Gs.</b>
+                <?php
+                    $dt = new DateTime($row['created_at']);
+                    $meses = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+                    $fechaLabel = $dt->format('d') . ' ' . $meses[(int)$dt->format('m')] . ' ' . $dt->format('H:i');
+                ?>
+                <span style="display:block; font-size:10px; color:var(--muted); font-weight:600; margin-top:4px;"><?= $fechaLabel ?></span>
             </div>
         </div>
     <?php endforeach; ?>
