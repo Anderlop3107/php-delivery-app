@@ -47,13 +47,14 @@ foreach ($activeLocals as $l) {
     }
 }
 
-// Estadísticas del Donut: Rendimiento de Entregas
+// Estadísticas del Donut: Rendimiento de Entregas (Esta Semana)
 $deliveryStats = app_one("
     SELECT 
         COUNT(CASE WHEN status = 'entregado' THEN 1 END) as completados,
         COUNT(CASE WHEN status = 'cancelado' THEN 1 END) as cancelados,
         COUNT(CASE WHEN status NOT IN ('entregado', 'cancelado') THEN 1 END) as en_curso
     FROM deliveries
+    WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
 ");
 $completadosCount = (int)($deliveryStats['completados'] ?? 0);
 $canceladosCount = (int)($deliveryStats['cancelados'] ?? 0);
@@ -69,11 +70,12 @@ $activeDeliveries = app_all("
     ORDER BY d.created_at DESC
 ");
 
-// Top Comercios (Demanda) y Repartidores Estrella
+// Top Comercios (Demanda) y Repartidores Estrella (Esta Semana)
 $topLocals = app_all("
     SELECT COALESCE(u.business_name, u.name) as name, COUNT(d.id) as count
     FROM deliveries d
     JOIN users u ON u.id = d.local_user_id
+    WHERE d.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
     GROUP BY d.local_user_id
     ORDER BY count DESC
     LIMIT 5
@@ -83,6 +85,7 @@ $topDrivers = app_all("
     FROM deliveries d
     JOIN users u ON u.id = d.repartidor_user_id
     WHERE d.status = 'entregado'
+      AND d.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
     GROUP BY d.repartidor_user_id
     ORDER BY count DESC
     LIMIT 5
@@ -786,6 +789,11 @@ $maxChartCount = max(5, max($chartCounts));
                 <div class="live-map-card" style="margin-bottom: 0; justify-content: space-between; display: flex; flex-direction: column;">
                     <div class="map-title-row">
                         <h3>Top 5 Comercios (Más Demandados)</h3>
+                        <select id="filter-top-locales" class="donut-filter-select" onchange="updateTopLocalesFilter(this.value)">
+                            <option value="day">Hoy</option>
+                            <option value="week" selected>Esta Semana</option>
+                            <option value="month">Este Mes</option>
+                        </select>
                     </div>
                     <div id="top-locales-chart" style="width: 100%; min-height: 250px;"></div>
                 </div>
@@ -794,6 +802,11 @@ $maxChartCount = max(5, max($chartCounts));
                 <div class="live-map-card" style="margin-bottom: 0; justify-content: space-between; display: flex; flex-direction: column;">
                     <div class="map-title-row">
                         <h3>Repartidores Estrella (Top Entregas)</h3>
+                        <select id="filter-top-repartidores" class="donut-filter-select" onchange="updateTopRepartidoresFilter(this.value)">
+                            <option value="day">Hoy</option>
+                            <option value="week" selected>Esta Semana</option>
+                            <option value="month">Este Mes</option>
+                        </select>
                     </div>
                     <div id="top-repartidores-chart" style="width: 100%; min-height: 250px;"></div>
                 </div>
@@ -1006,6 +1019,8 @@ $maxChartCount = max(5, max($chartCounts));
     let map = null;
     let markers = [];
     let donutChart = null;
+    let topLocalsChart = null;
+    let topDriversChart = null;
 
     function updateDonutFilter(range) {
         const formData = new FormData();
@@ -1023,6 +1038,58 @@ $maxChartCount = max(5, max($chartCounts));
             }
         })
         .catch(err => console.error("Error al actualizar filtro:", err));
+    }
+
+    function updateTopLocalesFilter(range) {
+        const formData = new FormData();
+        formData.append('action', 'get_top_locals');
+        formData.append('range', range);
+        
+        fetch('api_admin_action.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && topLocalsChart) {
+                topLocalsChart.updateOptions({
+                    xaxis: {
+                        categories: data.categories
+                    }
+                });
+                topLocalsChart.updateSeries([{
+                    name: 'Pedidos',
+                    data: data.series
+                }]);
+            }
+        })
+        .catch(err => console.error("Error al actualizar filtro locales:", err));
+    }
+
+    function updateTopRepartidoresFilter(range) {
+        const formData = new FormData();
+        formData.append('action', 'get_top_drivers');
+        formData.append('range', range);
+        
+        fetch('api_admin_action.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && topDriversChart) {
+                topDriversChart.updateOptions({
+                    xaxis: {
+                        categories: data.categories
+                    }
+                });
+                topDriversChart.updateSeries([{
+                    name: 'Entregas',
+                    data: data.series
+                }]);
+            }
+        })
+        .catch(err => console.error("Error al actualizar filtro repartidores:", err));
     }
 
     function refreshMapMarkers() {
@@ -1286,7 +1353,7 @@ $maxChartCount = max(5, max($chartCounts));
             },
             tooltip: { theme: 'light' }
         };
-        const topLocalsChart = new ApexCharts(document.querySelector("#top-locales-chart"), topLocalsOptions);
+        topLocalsChart = new ApexCharts(document.querySelector("#top-locales-chart"), topLocalsOptions);
         topLocalsChart.render();
 
         // Inicializar ApexCharts Donut Chart: REPARTIDORES ESTRELLA
@@ -1337,7 +1404,7 @@ $maxChartCount = max(5, max($chartCounts));
             },
             tooltip: { theme: 'light' }
         };
-        const topDriversChart = new ApexCharts(document.querySelector("#top-repartidores-chart"), topDriversOptions);
+        topDriversChart = new ApexCharts(document.querySelector("#top-repartidores-chart"), topDriversOptions);
         topDriversChart.render();
     };
 
