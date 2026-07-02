@@ -35,6 +35,15 @@ $paymentHistory = app_all("
 
 // Verificar si hay alguna notificación pendiente de pago para este driver
 $hasPendingNotification = ($latestPayment && $latestPayment['status'] === 'pending') ? 1 : 0;
+
+// Obtener cantidad de pedidos activos
+$activeCountRow = app_one("
+    SELECT COUNT(*) as count 
+    FROM deliveries 
+    WHERE repartidor_user_id = ? 
+      AND status NOT IN ('entregado', 'cancelado')
+", "i", [$driverId]);
+$activeCount = (int)($activeCountRow['count'] ?? 0);
 ?>
 <!DOCTYPE html>
 <html lang="es">
