@@ -429,13 +429,18 @@ if ($action === 'get_driver_kpis') {
     }
 
     // Obtener los puntos de entrega del rango
+    $whereClauseJoined = str_replace(
+        ['repartidor_user_id', 'created_at'], 
+        ['d.repartidor_user_id', 'd.created_at'], 
+        $whereClause
+    );
     $deliveriesPoints = app_all("
         SELECT d.id, d.delivery_latitude, d.delivery_longitude, d.delivery_address,
                COALESCE(d.pickup_latitude, l.latitude) as local_lat, COALESCE(d.pickup_longitude, l.longitude) as local_lng,
                l.business_name as local_name, d.status
         FROM deliveries d
         JOIN users l ON l.id = d.local_user_id
-        WHERE $whereClause
+        WHERE $whereClauseJoined
     ");
 
     echo json_encode([
