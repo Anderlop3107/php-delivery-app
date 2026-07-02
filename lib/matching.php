@@ -33,7 +33,8 @@ function obtener_pedidos_disponibles_para_repartidor(int $repartidorId): array
     // 1. Obtener datos del repartidor (ubicación y conexión activa)
     // Se valida si el repartidor está activo (GPS reportado en los últimos 60 segundos)
     $driver = app_one("
-        SELECT id, latitude, longitude, ubicacion_actualizada_en, subscription_status, subscription_expires_at 
+        SELECT id, latitude, longitude, ubicacion_actualizada_en, subscription_status, subscription_expires_at,
+               status_doc_ci, status_doc_licencia, status_doc_habilitacion, status_doc_cedula_verde
         FROM users 
         WHERE id = ? 
           AND role = 'repartidor'
@@ -41,6 +42,18 @@ function obtener_pedidos_disponibles_para_repartidor(int $repartidorId): array
     ", "i", [$repartidorId]);
     
     if (!$driver) {
+        return [];
+    }
+
+    // Verificar si la documentación está completamente aprobada
+    $docsApproved = (
+        $driver['status_doc_ci'] === 'approved' &&
+        $driver['status_doc_licencia'] === 'approved' &&
+        $driver['status_doc_habilitacion'] === 'approved' &&
+        $driver['status_doc_cedula_verde'] === 'approved'
+    );
+
+    if (!$docsApproved) {
         return [];
     }
 

@@ -15,6 +15,14 @@ $activeCountRow = app_one("
 ", "i", [(int)$sessionUser['id']]);
 $activeCount = (int)($activeCountRow['count'] ?? 0);
 
+// Verificar estado de documentación
+$docsApproved = (
+    ($userData['status_doc_ci'] ?? 'none') === 'approved' &&
+    ($userData['status_doc_licencia'] ?? 'none') === 'approved' &&
+    ($userData['status_doc_habilitacion'] ?? 'none') === 'approved' &&
+    ($userData['status_doc_cedula_verde'] ?? 'none') === 'approved'
+);
+
 // Verificar estado de suscripción
 $subscriptionExpired = true;
 if ($userData['subscription_status'] === 'active' && !empty($userData['subscription_expires_at'])) {
@@ -379,7 +387,63 @@ require __DIR__ . '/_header.php';
 
 <div class="driver-scanner-view">
 
-<?php if ($subscriptionExpired): ?>
+<?php if (!$docsApproved): ?>
+<div class="subscription-block-overlay" id="docs-block-modal" style="
+    position: fixed; inset: 0; z-index: 100000;
+    background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(15px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+">
+    <div style="
+        background: #ffffff; border-radius: 28px; padding: 40px 30px;
+        width: 100%; max-width: 420px; text-align: center;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    ">
+        <div style="
+            width: 80px; height: 80px; border-radius: 50%;
+            background: rgba(59, 130, 246, 0.1); color: #3b82f6;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 40px; margin: 0 auto 24px;
+        ">
+            📄
+        </div>
+
+        <h2 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 0 0 12px;">Documentación pendiente</h2>
+        <p style="font-size: 15px; color: #64748b; margin: 0 0 24px; line-height: 1.6; font-weight: 500;">
+            Para recibir pedidos, el administrador debe verificar y aprobar tu documentación obligatoria.
+        </p>
+
+        <div style="text-align: left; display: flex; flex-direction: column; gap: 12px; margin-bottom: 30px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #f8fafc; border-radius: 12px; font-size: 13px; font-weight: 700;">
+                <span style="color:#475569;">Cédula de Identidad</span>
+                <span class="status-pill <?= $userData['status_doc_ci'] ?>" style="font-size: 9px; padding: 4px 10px;"><?= $userData['status_doc_ci'] ?></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #f8fafc; border-radius: 12px; font-size: 13px; font-weight: 700;">
+                <span style="color:#475569;">Licencia de Conducir</span>
+                <span class="status-pill <?= $userData['status_doc_licencia'] ?>" style="font-size: 9px; padding: 4px 10px;"><?= $userData['status_doc_licencia'] ?></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #f8fafc; border-radius: 12px; font-size: 13px; font-weight: 700;">
+                <span style="color:#475569;">Habilitación Municipal</span>
+                <span class="status-pill <?= $userData['status_doc_habilitacion'] ?>" style="font-size: 9px; padding: 4px 10px;"><?= $userData['status_doc_habilitacion'] ?></span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #f8fafc; border-radius: 12px; font-size: 13px; font-weight: 700;">
+                <span style="color:#475569;">Cédula Verde</span>
+                <span class="status-pill <?= $userData['status_doc_cedula_verde'] ?>" style="font-size: 9px; padding: 4px 10px;"><?= $userData['status_doc_cedula_verde'] ?></span>
+            </div>
+        </div>
+
+        <a href="profile.php?tab=documentos" style="
+            display: block; width: 100%; padding: 16px; border-radius: 16px;
+            background: var(--primary, #2563eb); color: #ffffff; text-decoration: none;
+            font-size: 15px; font-weight: 800; text-align: center;
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+        ">
+            Subir o Editar Documentos
+        </a>
+    </div>
+</div>
+<?php elseif ($subscriptionExpired): ?>
 <div class="subscription-block-overlay" id="subscription-block-modal" style="
     position: fixed; inset: 0; z-index: 100000;
     background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(15px);
