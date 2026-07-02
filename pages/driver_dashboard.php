@@ -389,6 +389,12 @@ require __DIR__ . '/_header.php';
     .status-pill.pending { background: #fef3c7 !important; color: #92400e !important; }
     .status-pill.rejected { background: #fee2e2 !important; color: #991b1b !important; }
     .status-pill.none { background: #f1f5f9 !important; color: #64748b !important; }
+
+    @keyframes pulseGlow {
+        0% { transform: scale(1); box-shadow: 0 0 20px rgba(245, 158, 11, 0.12); }
+        50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(245, 158, 11, 0.25); }
+        100% { transform: scale(1); box-shadow: 0 0 20px rgba(245, 158, 11, 0.12); }
+    }
 </style>
 
 <div class="driver-scanner-view">
@@ -470,28 +476,39 @@ require __DIR__ . '/_header.php';
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         border: 1px solid rgba(255, 255, 255, 0.2);
     ">
-        <div style="
-            width: 80px; height: 80px; border-radius: 50%;
-            background: rgba(239, 68, 68, 0.1); color: #ef4444;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 40px; margin: 0 auto 24px;
-        ">
-            💳
-        </div>
-
         <?php if ($latestPayment && $latestPayment['status'] === 'pending'): ?>
-            <h2 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 0 0 12px;">Comprobante en verificación</h2>
+            <div style="
+                width: 80px; height: 80px; border-radius: 50%;
+                background: rgba(245, 158, 11, 0.08); color: #f59e0b;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 40px; margin: 0 auto 24px;
+                box-shadow: 0 0 20px rgba(245, 158, 11, 0.12);
+                animation: pulseGlow 2s infinite ease-in-out;
+            ">
+                ⏳
+            </div>
+            <h2 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 0 0 12px; letter-spacing: -0.5px;">Comprobante en verificación</h2>
             <p style="font-size: 15px; color: #64748b; margin: 0 0 24px; line-height: 1.6; font-weight: 500;">
                 Tu comprobante de pago fue subido con éxito y está en revisión. El administrador te habilitará pronto.
             </p>
             <div style="
-                background: #f1f5f9; padding: 12px; border-radius: 12px;
-                font-size: 13px; color: #475569; font-weight: 600;
+                background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px;
+                font-size: 13.5px; color: #475569; font-weight: 700;
+                display: flex; align-items: center; justify-content: center; gap: 8px;
             ">
-                📅 Enviado el: <?= date('d/m/Y H:i', strtotime($latestPayment['uploaded_at'])) ?> (UTC-3)
+                <span>📅</span>
+                <span>Enviado el: <?= date('d/m/Y H:i', strtotime($latestPayment['uploaded_at'])) ?> (UTC-3)</span>
             </div>
         <?php else: ?>
-            <h2 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 0 0 12px;">Suscríbete para recibir más pedidos</h2>
+            <div style="
+                width: 80px; height: 80px; border-radius: 50%;
+                background: rgba(239, 68, 68, 0.1); color: #ef4444;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 40px; margin: 0 auto 24px;
+            ">
+                💳
+            </div>
+            <h2 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 0 0 12px; letter-spacing: -0.5px;">Suscríbete para recibir más pedidos</h2>
             <p style="font-size: 15px; color: #64748b; margin: 0 0 24px; line-height: 1.6; font-weight: 500;">
                 Tu acceso ha vencido o requiere renovación. Por favor, sube tu comprobante de pago semanal para continuar activo en la plataforma.
             </p>
