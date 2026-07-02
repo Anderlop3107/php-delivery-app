@@ -946,7 +946,7 @@ $maxChartCount = max(5, max($chartCounts));
                 </div>
             <?php else: ?>
                 <?php foreach ($pendingVerifications as $pv): ?>
-                    <div class="verification-card" onclick='openDriverModal(<?= json_encode($pv) ?>)'>
+                    <div class="verification-card" onclick="window.location.href='admin_driver_detail.php?id=<?= (int)$pv['id'] ?>'" style="cursor:pointer;">
                         <div class="driver-mini-info">
                             <div class="driver-mini-avatar">
                                 <?php if ($pv['avatar_path']): ?>
