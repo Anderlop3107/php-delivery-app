@@ -884,34 +884,74 @@ $hasPendingNotification = ($latestPayment && $latestPayment['status'] === 'pendi
                     <div style="display:flex; flex-direction:column; gap:12px;">
                         <h3>📄 Documentación Registrada</h3>
                         <div class="docs-list">
+                            <!-- CI -->
                             <div class="doc-item-row" onclick="openDocModal('ci', 'Cédula de Identidad', '<?= esc($driverData['doc_ci_path']) ?>', '<?= esc($driverData['doc_ci_back_path']) ?>', '<?= $driverData['status_doc_ci'] ?>')">
-                                <div class="doc-meta">
-                                    <b>Cédula de Identidad</b>
-                                    <span>Frente y Dorso</span>
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                    <div class="doc-mini-preview" style="width: 40px; height: 30px; border-radius: 6px; overflow: hidden; background: #e2e8f0; border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center;">
+                                        <?php if ($driverData['doc_ci_path']): ?>
+                                            <img src="<?= esc(delivery_app_url($driverData['doc_ci_path'])) ?>" style="width:100%; height:100%; object-fit:cover;">
+                                        <?php else: ?>
+                                            <span style="font-size:12px;">📄</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="doc-meta">
+                                        <b>Cédula de Identidad</b>
+                                        <span>Frente y Dorso</span>
+                                    </div>
                                 </div>
                                 <span class="status-pill <?= $driverData['status_doc_ci'] ?>"><?= $driverData['status_doc_ci'] ?></span>
                             </div>
                             
+                            <!-- Licencia -->
                             <div class="doc-item-row" onclick="openDocModal('licencia', 'Licencia de Conducir', '<?= esc($driverData['doc_licencia_path']) ?>', '<?= esc($driverData['doc_licencia_back_path']) ?>', '<?= $driverData['status_doc_licencia'] ?>')">
-                                <div class="doc-meta">
-                                    <b>Licencia de Conducir</b>
-                                    <span>Registro Profesional</span>
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                    <div class="doc-mini-preview" style="width: 40px; height: 30px; border-radius: 6px; overflow: hidden; background: #e2e8f0; border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center;">
+                                        <?php if ($driverData['doc_licencia_path']): ?>
+                                            <img src="<?= esc(delivery_app_url($driverData['doc_licencia_path'])) ?>" style="width:100%; height:100%; object-fit:cover;">
+                                        <?php else: ?>
+                                            <span style="font-size:12px;">🪪</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="doc-meta">
+                                        <b>Licencia de Conducir</b>
+                                        <span>Registro Profesional</span>
+                                    </div>
                                 </div>
                                 <span class="status-pill <?= $driverData['status_doc_licencia'] ?>"><?= $driverData['status_doc_licencia'] ?></span>
                             </div>
                             
+                            <!-- Habilitación -->
                             <div class="doc-item-row" onclick="openDocModal('habilitacion', 'Habilitación Vehicular', '<?= esc($driverData['doc_habilitacion_path']) ?>', '<?= esc($driverData['doc_habilitacion_back_path']) ?>', '<?= $driverData['status_doc_habilitacion'] ?>')">
-                                <div class="doc-meta">
-                                    <b>Habilitación Municipal</b>
-                                    <span>Patente de Tránsito</span>
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                    <div class="doc-mini-preview" style="width: 40px; height: 30px; border-radius: 6px; overflow: hidden; background: #e2e8f0; border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center;">
+                                        <?php if ($driverData['doc_habilitacion_path']): ?>
+                                            <img src="<?= esc(delivery_app_url($driverData['doc_habilitacion_path'])) ?>" style="width:100%; height:100%; object-fit:cover;">
+                                        <?php else: ?>
+                                            <span style="font-size:12px;">🚗</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="doc-meta">
+                                        <b>Habilitación Municipal</b>
+                                        <span>Patente de Tránsito</span>
+                                    </div>
                                 </div>
                                 <span class="status-pill <?= $driverData['status_doc_habilitacion'] ?>"><?= $driverData['status_doc_habilitacion'] ?></span>
                             </div>
                             
+                            <!-- Cédula Verde -->
                             <div class="doc-item-row" onclick="openDocModal('cedula_verde', 'Cédula Verde', '<?= esc($driverData['doc_cedula_verde_path']) ?>', '<?= esc($driverData['doc_cedula_verde_back_path']) ?>', '<?= $driverData['status_doc_cedula_verde'] ?>')">
-                                <div class="doc-meta">
-                                    <b>Cédula Verde</b>
-                                    <span>Propiedad del Vehículo</span>
+                                <div style="display:flex; align-items:center; gap:12px;">
+                                    <div class="doc-mini-preview" style="width: 40px; height: 30px; border-radius: 6px; overflow: hidden; background: #e2e8f0; border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center;">
+                                        <?php if ($driverData['doc_cedula_verde_path']): ?>
+                                            <img src="<?= esc(delivery_app_url($driverData['doc_cedula_verde_path'])) ?>" style="width:100%; height:100%; object-fit:cover;">
+                                        <?php else: ?>
+                                            <span style="font-size:12px;">💚</span>
+                                        <?php endif; ?>
+                                    </div>
+                                    <div class="doc-meta">
+                                        <b>Cédula Verde</b>
+                                        <span>Propiedad del Vehículo</span>
+                                    </div>
                                 </div>
                                 <span class="status-pill <?= $driverData['status_doc_cedula_verde'] ?>"><?= $driverData['status_doc_cedula_verde'] ?></span>
                             </div>
