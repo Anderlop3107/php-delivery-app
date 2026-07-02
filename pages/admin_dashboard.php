@@ -878,7 +878,7 @@ $maxChartCount = max(5, max($chartCounts));
                     <div style="text-align:center; padding: 40px; color:var(--text-muted);">No hay repartidores registrados.</div>
                 <?php else: ?>
                     <?php foreach ($activeDrivers as $d): ?>
-                        <div class="table-row-item" onclick='openDriverModal(<?= json_encode($d) ?>)' style="cursor:pointer;">
+                        <div class="table-row-item" onclick="window.location.href='admin_driver_detail.php?id=<?= (int)$d['id'] ?>'" style="cursor:pointer;">
                             <div class="driver-mini-info">
                                 <div class="driver-mini-avatar">
                                     <?php if ($d['avatar_path']): ?>

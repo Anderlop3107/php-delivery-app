@@ -246,6 +246,241 @@ if ($action === 'get_top_drivers') {
     exit;
 }
 
+if ($action === 'verify_driver_payment') {
+    $driverId = (int)($_POST['driver_id'] ?? 0);
+    $status = $_POST['status'] ?? ''; // 'approved' or 'rejected'
+    $notes = trim((string)($_POST['notes'] ?? ''));
+    $paymentId = (int)($_POST['payment_id'] ?? 0);
+
+    if ($driverId <= 0 || !in_array($status, ['approved', 'rejected'], true)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Datos inválidos.']);
+        exit;
+    }
+
+    // Verificar que el conductor exista
+    $driver = app_one("SELECT id FROM users WHERE id = ? AND role = 'repartidor'", 'i', [$driverId]);
+    if (!$driver) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Repartidor no encontrado.']);
+        exit;
+    }
+
+    if ($status === 'approved') {
+        // Calcular próximo lunes 10:30 AM
+        $now = time();
+        $todayMonday1030 = strtotime('this Monday 10:30:00');
+        if ($now < $todayMonday1030) {
+            $expiresAt = date('Y-m-d H:i:s', $todayMonday1030);
+        } else {
+            $expiresAt = date('Y-m-d H:i:s', strtotime('next Monday 10:30:00'));
+        }
+
+        // Actualizar tabla users
+        app_exec("
+            UPDATE users 
+            SET subscription_status = 'active', subscription_expires_at = ?, updated_at = NOW()
+            WHERE id = ?
+        ", 'si', [$expiresAt, $driverId]);
+
+        // Actualizar comprobante en driver_payments
+        if ($paymentId > 0) {
+            app_exec("
+                UPDATE driver_payments 
+                SET status = 'approved', verified_at = NOW(), notes = ?
+                WHERE id = ?
+            ", 'si', [$notes, $paymentId]);
+        }
+    } else { // rejected
+        // Actualizar tabla users
+        app_exec("
+            UPDATE users 
+            SET subscription_status = 'expired', updated_at = NOW()
+            WHERE id = ?
+        ", 'i', [$driverId]);
+
+        // Actualizar comprobante en driver_payments
+        if ($paymentId > 0) {
+            app_exec("
+                UPDATE driver_payments 
+                SET status = 'rejected', verified_at = NOW(), notes = ?
+                WHERE id = ?
+            ", 'si', [$notes, $paymentId]);
+        }
+    }
+
+    echo json_encode(['success' => true, 'message' => 'Comprobante verificado con éxito.']);
+    exit;
+}
+
+if ($action === 'extend_driver_grace_period') {
+    $driverId = (int)($_POST['driver_id'] ?? 0);
+    $hours = (int)($_POST['hours'] ?? 0);
+
+    if ($driverId <= 0 || $hours <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Datos inválidos.']);
+        exit;
+    }
+
+    // Verificar que el conductor exista
+    $driver = app_one("SELECT id FROM users WHERE id = ? AND role = 'repartidor'", 'i', [$driverId]);
+    if (!$driver) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Repartidor no encontrado.']);
+        exit;
+    }
+
+    $expiresAt = date('Y-m-d H:i:s', strtotime("+$hours hours"));
+
+    // Actualizar tabla users
+    app_exec("
+        UPDATE users 
+        SET subscription_status = 'active', subscription_expires_at = ?, updated_at = NOW()
+        WHERE id = ?
+    ", 'si', [$expiresAt, $driverId]);
+
+    echo json_encode([
+        'success' => true, 
+        'message' => 'Prórroga otorgada con éxito.',
+        'expires_at' => date('d/m/Y H:i', strtotime($expiresAt))
+    ]);
+    exit;
+}
+
+if ($action === 'get_driver_kpis') {
+    $driverId = (int)($_POST['driver_id'] ?? 0);
+    $range = $_POST['range'] ?? 'week';
+
+    if ($driverId <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Datos inválidos.']);
+        exit;
+    }
+
+    $whereClause = "repartidor_user_id = $driverId";
+    if ($range === 'day') {
+        $whereClause .= " AND created_at >= DATE(NOW())";
+    } elseif ($range === 'week') {
+        $whereClause .= " AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+    } elseif ($range === 'month') {
+        $whereClause .= " AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+    }
+
+    // 1. Entregados
+    $stats = app_one("
+        SELECT 
+            COUNT(CASE WHEN status = 'entregado' THEN 1 END) as completados,
+            COUNT(CASE WHEN status = 'cancelado' THEN 1 END) as cancelados,
+            COALESCE(SUM(CASE WHEN status = 'entregado' THEN delivery_cost END), 0) as earnings
+        FROM deliveries
+        WHERE $whereClause
+    ");
+
+    $completados = (int)($stats['completados'] ?? 0);
+    $cancelados = (int)($stats['cancelados'] ?? 0);
+    $earnings = (float)($stats['earnings'] ?? 0);
+
+    // Simular horas conectadas y distancia basadas en entregados
+    $horasConectadas = $completados * 1.5 + $cancelados * 0.5;
+    if ($range === 'day' && $horasConectadas > 8) $horasConectadas = 8;
+    $distanciaKm = $completados * 4.2;
+
+    // Generar series para los gráficos del repartidor (agrupados por fecha de creación)
+    $seriesData = app_all("
+        SELECT DATE(created_at) as date_label,
+               COUNT(CASE WHEN status = 'entregado' THEN 1 END) as count_delivered,
+               COALESCE(SUM(CASE WHEN status = 'entregado' THEN delivery_cost END), 0) as sum_earnings,
+               COUNT(CASE WHEN status = 'cancelado' THEN 1 END) as count_cancelled
+        FROM deliveries
+        WHERE $whereClause
+        GROUP BY DATE(created_at)
+        ORDER BY DATE(created_at) ASC
+    ");
+
+    $labels = [];
+    $seriesDelivered = [];
+    $seriesEarnings = [];
+    $seriesCancelled = [];
+
+    foreach ($seriesData as $sd) {
+        $labels[] = date('d/m', strtotime($sd['date_label']));
+        $seriesDelivered[] = (int)$sd['count_delivered'];
+        $seriesEarnings[] = (float)$sd['sum_earnings'];
+        $seriesCancelled[] = (int)$sd['count_cancelled'];
+    }
+
+    // Fallbacks si no hay entregas para mostrar el gráfico premium con estructura
+    if (empty($labels)) {
+        if ($range === 'day') {
+            $labels = [date('d/m')];
+            $seriesDelivered = [0];
+            $seriesEarnings = [0];
+            $seriesCancelled = [0];
+        } else {
+            $days = ($range === 'week') ? 7 : 30;
+            for ($i = $days - 1; $i >= 0; $i--) {
+                $labels[] = date('d/m', strtotime("-$i days"));
+                $seriesDelivered[] = 0;
+                $seriesEarnings[] = 0;
+                $seriesCancelled[] = 0;
+            }
+        }
+    }
+
+    // Obtener los puntos de entrega del rango
+    $deliveriesPoints = app_all("
+        SELECT d.id, d.delivery_latitude, d.delivery_longitude, d.delivery_address,
+               COALESCE(d.pickup_latitude, l.latitude) as local_lat, COALESCE(d.pickup_longitude, l.longitude) as local_lng,
+               l.business_name as local_name, d.status
+        FROM deliveries d
+        JOIN users l ON l.id = d.local_user_id
+        WHERE $whereClause
+    ");
+
+    echo json_encode([
+        'success' => true,
+        'completados' => $completados,
+        'cancelados' => $cancelados,
+        'earnings' => $earnings,
+        'horas_conectadas' => round($horasConectadas, 1),
+        'distancia_km' => round($distanciaKm, 1),
+        'labels' => $labels,
+        'series_delivered' => $seriesDelivered,
+        'series_earnings' => $seriesEarnings,
+        'series_cancelled' => $seriesCancelled,
+        'points' => $deliveriesPoints
+    ]);
+    exit;
+}
+
+if ($action === 'get_driver_history') {
+    $driverId = (int)($_POST['driver_id'] ?? 0);
+    $limit = (int)($_POST['limit'] ?? 15);
+    $offset = (int)($_POST['offset'] ?? 0);
+
+    if ($driverId <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Datos inválidos.']);
+        exit;
+    }
+
+    $history = app_all("
+        SELECT d.*, l.business_name as local_name
+        FROM deliveries d
+        JOIN users l ON l.id = d.local_user_id
+        WHERE d.repartidor_user_id = ?
+        ORDER BY d.created_at DESC
+        LIMIT ? OFFSET ?
+    ", 'iii', [$driverId, $limit, $offset]);
+
+    echo json_encode([
+        'success' => true,
+        'history' => $history
+    ]);
+    exit;
+}
+
 
 if ($action === 'get_active_drivers') {
     $activeDrivers = app_all("

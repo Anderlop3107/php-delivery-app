@@ -15,6 +15,24 @@ $activeCountRow = app_one("
 ", "i", [(int)$sessionUser['id']]);
 $activeCount = (int)($activeCountRow['count'] ?? 0);
 
+// Verificar estado de suscripción
+$subscriptionExpired = true;
+if ($userData['subscription_status'] === 'active' && !empty($userData['subscription_expires_at'])) {
+    if (strtotime($userData['subscription_expires_at']) >= time()) {
+        $subscriptionExpired = false;
+    }
+}
+
+$latestPayment = null;
+if ($subscriptionExpired) {
+    $latestPayment = app_one("
+        SELECT * FROM driver_payments
+        WHERE driver_user_id = ?
+        ORDER BY id DESC
+        LIMIT 1
+    ", "i", [(int)$sessionUser['id']]);
+}
+
 $title = 'Escáner de Pedidos';
 require __DIR__ . '/_header.php';
 ?>
@@ -360,6 +378,142 @@ require __DIR__ . '/_header.php';
 </style>
 
 <div class="driver-scanner-view">
+
+<?php if ($subscriptionExpired): ?>
+<div class="subscription-block-overlay" id="subscription-block-modal" style="
+    position: fixed; inset: 0; z-index: 100000;
+    background: rgba(15, 23, 42, 0.75); backdrop-filter: blur(15px);
+    display: flex; align-items: center; justify-content: center;
+    padding: 20px;
+">
+    <div style="
+        background: #ffffff; border-radius: 28px; padding: 40px 30px;
+        width: 100%; max-width: 420px; text-align: center;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+        border: 1px solid rgba(255, 255, 255, 0.2);
+    ">
+        <div style="
+            width: 80px; height: 80px; border-radius: 50%;
+            background: rgba(239, 68, 68, 0.1); color: #ef4444;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 40px; margin: 0 auto 24px;
+        ">
+            💳
+        </div>
+
+        <?php if ($latestPayment && $latestPayment['status'] === 'pending'): ?>
+            <h2 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 0 0 12px;">Comprobante en verificación</h2>
+            <p style="font-size: 15px; color: #64748b; margin: 0 0 24px; line-height: 1.6; font-weight: 500;">
+                Tu comprobante de pago fue subido con éxito y está en revisión. El administrador te habilitará pronto.
+            </p>
+            <div style="
+                background: #f1f5f9; padding: 12px; border-radius: 12px;
+                font-size: 13px; color: #475569; font-weight: 600;
+            ">
+                📅 Enviado el: <?= date('d/m/Y H:i', strtotime($latestPayment['uploaded_at'])) ?> (UTC-3)
+            </div>
+        <?php else: ?>
+            <h2 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 0 0 12px;">Suscríbete para recibir más pedidos</h2>
+            <p style="font-size: 15px; color: #64748b; margin: 0 0 24px; line-height: 1.6; font-weight: 500;">
+                Tu acceso ha vencido o requiere renovación. Por favor, sube tu comprobante de pago semanal para continuar activo en la plataforma.
+            </p>
+            
+            <?php if ($latestPayment && $latestPayment['status'] === 'rejected'): ?>
+                <div style="
+                    background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c;
+                    padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 600;
+                    margin-bottom: 20px; text-align: left;
+                ">
+                    ❌ <b>Comprobante rechazado anterior:</b><br>
+                    <?= esc($latestPayment['notes'] ?: 'No se especificaron motivos.') ?>
+                </div>
+            <?php endif; ?>
+
+            <form id="payment-upload-form" style="display: flex; flex-direction: column; gap: 16px;">
+                <label style="
+                    display: flex; flex-direction: column; align-items: center; justify-content: center;
+                    border: 2px dashed #cbd5e1; border-radius: 16px; padding: 24px; cursor: pointer;
+                    background: #f8fafc; transition: all 0.2s;
+                " id="upload-label" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
+                    <span style="font-size: 32px; margin-bottom: 8px;">📷</span>
+                    <span style="font-size: 14px; font-weight: 700; color: #475569;" id="file-label-text">Seleccionar foto de comprobante</span>
+                    <span style="font-size: 11px; color: #94a3b8; margin-top: 4px;">Formatos: JPG, JPEG, PNG (Máx 8MB)</span>
+                    <input type="file" name="payment_proof" id="payment_proof" accept="image/*" style="display: none;" onchange="handleFileSelect(this)">
+                </label>
+                
+                <button type="submit" id="btn-submit-payment" style="
+                    width: 100%; padding: 16px; border: none; border-radius: 16px;
+                    background: var(--primary, #2563eb); color: #ffffff;
+                    font-size: 15px; font-weight: 800; cursor: pointer;
+                    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+                    transition: all 0.2s;
+                ">
+                    Subir Comprobante
+                </button>
+            </form>
+            
+            <script>
+                function handleFileSelect(input) {
+                    const text = document.getElementById('file-label-text');
+                    if (input.files && input.files[0]) {
+                        text.innerText = "📄 " + input.files[0].name;
+                        const lbl = document.getElementById('upload-label');
+                        if (lbl) {
+                            lbl.style.borderColor = '#10b981';
+                            lbl.style.background = '#f0fdf4';
+                        }
+                    }
+                }
+                
+                function handleDrop(e) {
+                    e.preventDefault();
+                    const input = document.getElementById('payment_proof');
+                    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        input.files = e.dataTransfer.files;
+                        handleFileSelect(input);
+                    }
+                }
+                
+                document.getElementById('payment-upload-form').addEventListener('submit', async function(e) {
+                    e.preventDefault();
+                    
+                    const fileInput = document.getElementById('payment_proof');
+                    if (!fileInput.files || fileInput.files.length === 0) {
+                        alert('Por favor selecciona una foto de tu comprobante de pago.');
+                        return;
+                    }
+                    
+                    const btn = document.getElementById('btn-submit-payment');
+                    btn.disabled = true;
+                    btn.innerText = 'Subiendo...';
+                    
+                    const formData = new FormData(this);
+                    try {
+                        const resp = await fetch('api_driver_upload_payment.php', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        const res = await resp.json();
+                        if (res.success) {
+                            alert('¡Comprobante subido correctamente! Espera la validación del administrador.');
+                            window.location.reload();
+                        } else {
+                            alert(res.message || 'Error al subir el comprobante.');
+                            btn.disabled = false;
+                            btn.innerText = 'Subir Comprobante';
+                        }
+                    } catch(err) {
+                        console.error(err);
+                        alert('Error de conexión con el servidor.');
+                        btn.disabled = false;
+                        btn.innerText = 'Subir Comprobante';
+                    }
+                });
+            </script>
+        <?php endif; ?>
+    </div>
+</div>
+<?php endif; ?>
     <!-- SECCIÓN DE PERFIL PERSONALIZADA -->
     <div class="profile-header-tech">
         <div class="avatar-wrapper-tech">
