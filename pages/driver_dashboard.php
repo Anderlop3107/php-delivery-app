@@ -592,6 +592,23 @@ require __DIR__ . '/_header.php';
     </div>
 </div>
 <?php endif; ?>
+
+<!-- Modal de Activación Exitosa -->
+<div id="activation-success-modal" class="modal-overlay" style="display: none; z-index: 100001; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); position: fixed; inset: 0; align-items: center; justify-content: center; padding: 20px;">
+    <div style="background: #ffffff; border-radius: 28px; padding: 40px 30px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255,255,255,0.2);">
+        <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(16, 185, 129, 0.1); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 24px;">
+            🎉
+        </div>
+        <h2 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 0 0 12px;">¡Cuenta Activada!</h2>
+        <p style="font-size: 15px; color: #64748b; margin: 0 0 30px; line-height: 1.6; font-weight: 500;">
+            El administrador aprobó tu cuenta. Ya estás habilitado para recibir y tomar pedidos en vivo.
+        </p>
+        <button type="button" onclick="acceptActivation()" style="width: 100%; padding: 16px; border-radius: 16px; background: #10b981; color: #ffffff; font-size: 15px; font-weight: 800; border: none; cursor: pointer; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);">
+            Comenzar a Trabajar
+        </button>
+    </div>
+</div>
+
     <!-- SECCIÓN DE PERFIL PERSONALIZADA -->
     <div class="profile-header-tech">
         <div class="avatar-wrapper-tech">
@@ -1205,6 +1222,61 @@ require __DIR__ . '/_header.php';
             }
         }
     });
+
+    // --- LÓGICA DE MONITOREO DE APROBACIÓN EN VIVO (POLLING) ---
+    function showActivationSuccessModal() {
+        document.getElementById('activation-success-modal').style.display = 'flex';
+    }
+
+    async function acceptActivation() {
+        const docsModal = document.getElementById('docs-block-modal');
+        if (docsModal) docsModal.style.display = 'none';
+        
+        const subModal = document.getElementById('subscription-block-modal');
+        if (subModal) subModal.style.display = 'none';
+        
+        document.getElementById('activation-success-modal').style.display = 'none';
+        
+        try {
+            const formData = new FormData();
+            formData.append('is_online', '1');
+            await fetch('api_toggle_status.php', {
+                method: 'POST',
+                body: formData
+            });
+            
+            const checkbox = document.getElementById('chk-status-radar');
+            if (checkbox) {
+                checkbox.checked = true;
+                handleScannerToggle(true, true);
+            } else {
+                handleScannerToggle(true, true);
+            }
+        } catch (e) {
+            console.error(e);
+            window.location.reload();
+        }
+    }
+
+    <?php if (!$docsApproved || $subscriptionExpired): ?>
+    let approvalCheckInterval = setInterval(async () => {
+        try {
+            const resp = await fetch('api_check_approval.php?_t=' + Date.now());
+            const res = await resp.json();
+            if (res.success && res.approved) {
+                clearInterval(approvalCheckInterval);
+                
+                // Sonar notification.mp3
+                const audio = new Audio('<?= delivery_app_url("assets/sounds/notification.mp3") ?>');
+                audio.play().catch(e => console.log("Autoplay de audio prevenido:", e));
+                
+                showActivationSuccessModal();
+            }
+        } catch (e) {
+            console.error("Error al consultar aprobación:", e);
+        }
+    }, 5000);
+    <?php endif; ?>
 </script>
 
 <?php require __DIR__ . '/_footer.php'; ?>

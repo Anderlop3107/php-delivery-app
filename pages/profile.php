@@ -682,6 +682,51 @@ require __DIR__ . '/_header.php';
                         </div>
                     </div>
                 </div>
+
+                <!-- Pago de Suscripción Semanal -->
+                <?php
+                $latestPayment = app_one("
+                    SELECT * FROM driver_payments 
+                    WHERE driver_user_id = ? 
+                    ORDER BY id DESC LIMIT 1
+                ", "i", [(int)$user['id']]);
+                
+                $subscriptionStatus = $userData['subscription_status'] ?? 'expired';
+                $receiptStatus = $latestPayment['status'] ?? 'none';
+                
+                $receipt_class = 'incomplete';
+                if ($subscriptionStatus === 'active') {
+                    $receipt_class = 'uploaded';
+                } elseif ($receiptStatus === 'pending') {
+                    $receipt_class = 'incomplete';
+                } elseif ($receiptStatus === 'rejected') {
+                    $receipt_class = 'incomplete';
+                }
+                ?>
+                <div class="upload-card-interactive <?= $receipt_class ?>" id="card-weekly_subscription" onclick="openSubscriptionUploadModal()" style="margin-top: 15px;">
+                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+                        <div style="display: flex; align-items: center;">
+                            <span class="user-icon">💳</span>
+                            <div style="display: flex; flex-direction: column;">
+                                <span style="font-weight: 800; font-size: 15px; color: var(--text);">Suscripción Semanal</span>
+                                <span id="status-weekly_subscription" style="font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
+                                    <?php if ($subscriptionStatus === 'active'): ?>
+                                        <span class="status-badge-interactive uploaded" style="background:#d1fae5; color:#065f46; padding: 2px 8px; border-radius: 8px; font-size: 10px; text-transform: uppercase;">Activo ✓</span>
+                                    <?php elseif ($receiptStatus === 'pending'): ?>
+                                        <span class="status-badge-interactive incomplete" style="background:#fef3c7; color:#92400e; padding: 2px 8px; border-radius: 8px; font-size: 10px; text-transform: uppercase;">En revisión ⏳</span>
+                                    <?php elseif ($receiptStatus === 'rejected'): ?>
+                                        <span class="status-badge-interactive incomplete" style="background:#fee2e2; color:#991b1b; padding: 2px 8px; border-radius: 8px; font-size: 10px; text-transform: uppercase;">Rechazado ❌</span>
+                                    <?php else: ?>
+                                        <span class="status-badge-interactive incomplete" style="background:#f1f5f9; color:#64748b; padding: 2px 8px; border-radius: 8px; font-size: 10px; text-transform: uppercase;">Sin pagar ⚠️</span>
+                                    <?php endif; ?>
+                                </span>
+                            </div>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span class="arrow-icon">></span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     <?php endif; ?>
@@ -697,6 +742,36 @@ require __DIR__ . '/_header.php';
         <h2 id="success-modal-title">¡Perfil actualizado!</h2>
         <p id="success-modal-message">Tus cambios se han guardado con éxito.</p>
         <button type="button" class="btn-listo" onclick="closeSuccessModal()">Listo</button>
+    </div>
+</div>
+
+<!-- Modal de Carga de Suscripción en el Perfil -->
+<div id="subscription-modal-profile" class="modal-overlay" style="display: none; z-index: 3000;">
+    <div class="modal-card" style="max-width: 420px; background: #ffffff; border-radius: 28px; padding: 30px;">
+        <button type="button" class="modal-close-top" onclick="closeSubscriptionModalProfile()" style="background:none; border:none; font-size:18px; cursor:pointer; color:#64748b; float:right;">✕</button>
+        <h2 style="font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 6px; clear:both;">Suscripción Semanal</h2>
+        <p style="font-size: 13.5px; color: var(--muted); font-weight: 600; margin-bottom: 20px; line-height: 1.4; text-align: center;">
+            Por favor, sube tu comprobante de pago semanal para continuar activo en la plataforma.
+        </p>
+
+        <?php if ($latestPayment && $latestPayment['status'] === 'rejected'): ?>
+            <div style="background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 600; margin-bottom: 15px; text-align: left;">
+                ❌ <b>Rechazado anterior:</b><br>
+                <?= esc($latestPayment['notes'] ?: 'No se especificaron motivos.') ?>
+            </div>
+        <?php endif; ?>
+
+        <form id="payment-upload-form-profile" style="display: flex; flex-direction: column; gap: 16px;">
+            <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px dashed var(--border); border-radius: 16px; padding: 24px; cursor: pointer; background: #f8fafc; text-align:center;" id="upload-label-profile">
+                <span style="font-size: 32px; margin-bottom: 8px;">📷</span>
+                <span style="font-size: 14px; font-weight: 700; color: #475569;" id="file-label-text-profile">Seleccionar foto de comprobante</span>
+                <input type="file" name="payment_proof" id="payment_proof_profile" accept="image/*" style="display: none;" onchange="handleFileSelectProfile(this)">
+            </label>
+            
+            <button type="submit" id="btn-submit-payment-profile" style="width: 100%; padding: 16px; border-radius: 16px; background: var(--primary); color: #ffffff; font-size: 15px; font-weight: 800; border: none; cursor: pointer; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);">
+                Subir Comprobante
+            </button>
+        </form>
     </div>
 </div>
 
@@ -843,6 +918,59 @@ require __DIR__ . '/_header.php';
         });
     });
     <?php endif; ?>
+
+    // --- MANEJO DE COMPROBANTED DE PAGO EN PERFIL ---
+    function openSubscriptionUploadModal() {
+        document.getElementById('subscription-modal-profile').style.display = 'flex';
+    }
+    function closeSubscriptionModalProfile() {
+        document.getElementById('subscription-modal-profile').style.display = 'none';
+    }
+    function handleFileSelectProfile(input) {
+        const text = document.getElementById('file-label-text-profile');
+        if (input.files && input.files[0]) {
+            text.innerText = "📄 " + input.files[0].name;
+            document.getElementById('upload-label-profile').style.borderColor = '#10b981';
+            document.getElementById('upload-label-profile').style.background = '#f0fdf4';
+        }
+    }
+    
+    const subFormProfile = document.getElementById('payment-upload-form-profile');
+    if (subFormProfile) {
+        subFormProfile.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('payment_proof_profile');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Por favor selecciona una foto de tu comprobante de pago.');
+                return;
+            }
+            const btn = document.getElementById('btn-submit-payment-profile');
+            btn.disabled = true;
+            btn.innerText = 'Subiendo...';
+            
+            const formData = new FormData(this);
+            try {
+                const resp = await fetch('api_driver_upload_payment.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const res = await resp.json();
+                if (res.success) {
+                    alert('¡Comprobante subido correctamente! Espera la validación del administrador.');
+                    window.location.reload();
+                } else {
+                    alert(res.message || 'Error al subir el comprobante.');
+                    btn.disabled = false;
+                    btn.innerText = 'Subir Comprobante';
+                }
+            } catch(err) {
+                console.error(err);
+                alert('Error de conexión.');
+                btn.disabled = false;
+                btn.innerText = 'Subir Comprobante';
+            }
+        });
+    }
 </script>
 
 <?php require __DIR__ . '/_footer.php'; ?>
