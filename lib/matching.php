@@ -33,7 +33,7 @@ function obtener_pedidos_disponibles_para_repartidor(int $repartidorId): array
     // 1. Obtener datos del repartidor (ubicación y conexión activa)
     // Se valida si el repartidor está activo (GPS reportado en los últimos 60 segundos)
     $driver = app_one("
-        SELECT id, latitude, longitude, ubicacion_actualizada_en 
+        SELECT id, latitude, longitude, ubicacion_actualizada_en, subscription_status, subscription_expires_at 
         FROM users 
         WHERE id = ? 
           AND role = 'repartidor'
@@ -41,6 +41,18 @@ function obtener_pedidos_disponibles_para_repartidor(int $repartidorId): array
     ", "i", [$repartidorId]);
     
     if (!$driver) {
+        return [];
+    }
+
+    // Verificar si la suscripción está vencida
+    $subscriptionExpired = true;
+    if ($driver['subscription_status'] === 'active' && !empty($driver['subscription_expires_at'])) {
+        if (strtotime($driver['subscription_expires_at']) >= time()) {
+            $subscriptionExpired = false;
+        }
+    }
+
+    if ($subscriptionExpired) {
         return [];
     }
 

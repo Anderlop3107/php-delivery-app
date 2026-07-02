@@ -16,12 +16,23 @@ if ($lat === null || $lng === null || $lat === 0.0 || $lng === 0.0) {
     exit;
 }
 
-// Actualizar latitud, longitud, timestamp y marcar como online
+// Verificar si la suscripción está vencida
+$userData = app_one("SELECT subscription_status, subscription_expires_at FROM users WHERE id = ?", "i", [(int)$user['id']]);
+$subscriptionExpired = true;
+if ($userData['subscription_status'] === 'active' && !empty($userData['subscription_expires_at'])) {
+    if (strtotime($userData['subscription_expires_at']) >= time()) {
+        $subscriptionExpired = false;
+    }
+}
+
+$isOnlineVal = $subscriptionExpired ? 0 : 1;
+
+// Actualizar latitud, longitud, timestamp y marcar como online/offline según suscripción
 $updated = app_exec("
     UPDATE users 
-    SET latitude = ?, longitude = ?, ubicacion_actualizada_en = NOW(), is_online = 1, updated_at = NOW() 
+    SET latitude = ?, longitude = ?, ubicacion_actualizada_en = NOW(), is_online = ?, updated_at = NOW() 
     WHERE id = ?
-", 'ddi', [$lat, $lng, (int)$user['id']]);
+", 'ddii', [$lat, $lng, $isOnlineVal, (int)$user['id']]);
 
 echo json_encode([
     'success' => true,
