@@ -383,6 +383,12 @@ require __DIR__ . '/_header.php';
         transition: all 0.2s; 
     }
     .btn-listo:active { transform: scale(0.97); opacity: 0.95; }
+
+    /* Estilos Premium para las pastillas de estado */
+    .status-pill.approved { background: #d1fae5 !important; color: #065f46 !important; }
+    .status-pill.pending { background: #fef3c7 !important; color: #92400e !important; }
+    .status-pill.rejected { background: #fee2e2 !important; color: #991b1b !important; }
+    .status-pill.none { background: #f1f5f9 !important; color: #64748b !important; }
 </style>
 
 <div class="driver-scanner-view">
@@ -415,22 +421,29 @@ require __DIR__ . '/_header.php';
         </p>
 
         <div style="text-align: left; display: flex; flex-direction: column; gap: 12px; margin-bottom: 30px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #f8fafc; border-radius: 12px; font-size: 13px; font-weight: 700;">
-                <span style="color:#475569;">Cédula de Identidad</span>
-                <span class="status-pill <?= $userData['status_doc_ci'] ?>" style="font-size: 9px; padding: 4px 10px;"><?= $userData['status_doc_ci'] ?></span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #f8fafc; border-radius: 12px; font-size: 13px; font-weight: 700;">
-                <span style="color:#475569;">Licencia de Conducir</span>
-                <span class="status-pill <?= $userData['status_doc_licencia'] ?>" style="font-size: 9px; padding: 4px 10px;"><?= $userData['status_doc_licencia'] ?></span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #f8fafc; border-radius: 12px; font-size: 13px; font-weight: 700;">
-                <span style="color:#475569;">Habilitación Municipal</span>
-                <span class="status-pill <?= $userData['status_doc_habilitacion'] ?>" style="font-size: 9px; padding: 4px 10px;"><?= $userData['status_doc_habilitacion'] ?></span>
-            </div>
-            <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #f8fafc; border-radius: 12px; font-size: 13px; font-weight: 700;">
-                <span style="color:#475569;">Cédula Verde</span>
-                <span class="status-pill <?= $userData['status_doc_cedula_verde'] ?>" style="font-size: 9px; padding: 4px 10px;"><?= $userData['status_doc_cedula_verde'] ?></span>
-            </div>
+            <?php
+            $docStatuses = [
+                'ci' => ['Cédula de Identidad', $userData['status_doc_ci'] ?? 'none'],
+                'licencia' => ['Licencia de Conducir', $userData['status_doc_licencia'] ?? 'none'],
+                'habilitacion' => ['Habilitación Municipal', $userData['status_doc_habilitacion'] ?? 'none'],
+                'cedula_verde' => ['Cédula Verde', $userData['status_doc_cedula_verde'] ?? 'none']
+            ];
+            $statusLabels = [
+                'none' => 'Sin cargar ⚠️',
+                'pending' => 'En revisión ⏳',
+                'approved' => 'Aprobado ✓',
+                'rejected' => 'Rechazado ❌'
+            ];
+            foreach ($docStatuses as $key => $info): 
+                $label = $info[0];
+                $status = $info[1];
+                $badgeText = $statusLabels[$status] ?? $status;
+            ?>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #f8fafc; border-radius: 12px; font-size: 13px; font-weight: 700; border: 1px solid #f1f5f9;">
+                    <span style="color:#475569; font-weight: 700;"><?= $label ?></span>
+                    <span class="status-pill <?= $status ?>" style="font-size: 10px; padding: 4px 10px; border-radius: 20px; font-weight: 800; text-transform: uppercase;"><?= $badgeText ?></span>
+                </div>
+            <?php endforeach; ?>
         </div>
 
         <a href="profile.php?tab=documentos" style="
@@ -438,6 +451,7 @@ require __DIR__ . '/_header.php';
             background: var(--primary, #2563eb); color: #ffffff; text-decoration: none;
             font-size: 15px; font-weight: 800; text-align: center;
             box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+            transition: all 0.2s;
         ">
             Subir o Editar Documentos
         </a>
