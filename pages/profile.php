@@ -710,7 +710,7 @@ require __DIR__ . '/_header.php';
                             <div style="display: flex; flex-direction: column;">
                                 <span style="font-weight: 800; font-size: 15px; color: var(--text);">Suscripción Semanal</span>
                                 <span id="status-weekly_subscription" style="font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
-                                    <?php if ($subscriptionStatus === 'active'): ?>
+                                                                        <?php if ($subscriptionStatus === 'active' && !empty($latestPayment['payment_proof_path']) && $latestPayment['status'] !== 'rejected'): ?>
                                         <span class="status-badge-interactive uploaded" style="background:#d1fae5; color:#065f46; padding: 2px 8px; border-radius: 8px; font-size: 10px; text-transform: uppercase;">Activo ✓</span>
                                     <?php elseif ($receiptStatus === 'pending'): ?>
                                         <span class="status-badge-interactive incomplete" style="background:#fef3c7; color:#92400e; padding: 2px 8px; border-radius: 8px; font-size: 10px; text-transform: uppercase;">En revisión ⏳</span>
