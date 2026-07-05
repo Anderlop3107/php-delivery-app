@@ -312,6 +312,66 @@ if ($action === 'verify_driver_payment') {
     echo json_encode(['success' => true, 'message' => 'Comprobante verificado con éxito.']);
     exit;
 }
+        // Eliminar comprobante de pago
+        if ($action === 'delete_payment_proof') {
+            $paymentId = (int)($_POST['payment_id'] ?? 0);
+            if ($paymentId <= 0) {
+                http_response_code(400);
+                echo json_encode(['error' => 'ID de comprobante inválido.']);
+                exit;
+            }
+            // Obtener información del comprobante y del conductor
+            $payment = app_one('SELECT driver_user_id, payment_proof_path FROM driver_payments WHERE id = ?', 'i', [$paymentId]);
+            if (!$payment) {
+                http_response_code(404);
+                echo json_encode(['error' => 'Comprobante no encontrado.']);
+                exit;
+            }
+            $driverId = (int)$payment['driver_user_id'];
+            // Construir ruta completa al archivo
+            $filePath = __DIR__ . '/../../uploads/payments/' . $payment['payment_proof_path'];
+            if (file_exists($filePath)) {
+                @unlink($filePath);
+            }
+            // Actualizar registro del pago: eliminar referencia al archivo y marcar como rechazado
+            app_exec('UPDATE driver_payments SET payment_proof_path = NULL, status = \'rejected\', verified_at = NOW() WHERE id = ?', 'i', [$paymentId]);
+            // Resetear suscripción del conductor
+            if ($driverId > 0) {
+                app_exec('UPDATE users SET subscription_status = \'expired\', subscription_expires_at = NULL, updated_at = NOW() WHERE id = ?', 'i', [$driverId]);
+            }
+            echo json_encode(['success' => true, 'message' => 'Comprobante eliminado y suscripción desactivada.']);
+            exit;
+        }
+        // Check for new pending payments (admin notification)
+        if ($action === 'check_new_payment') {
+            // Retrieve any pending payment that hasn't been notified yet (status = 'pending')
+            $newPayments = app_all("SELECT dp.id, u.name AS driver_name, dp.payment_proof_path FROM driver_payments dp JOIN users u ON dp.driver_user_id = u.id WHERE dp.status = 'pending'", []);
+            if ($newPayments) {
+                // Mark them as notified to avoid duplicate alerts (optional: add a notified column later)
+                // For now we simply return the list; admins will handle them and status will change.
+                echo json_encode(['new' => true, 'payments' => $newPayments]);
+            } else {
+                echo json_encode(['new' => false]);
+            }
+            exit;
+        }
+        // Deshabilitar suscripción
+        $driverId = (int)($_POST['driver_id'] ?? 0);
+        if ($driverId <= 0) {
+            http_response_code(400);
+            echo json_encode(['error' => 'Datos de conductor inválidos.']);
+            exit;
+        }
+        $driver = app_one('SELECT id FROM users WHERE id = ? AND role = \'repartidor\'', 'i', [$driverId]);
+        if (!$driver) {
+            http_response_code(404);
+            echo json_encode(['error' => 'Repartidor no encontrado.']);
+            exit;
+        }
+        app_exec('UPDATE users SET subscription_status = \'expired\', subscription_expires_at = NULL, updated_at = NOW() WHERE id = ?', 'i', [$driverId]);
+        echo json_encode(['success' => true, 'message' => 'Suscripción deshabilitada correctamente.']);
+        exit;
+
 
 if ($action === 'extend_driver_grace_period') {
     $driverId = (int)($_POST['driver_id'] ?? 0);
@@ -488,12 +548,14 @@ if ($action === 'get_driver_history') {
 
 
 if ($action === 'get_active_drivers') {
-    $activeDrivers = app_all("
-        SELECT id, name, logo_path as avatar_path, latitude, longitude, is_online, 
+    $activeDrivers = app_all(
+        "SELECT id, name, logo_path as avatar_path, latitude, longitude, is_online,
                (SELECT COUNT(*) FROM deliveries WHERE repartidor_user_id = users.id AND status NOT IN ('entregado', 'cancelado')) as active_delivery_count
         FROM users 
-        WHERE role = 'repartidor' AND is_online = 1 AND latitude IS NOT NULL AND longitude IS NOT NULL
-    ");
+        WHERE role = 'repartidor' 
+          AND latitude IS NOT NULL AND longitude IS NOT NULL 
+          AND last_ping >= DATE_SUB(NOW(), INTERVAL 30 SECOND)"
+    );
     echo json_encode([
         'success' => true,
         'drivers' => $activeDrivers

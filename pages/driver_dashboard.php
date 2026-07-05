@@ -391,10 +391,23 @@ require __DIR__ . '/_header.php';
     .status-pill.none { background: #f1f5f9 !important; color: #64748b !important; }
 
     @keyframes pulseGlow {
-        0% { transform: scale(1); box-shadow: 0 0 20px rgba(245, 158, 11, 0.12); }
-        50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(245, 158, 11, 0.25); }
-        100% { transform: scale(1); box-shadow: 0 0 20px rgba(245, 158, 11, 0.12); }
-    }
+    0% { transform: scale(1); box-shadow: 0 0 20px rgba(245, 158, 11, 0.12); }
+    50% { transform: scale(1.05); box-shadow: 0 0 30px rgba(245, 158, 11, 0.25); }
+    100% { transform: scale(1); box-shadow: 0 0 20px rgba(245, 158, 11, 0.12); }
+}
+/* Premium modal styling */
+.premium-modal {
+    background: rgba(255,255,255,0.2);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255,255,255,0.3);
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    border-radius: 28px;
+    padding: 40px 30px;
+    max-width: 420px;
+    width: 100%;
+    text-align: center;
+    animation: scaleIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+}
 </style>
 
 <div class="driver-scanner-view">
@@ -612,7 +625,7 @@ require __DIR__ . '/_header.php';
 
 <!-- Modal de Activación Exitosa -->
 <div id="activation-success-modal" class="modal-overlay" style="display: none; z-index: 100001; background: rgba(15, 23, 42, 0.8); backdrop-filter: blur(10px); position: fixed; inset: 0; align-items: center; justify-content: center; padding: 20px;">
-    <div style="background: #ffffff; border-radius: 28px; padding: 40px 30px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255,255,255,0.2);">
+    <div class="premium-modal"> 
         <div style="width: 80px; height: 80px; border-radius: 50%; background: rgba(16, 185, 129, 0.1); color: #10b981; display: flex; align-items: center; justify-content: center; font-size: 40px; margin: 0 auto 24px;">
             🎉
         </div>
@@ -657,7 +670,7 @@ require __DIR__ . '/_header.php';
     <!-- ÁREA DEL TOGGLE -->
     <div class="availability-toggle-box">
         <label class="ios-switch">
-            <input type="checkbox" id="main-status-toggle" onchange="handleScannerToggle(this.checked)" <?= ($userData['is_online'] == 1 && $activeCount < 2) ? 'checked' : '' ?>>
+            <input type="checkbox" id="main-status-toggle" onchange="handleScannerToggle(this.checked)" <?= ($userData['is_online'] == 1 && $activeCount < 2) ? 'checked' : '' ?> >
             <span class="ios-slider"></span>
         </label>
         <div class="status-label-text" id="main-status-text">Desconectado</div>
@@ -774,6 +787,15 @@ require __DIR__ . '/_header.php';
     let currentLng = null;
     let mockLat = <?= (float)($userData['latitude'] ?: -25.2637) ?>;
     let mockLng = <?= (float)($userData['longitude'] ?: -57.5759) ?>;
+// Toast helper
+function showToast(message) {
+    const toast = document.getElementById('approval-toast');
+    if (toast) {
+        toast.querySelector('#toast-message').textContent = message;
+        toast.style.display = 'block';
+        setTimeout(() => { toast.style.display = 'none'; }, 5000);
+    }
+}
 
     function startLocationUpdates() {
         sendCurrentLocation();
@@ -1262,11 +1284,12 @@ require __DIR__ . '/_header.php';
                 body: formData
             });
             
-            const checkbox = document.getElementById('chk-status-radar');
-            if (checkbox) {
-                checkbox.checked = true;
-                handleScannerToggle(true, true);
-            } else {
+            const checkbox = document.getElementById('main-status-toggle');
+if (checkbox) {
+    checkbox.disabled = false;
+    checkbox.checked = true;
+    handleScannerToggle(true, true);
+} else {
                 handleScannerToggle(true, true);
             }
         } catch (e) {
@@ -1288,6 +1311,7 @@ require __DIR__ . '/_header.php';
                 audio.play().catch(e => console.log("Autoplay de audio prevenido:", e));
                 
                 showActivationSuccessModal();
+showToast('¡Cuenta activada! 🎉');
             }
         } catch (e) {
             console.error("Error al consultar aprobación:", e);

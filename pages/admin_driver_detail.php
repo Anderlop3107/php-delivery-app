@@ -983,12 +983,13 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
 
                         <!-- Comprobante subido -->
                         <div class="sub-proof-preview" onclick="openReceiptLightbox()">
-                            <?php if ($latestPayment): ?>
+                            <?php if (!empty($latestPayment) && !empty($latestPayment['payment_proof_path'])): ?>
                                 <img src="<?= esc(delivery_app_url($latestPayment['payment_proof_path'])) ?>" alt="Comprobante">
                                 <div style="position:absolute; bottom:6px; right:6px; background:rgba(0,0,0,0.6); color:#fff; font-size:9px; padding:3px 6px; border-radius:4px; font-weight:700;">AMPLIAR</div>
+                                <button class="btn-delete-proof" style="position:absolute; top:6px; right:6px; background:#e11d48; color:#fff; border:none; border-radius:4px; padding:2px 6px; font-size:10px;" onclick="deleteReceipt(<?= $latestPayment['id'] ?>); event.stopPropagation();">Eliminar</button>
                             <?php else: ?>
-                                <div class="sub-proof-placeholder">
-                                    <span>📷 Sin comprobante cargado</span>
+                                <div class="sub-proof-placeholder" style="background:#f1f5f9; display:flex; align-items:center; justify-content:center; height:200px; border-radius:8px;">
+                                    <span style="color:#64748b; font-size:14px;">Pendiente de carga</span>
                                 </div>
                             <?php endif; ?>
                         </div>
@@ -1394,28 +1395,45 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                 method: 'POST',
                 body: formData
             })
-            .then(res => res.json())
+            .then(res => {
+                const contentType = res.headers.get('content-type') || '';
+                if (!res.ok || !contentType.includes('application/json')) {
+                    return res.text().then(txt => {
+                        console.error('Unexpected response:', txt);
+                        throw new Error('Server returned non-JSON response');
+                    });
+                }
+                return res.json();
+            })
             .then(data => {
                 if (data.success) {
-                    // Actualizar valores numéricos de cabecera
+                    // Defensive defaults
+                    const earnings = data.earnings ?? 0;
+                    const labels = data.labels ?? [];
+                    const seriesDelivered = data.series_delivered ?? [];
+                    const seriesEarnings = data.series_earnings ?? [];
+                    const seriesCancelled = data.series_cancelled ?? [];
+                    const points = Array.isArray(data.points) ? data.points : [];
+
+                    // Update numeric header values
                     document.getElementById('kpi-delivered-val').innerText = data.completados;
-                    document.getElementById('kpi-earnings-val').innerText = data.earnings.toLocaleString('de-DE') + ' Gs.';
+                    document.getElementById('kpi-earnings-val').innerText = Number(earnings).toLocaleString('de-DE') + ' Gs.';
                     document.getElementById('kpi-hours-val').innerHTML = '⏱️ ' + data.horas_conectadas + ' hrs Conectado';
                     document.getElementById('kpi-cancelled-val').innerText = data.cancelados;
                     document.getElementById('map-total-distance').innerText = data.distancia_km + ' km';
 
-                    // Actualizar gráficos ApexCharts
-                    chartDelivered.updateSeries([{ data: data.series_delivered }]);
-                    chartDelivered.updateOptions({ xaxis: { categories: data.labels } });
+                    // Update ApexCharts with safe data
+                    chartDelivered.updateSeries([{ data: seriesDelivered }]);
+                    chartDelivered.updateOptions({ xaxis: { categories: labels } });
 
-                    chartEarnings.updateSeries([{ data: data.series_earnings }]);
-                    chartEarnings.updateOptions({ xaxis: { categories: data.labels } });
+                    chartEarnings.updateSeries([{ data: seriesEarnings }]);
+                    chartEarnings.updateOptions({ xaxis: { categories: labels } });
 
-                    chartCancelled.updateSeries([{ data: data.series_cancelled }]);
-                    chartCancelled.updateOptions({ xaxis: { categories: data.labels } });
+                    chartCancelled.updateSeries([{ data: seriesCancelled }]);
+                    chartCancelled.updateOptions({ xaxis: { categories: labels } });
 
-                    // Actualizar puntos de entrega en el mapa
-                    updateMapPoints(data.points);
+                    // Update map points
+                    updateMapPoints(points);
                 }
             })
             .catch(err => console.error("Error al actualizar KPIs de repartidor:", err));
@@ -1606,9 +1624,35 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
 
         // --- LIGHTBOX IMAGENES ---
         function openReceiptLightbox() {
-            <?php if ($latestPayment): ?>
-                openLightbox('<?= delivery_app_url($latestPayment['payment_proof_path']) ?>');
-            <?php endif; ?>
+            const img = document.querySelector('.sub-proof-preview img');
+            if (img && img.src) {
+                openLightbox(img.src);
+            }
+        }
+
+        // --- DELETE RECEIPT ---
+        function deleteReceipt(paymentId) {
+            if (!confirm('¿Estás seguro de eliminar el comprobante?')) return;
+            const formData = new FormData();
+            formData.append('action', 'delete_payment_proof');
+            formData.append('payment_id', paymentId);
+            fetch('api_admin_action.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Error al eliminar el comprobante.');
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Error al comunicarse con el servidor.');
+            });
         }
 
         function openLightboxFromDoc(side) {

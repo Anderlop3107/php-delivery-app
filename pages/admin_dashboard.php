@@ -168,7 +168,7 @@ $maxChartCount = max(5, max($chartCounts));
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
     
     <!-- ApexCharts CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="/php-delivery-app/assets/js/apexcharts.min.js"></script>
     
     <style>
         :root {
@@ -744,21 +744,21 @@ $maxChartCount = max(5, max($chartCounts));
                     <div class="stat-icon-container clay-blue">📦</div>
                     <div class="stat-meta">
                         <span>Pedidos Hoy</span>
-                        <b><?= $todayOrders ?></b>
+                        <b><?php echo $todayOrders ?></b>
                     </div>
                 </div>
                 <div class="clay-card-stat">
                     <div class="stat-icon-container clay-green">🛵</div>
                     <div class="stat-meta">
                         <span>Drivers Activos</span>
-                        <b><?= $onlineDriversCount ?></b>
+                        <b><?php echo $onlineDriversCount ?></b>
                     </div>
                 </div>
                 <div class="clay-card-stat">
                     <div class="stat-icon-container clay-orange">🏢</div>
                     <div class="stat-meta">
                         <span>Locales Activos</span>
-                        <b><?= $activeLocalsCount ?></b>
+                        <b><?php echo $activeLocalsCount ?></b>
                     </div>
                 </div>
             </div>
@@ -842,22 +842,23 @@ $maxChartCount = max(5, max($chartCounts));
                             <div class="driver-mini-info">
                                 <div class="driver-mini-avatar">
                                     <?php if ($l['logo_path']): ?>
-                                        <img src="<?= esc(delivery_app_url($l['logo_path'])) ?>" alt="Logo">
+                                        <img src="<?php echo esc(delivery_app_url($l['logo_path'])) ?>" alt="Logo">
                                     <?php else: ?>
                                         🏢
                                     <?php endif; ?>
                                 </div>
                                 <div class="driver-text">
                                     <b><?= esc($l['business_name'] ?: $l['name']) ?></b>
+                                    <b><?= esc($l['business_name'] ?: $l['name']) ?></b>
                                     <span style="color:var(--text-muted); font-size:10px;">Vence: <?= $l['subscription_expires_at'] ? date('d/m/Y', strtotime($l['subscription_expires_at'])) : 'N/A' ?></span>
                                 </div>
                             </div>
                             
                             <div>
-                                <select class="status-pill-select" onchange="updateSubscription(<?= $l['id'] ?>, this.value)">
-                                    <option value="active" <?= $l['subscription_status'] === 'active' ? 'selected' : '' ?>>Activo (+30d)</option>
-                                    <option value="expired" <?= $l['subscription_status'] === 'expired' ? 'selected' : '' ?>>Expirado</option>
-                                    <option value="pending" <?= $l['subscription_status'] === 'pending' ? 'selected' : '' ?>>Pendiente</option>
+                                <select class="status-pill-select" onchange="updateSubscription(<?= $l['id']; ?>, this.value)">
+                                    <option value="active" <?php echo $l['subscription_status'] === 'active' ? 'selected' : '' ?>>Activo (+30d)</option>
+                                    <option value="expired" <?php echo $l['subscription_status'] === 'expired' ? 'selected' : '' ?>>Expirado</option>
+                                    <option value="pending" <?php echo $l['subscription_status'] === 'pending' ? 'selected' : '' ?>>Pendiente</option>
                                 </select>
                             </div>
                         </div>
@@ -878,11 +879,11 @@ $maxChartCount = max(5, max($chartCounts));
                     <div style="text-align:center; padding: 40px; color:var(--text-muted);">No hay repartidores registrados.</div>
                 <?php else: ?>
                     <?php foreach ($activeDrivers as $d): ?>
-                        <div class="table-row-item" onclick="window.location.href='admin_driver_detail.php?id=<?= (int)$d['id'] ?>'" style="cursor:pointer;">
+                        <div class="table-row-item" onclick="window.location.href='admin_driver_detail.php?id=<?= (int)$d['id']; ?>'" style="cursor:pointer;">
                             <div class="driver-mini-info">
                                 <div class="driver-mini-avatar">
                                     <?php if ($d['avatar_path']): ?>
-                                        <img src="<?= esc(delivery_app_url($d['avatar_path'])) ?>" alt="Avatar">
+                                        <img src="<?= esc(delivery_app_url($d['avatar_path'])); ?>" alt="Avatar">
                                     <?php else: ?>
                                         👤
                                     <?php endif; ?>
@@ -918,13 +919,13 @@ $maxChartCount = max(5, max($chartCounts));
                     <?php foreach ($activeDeliveries as $ad): ?>
                         <div class="table-row-item" style="flex-direction:column; align-items:flex-start;">
                             <div style="display:flex; justify-content:space-between; width:100%; border-bottom:1px solid #f1f5f9; padding-bottom:8px; margin-bottom:8px;">
-                                <span style="font-weight:800;">Pedido #<?= $ad['id'] ?></span>
-                                <span class="doc-dot doc-pending"><?= strtoupper($ad['status']) ?></span>
+                                <span style="font-weight:800;">Pedido #<?php echo $ad['id'] ?></span>
+                                <span class="doc-dot doc-pending"><?php echo strtoupper($ad['status']) ?></span>
                             </div>
                             <div style="font-size:12px; color:var(--text-muted); display:flex; flex-direction:column; gap:4px; width:100%;">
-                                <div><b>Local:</b> <?= esc($ad['local_name'] ?: 'N/A') ?></div>
-                                <div><b>Repartidor:</b> <?= esc($ad['driver_name'] ?: 'No asignado') ?></div>
-                                <div><b>Dirección:</b> <?= esc($ad['delivery_address']) ?></div>
+                                <div><b>Local:</b> <?php echo esc($ad['local_name'] ?: 'N/A') ?></div>
+                                <div><b>Repartidor:</b> <?php echo esc($ad['driver_name'] ?: 'No asignado') ?></div>
+                                <div><b>Dirección:</b> <?php echo esc($ad['delivery_address']) ?></div>
                             </div>
                         </div>
                     <?php endforeach; ?>
@@ -946,11 +947,11 @@ $maxChartCount = max(5, max($chartCounts));
                 </div>
             <?php else: ?>
                 <?php foreach ($pendingVerifications as $pv): ?>
-                    <div class="verification-card" onclick="window.location.href='admin_driver_detail.php?id=<?= (int)$pv['id'] ?>'" style="cursor:pointer;">
+                    <div class="verification-card" onclick="window.location.href='admin_driver_detail.php?id=<?= (int)$pv['id']; ?>'" style="cursor:pointer;">
                         <div class="driver-mini-info">
                             <div class="driver-mini-avatar">
                                 <?php if ($pv['avatar_path']): ?>
-                                    <img src="<?= esc(delivery_app_url($pv['avatar_path'])) ?>" alt="Avatar">
+                                    <img src="<?= esc(delivery_app_url($pv['avatar_path'])); ?>" alt="Avatar">
                                 <?php else: ?>
                                     👤
                                 <?php endif; ?>
@@ -981,7 +982,7 @@ $maxChartCount = max(5, max($chartCounts));
                 <?php foreach (array_slice($unassigned, 0, 4) as $ua): ?>
                     <div class="verification-card" style="cursor:default;">
                         <div class="driver-text">
-                            <b>#<?= $ua['id'] ?> · <?= esc($ua['local_name']) ?></b>
+                            <b>#<?php echo $ua['id'] ?> · <?php echo esc($ua['local_name']) ?></b>
                             <span style="color:#d97706; font-size:10px;">Buscando repartidor...</span>
                         </div>
                     </div>
@@ -1051,13 +1052,13 @@ $maxChartCount = max(5, max($chartCounts));
         })
         .then(res => res.json())
         .then(data => {
-            if (data.success && topLocalsChart) {
-                topLocalsChart.updateOptions({
+            if (data.success && topLocalesChart) {
+                topLocalesChart.updateOptions({
                     xaxis: {
                         categories: data.categories
                     }
                 });
-                topLocalsChart.updateSeries([{
+                topLocalesChart.updateSeries([{
                     name: 'Pedidos',
                     data: data.series
                 }]);
@@ -1116,7 +1117,7 @@ $maxChartCount = max(5, max($chartCounts));
                     const isDelivering = parseInt(d.active_delivery_count || 0) > 0;
                     el.className = 'driver-avatar-marker ' + (isDelivering ? 'delivering' : 'online');
                     
-                    const avatarUrl = d.avatar_path ? '<?= delivery_app_url() ?>/' + d.avatar_path : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80';
+                    const avatarUrl = d.avatar_path ? '<?php echo delivery_app_url() ?>/' + d.avatar_path : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80';
                     el.style.backgroundImage = `url('${avatarUrl}')`;
                     
                     let statusLabel = '🟢 En Línea y Disponible';
@@ -1309,7 +1310,7 @@ $maxChartCount = max(5, max($chartCounts));
         const topLocalsOptions = {
             series: [{
                 name: 'Pedidos',
-                data: <?= json_encode(array_column($topLocals, 'count')) ?>
+                data: <?php echo json_encode(array_column($topLocals, 'count')); ?>
             }],
             chart: {
                 type: 'bar',
@@ -1326,7 +1327,7 @@ $maxChartCount = max(5, max($chartCounts));
             },
             colors: ['#2563eb'],
             xaxis: {
-                categories: <?= json_encode(array_column($topLocals, 'name')) ?>,
+                categories: <?php echo json_encode(array_column($topLocals, 'name')); ?>,
                 labels: {
                     style: {
                         colors: '#94a3b8',
@@ -1360,7 +1361,7 @@ $maxChartCount = max(5, max($chartCounts));
         const topDriversOptions = {
             series: [{
                 name: 'Entregas',
-                data: <?= json_encode(array_column($topDrivers, 'count')) ?>
+                data: <?php echo json_encode(array_column($topDrivers, 'count')); ?>
             }],
             chart: {
                 type: 'bar',
@@ -1377,7 +1378,7 @@ $maxChartCount = max(5, max($chartCounts));
             },
             colors: ['#10b981'],
             xaxis: {
-                categories: <?= json_encode(array_column($topDrivers, 'name')) ?>,
+                categories: <?php echo json_encode(array_column($topDrivers, 'name')); ?>,
                 labels: {
                     style: {
                         colors: '#94a3b8',
@@ -1534,6 +1535,34 @@ $maxChartCount = max(5, max($chartCounts));
             alert('Error de conexión.');
         });
     }
+</script>
+<!-- Admin payment notification sound -->
+<audio id="new-payment-sound" src="/php-delivery-app/assets/sounds/delivered.mp3" preload="auto"></audio>
+<script>
+    // Existing functions ... (preserve existing code)
+    // Add polling for new payments with faster, non‑overlapping checks
+    let paymentAlerted = false;
+    function pollNewPayments() {
+        const fd = new FormData();
+        fd.append('action', 'check_new_payment');
+        fetch('api_admin_action.php', { method: 'POST', body: fd })
+            .then(res => res.json())
+            .then(data => {
+                if (data.new && !paymentAlerted) {
+                    const audio = document.getElementById('new-payment-sound');
+                    if (audio) audio.play();
+                    alert('Nuevo comprobante de pago recibido.');
+                    paymentAlerted = true; // avoid repeated alerts until page reload
+                }
+            })
+            .catch(err => console.error('Polling error:', err))
+            .finally(() => {
+                // schedule next poll after 5 seconds
+                setTimeout(pollNewPayments, 5000);
+            });
+    }
+    // Kick off the polling loop
+    pollNewPayments();
 </script>
 
 </body>
