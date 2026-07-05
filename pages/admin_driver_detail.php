@@ -1462,7 +1462,7 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             })
             .then(res => res.json())
             .then(data => {
-                if (data.success && data.history.length > 0) {
+                if (data.success && Array.isArray(data.history) && data.history.length > 0) {
                     const tbody = document.getElementById('driver-history-table-body');
                     
                     data.history.forEach(order => {

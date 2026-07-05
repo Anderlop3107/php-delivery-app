@@ -1543,23 +1543,46 @@ $maxChartCount = max(5, max($chartCounts));
     // Add polling for new payments with faster, non‑overlapping checks
     let paymentAlerted = false;
     function pollNewPayments() {
+        console.log('Polling for new payments...');
         const fd = new FormData();
         fd.append('action', 'check_new_payment');
-        fetch('api_admin_action.php', { method: 'POST', body: fd })
-            .then(res => res.json())
-            .then(data => {
-                if (data.new && !paymentAlerted) {
-                    const audio = document.getElementById('new-payment-sound');
-                    if (audio) audio.play();
-                    alert('Nuevo comprobante de pago recibido.');
-                    paymentAlerted = true; // avoid repeated alerts until page reload
+        fetch('api_admin_action.php', {
+            method: 'POST',
+            body: fd,
+            credentials: 'include'
+        })
+        .then(res => {
+            if (!res.ok) {
+                console.error('Polling failed with status', res.status);
+                // If redirected to login, stop further polling
+                if (res.status === 302) {
+                    alert('Sesión expirada. Por favor, inicie sesión nuevamente.');
+                    window.location.href = '/php-delivery-app/login.php';
+                    return null;
                 }
-            })
-            .catch(err => console.error('Polling error:', err))
-            .finally(() => {
-                // schedule next poll after 5 seconds
-                setTimeout(pollNewPayments, 5000);
-            });
+            }
+            const ct = res.headers.get('Content-Type') || '';
+            if (!ct.includes('application/json')) {
+                console.error('Unexpected content type:', ct);
+                return null;
+            }
+            return res.json();
+        })
+        .then(data => {
+            if (!data) return;
+            console.log('Poll response:', data);
+            if (data.new && !paymentAlerted) {
+                const audio = document.getElementById('new-payment-sound');
+                if (audio) audio.play();
+                alert('Nuevo comprobante de pago recibido.');
+                paymentAlerted = true; // avoid repeated alerts until page reload
+            }
+        })
+        .catch(err => console.error('Polling error:', err))
+        .finally(() => {
+            // schedule next poll after 5 seconds
+            setTimeout(pollNewPayments, 5000);
+        });
     }
     // Kick off the polling loop
     pollNewPayments();
