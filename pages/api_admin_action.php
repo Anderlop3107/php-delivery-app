@@ -1,4 +1,5 @@
 <?php
+header('Content-Type: application/json');
 require_once __DIR__ . '/../bootstrap.php';
 
 header('Content-Type: application/json');
@@ -355,22 +356,51 @@ if ($action === 'verify_driver_payment') {
             }
             exit;
         }
-        // Deshabilitar suscripción
-        $driverId = (int)($_POST['driver_id'] ?? 0);
-        if ($driverId <= 0) {
-            http_response_code(400);
-            echo json_encode(['error' => 'Datos de conductor inválidos.']);
-            exit;
-        }
-        $driver = app_one('SELECT id FROM users WHERE id = ? AND role = \'repartidor\'', 'i', [$driverId]);
-        if (!$driver) {
-            http_response_code(404);
-            echo json_encode(['error' => 'Repartidor no encontrado.']);
-            exit;
-        }
-        app_exec('UPDATE users SET subscription_status = \'expired\', subscription_expires_at = NULL, updated_at = NOW() WHERE id = ?', 'i', [$driverId]);
-        echo json_encode(['success' => true, 'message' => 'Suscripción deshabilitada correctamente.']);
+        // Disable subscription endpoint
+if ($action === 'disable_subscription') {
+    $driverId = (int)($_POST['driver_id'] ?? 0);
+    if ($driverId <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Datos de conductor inválidos.']);
         exit;
+    }
+    $driver = app_one('SELECT id FROM users WHERE id = ? AND role = \'repartidor\'', 'i', [$driverId]);
+    if (!$driver) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Repartidor no encontrado.']);
+        exit;
+    }
+    app_exec('UPDATE users SET subscription_status = \'expired\', subscription_expires_at = NULL, updated_at = NOW() WHERE id = ?', 'i', [$driverId]);
+    echo json_encode(['success' => true, 'message' => 'Suscripción deshabilitada correctamente.']);
+    exit;
+}
+
+// Enable subscription endpoint
+if ($action === 'enable_subscription') {
+    $driverId = (int)($_POST['driver_id'] ?? 0);
+    if ($driverId <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Datos de conductor inválidos.']);
+        exit;
+    }
+    $driver = app_one('SELECT id FROM users WHERE id = ? AND role = \'repartidor\'', 'i', [$driverId]);
+    if (!$driver) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Repartidor no encontrado.']);
+        exit;
+    }
+    // Calculate next Monday 10:30 AM for expiration
+    $now = time();
+    $todayMonday1030 = strtotime('this Monday 10:30:00');
+    if ($now < $todayMonday1030) {
+        $expiresAt = date('Y-m-d H:i:s', $todayMonday1030);
+    } else {
+        $expiresAt = date('Y-m-d H:i:s', strtotime('next Monday 10:30:00'));
+    }
+    app_exec('UPDATE users SET subscription_status = \'active\', subscription_expires_at = ?, updated_at = NOW() WHERE id = ?', 'si', [$expiresAt, $driverId]);
+    echo json_encode(['success' => true, 'message' => 'Suscripción habilitada correctamente.']);
+    exit;
+}
 
 
 if ($action === 'extend_driver_grace_period') {
