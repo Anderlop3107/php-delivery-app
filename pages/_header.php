@@ -355,6 +355,65 @@ $user = current_user();
                 }
             }
 
+            function showFloatingToast(title, body, icon = '🔔', borderLeftColor = '#2563eb') {
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+                    position: fixed;
+                    bottom: 24px;
+                    right: 24px;
+                    z-index: 9999;
+                    background: #ffffff;
+                    border-left: 5px solid ${borderLeftColor};
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+                    padding: 16px 20px;
+                    border-radius: 20px;
+                    display: flex;
+                    align-items: center;
+                    gap: 14px;
+                    min-width: 320px;
+                    max-width: 400px;
+                    cursor: pointer;
+                    font-family: 'Inter', sans-serif;
+                    transition: all 0.3s ease;
+                    transform: translateY(20px);
+                    opacity: 0;
+                `;
+
+                toast.innerHTML = `
+                    <div style="font-size: 24px; flex-shrink: 0;">${icon}</div>
+                    <div style="flex-grow: 1;">
+                        <h4 style="margin: 0 0 4px 0; font-size: 13.5px; font-weight: 800; color: #0f172a;">${title}</h4>
+                        <p style="margin: 0; font-size: 12px; font-weight: 600; color: #64748b; line-height: 1.4;">${body}</p>
+                    </div>
+                    <button style="background: none; border: none; font-size: 14px; cursor: pointer; color: #94a3b8; font-weight: bold; padding: 0 4px;">✕</button>
+                `;
+
+                toast.onmouseenter = () => { toast.style.transform = 'scale(1.02)'; };
+                toast.onmouseleave = () => { toast.style.transform = 'scale(1)'; };
+
+                document.body.appendChild(toast);
+
+                requestAnimationFrame(() => {
+                    toast.style.transform = 'translateY(0)';
+                    toast.style.opacity = '1';
+                });
+
+                const closeToast = () => {
+                    toast.style.transform = 'translateY(20px)';
+                    toast.style.opacity = '0';
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 300);
+                };
+
+                toast.querySelector('button').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeToast();
+                });
+
+                setTimeout(closeToast, 5000);
+            }
+
             async function checkUpdates() {
                 try {
                     const resp = await fetch('<?= esc(delivery_app_url("pages/api_get_active_deliveries.php")) ?>?_t=' + Date.now());
@@ -455,14 +514,17 @@ $user = current_user();
                     if (playArrivalSound) {
                         playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_arrived.mp3")) ?>');
                         showDesktopNotification("¡Delivery en Local!", notificationText);
+                        showFloatingToast("¡Delivery en Local!", notificationText, '📍', '#f59e0b');
                         soundPlayed = true;
                     } else if (playCompletedSound) {
                         playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_completed.mp3")) ?>');
                         showDesktopNotification("¡Pedido Entregado!", notificationText);
+                        showFloatingToast("¡Pedido Entregado!", notificationText, '✅', '#10b981');
                         soundPlayed = true;
                     } else if (playAssignedSound) {
                         playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_assigned.mp3")) ?>');
                         showDesktopNotification("¡Chofer Asignado!", notificationText);
+                        showFloatingToast("¡Chofer Asignado!", notificationText, '🚴', '#2563eb');
                         soundPlayed = true;
                     }
 

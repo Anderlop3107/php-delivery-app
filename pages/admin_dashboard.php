@@ -20,8 +20,10 @@ $activeDrivers = app_all("
            status_doc_ci, status_doc_licencia, status_doc_habilitacion, status_doc_cedula_verde,
            doc_ci_path, doc_ci_back_path, doc_licencia_path, doc_licencia_back_path,
            doc_habilitacion_path, doc_habilitacion_back_path, doc_cedula_verde_path, doc_cedula_verde_back_path,
-           phone, email,
-           (SELECT COUNT(*) FROM deliveries WHERE repartidor_user_id = users.id AND status NOT IN ('entregado', 'cancelado')) as active_delivery_count
+           phone, email, subscription_status,
+           (SELECT COUNT(*) FROM deliveries WHERE repartidor_user_id = users.id AND status NOT IN ('entregado', 'cancelado')) as active_delivery_count,
+           (SELECT payment_proof_path FROM driver_payments WHERE driver_user_id = users.id AND status = 'pending' ORDER BY id DESC LIMIT 1) as payment_proof_path,
+           (SELECT id FROM driver_payments WHERE driver_user_id = users.id AND status = 'pending' ORDER BY id DESC LIMIT 1) as payment_id
     FROM users 
     WHERE role = 'repartidor'
 ");
@@ -118,7 +120,8 @@ foreach ($activeDrivers as $d) {
         $d['status_doc_ci'] === 'pending' ||
         $d['status_doc_licencia'] === 'pending' ||
         $d['status_doc_habilitacion'] === 'pending' ||
-        $d['status_doc_cedula_verde'] === 'pending'
+        $d['status_doc_cedula_verde'] === 'pending' ||
+        ($d['subscription_status'] ?? '') === 'pending'
     ) {
         $pendingVerifications[] = $d;
     }
@@ -156,6 +159,7 @@ $maxChartCount = max(5, max($chartCounts));
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:,">
     <title>Panel de Administración Premium</title>
     
     <!-- Google Fonts -->
@@ -168,7 +172,9 @@ $maxChartCount = max(5, max($chartCounts));
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.4.0/mapbox-gl.js"></script>
     
     <!-- ApexCharts CDN -->
-    <script src="/php-delivery-app/assets/js/apexcharts.min.js"></script>
+    <script src="<?= esc(delivery_app_url('assets/js/apexcharts.min.js')) ?>"></script>
+    <!-- SweetAlert2 local copy (avoids Tracking‑Prevention blocks) -->
+    <script src="<?= esc(delivery_app_url('assets/js/sweetalert2.min.js')) ?>"></script>
     
     <style>
         :root {
@@ -947,7 +953,7 @@ $maxChartCount = max(5, max($chartCounts));
                 </div>
             <?php else: ?>
                 <?php foreach ($pendingVerifications as $pv): ?>
-                    <div class="verification-card" onclick="window.location.href='admin_driver_detail.php?id=<?= (int)$pv['id']; ?>'" style="cursor:pointer;">
+                    <div class="verification-card" onclick="window.location.href='admin_driver_detail.php?id=<?= (int)$pv['id']; ?>'" style="cursor:pointer; position:relative;">
                         <div class="driver-mini-info">
                             <div class="driver-mini-avatar">
                                 <?php if ($pv['avatar_path']): ?>
@@ -958,10 +964,27 @@ $maxChartCount = max(5, max($chartCounts));
                             </div>
                             <div class="driver-text">
                                 <b><?= esc($pv['name']) ?></b>
-                                <span>Verificación requerida</span>
+                                <span>
+                                    <?php if (($pv['subscription_status'] ?? '') === 'pending'): ?>
+                                        💳 Pago por verificar
+                                    <?php else: ?>
+                                        📄 Documentación requerida
+                                    <?php endif; ?>
+                                </span>
                             </div>
                         </div>
-                        <div class="btn-view-chevron">&rsaquo;</div>
+                        <!-- Imagen del comprobante de pago -->
+                        <?php if (!empty($pv['payment_proof_path'])): ?>
+                            <div class="payment-proof" style="margin-top:8px; text-align:center;">
+                                <img src="<?= esc(delivery_app_url($pv['payment_proof_path'])); ?>" alt="Comprobante" style="max-width:100%; height:auto; border:1px solid #e5e7eb; border-radius:8px;">
+                                <p style="margin-top:4px; font-size:11px; color:#64748b; font-weight:500;">Comprobante de pago del conductor <?= esc($pv['name']); ?></p>
+                            </div>
+                            <div style="display:flex; gap:8px; margin-top:10px;" onclick="event.stopPropagation();">
+                                <button type="button" style="flex:1; padding:8px; font-size:12px; font-weight:700; border:none; border-radius:8px; background:#10b981; color:#fff; cursor:pointer;" onclick="verifyDashboardSubscription('approved', <?= (int)$pv['id']; ?>, <?= (int)$pv['payment_id']; ?>)">Aprobar</button>
+                                <button type="button" style="flex:1; padding:8px; font-size:12px; font-weight:700; border:none; border-radius:8px; background:#ef4444; color:#fff; cursor:pointer;" onclick="verifyDashboardSubscription('rejected', <?= (int)$pv['id']; ?>, <?= (int)$pv['payment_id']; ?>)">Rechazar</button>
+                            </div>
+                        <?php endif; ?>
+                        <div class="btn-view-chevron" style="top:20px;">&rsaquo;</div>
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>
@@ -1536,14 +1559,77 @@ $maxChartCount = max(5, max($chartCounts));
         });
     }
 </script>
-<!-- Admin payment notification sound -->
-<audio id="new-payment-sound" src="/php-delivery-app/assets/sounds/delivered.mp3" preload="auto"></audio>
 <script>
-    // Existing functions ... (preserve existing code)
-    // Add polling for new payments with faster, non‑overlapping checks
     let paymentAlerted = false;
+    let audioUnlocked = false;
+    
+    // Crear instancia de audio con ruta dinámica
+    const notificationSound = new Audio('<?= esc(delivery_app_url('assets/sounds/delivered.mp3')) ?>');
+    notificationSound.preload = 'auto';
+
+    // Generar dinámicamente un banner flotante premium para habilitar el sonido
+    const banner = document.createElement('div');
+    banner.id = 'audio-unlock-banner';
+    banner.style.cssText = `
+        position: fixed; bottom: 24px; right: 24px; z-index: 999999;
+        background: #2563eb; color: #ffffff; padding: 14px 24px; border-radius: 50px;
+        box-shadow: 0 10px 30px rgba(37, 99, 235, 0.4); display: flex; align-items: center; gap: 10px;
+        font-size: 13.5px; font-weight: 800; cursor: pointer; transition: all 0.3s ease;
+        border: 2px solid rgba(255, 255, 255, 0.2);
+    `;
+    banner.innerHTML = '<span>🔔</span> Habilitar alertas sonoras';
+    
+    banner.onmouseenter = () => {
+        banner.style.transform = 'scale(1.05)';
+        banner.style.boxShadow = '0 12px 35px rgba(37, 99, 235, 0.5)';
+    };
+    banner.onmouseleave = () => {
+        banner.style.transform = 'scale(1)';
+        banner.style.boxShadow = '0 10px 30px rgba(37, 99, 235, 0.4)';
+    };
+
+    function unlockAudio() {
+        if (audioUnlocked) return;
+        notificationSound.play().then(() => {
+            notificationSound.pause();
+            notificationSound.currentTime = 0;
+            audioUnlocked = true;
+            
+            // Animación de salida y remoción
+            banner.style.opacity = '0';
+            banner.style.transform = 'translateY(20px)';
+            setTimeout(() => banner.remove(), 500);
+
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: 'Alertas sonoras activadas con éxito.',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }).catch(err => {
+            console.warn('Fallo al desbloquear audio:', err);
+        });
+    }
+
+    banner.addEventListener('click', (e) => {
+        e.stopPropagation();
+        unlockAudio();
+    });
+    
+    // También desbloquear si hacen click en cualquier parte
+    document.addEventListener('click', () => {
+        if (!audioUnlocked) unlockAudio();
+    }, { once: true });
+
+    // Append banner to body once page finishes loading
+    window.addEventListener('load', () => {
+        document.body.appendChild(banner);
+        pollNewPayments();
+    });
+
     function pollNewPayments() {
-        console.log('Polling for new payments...');
         const fd = new FormData();
         fd.append('action', 'check_new_payment');
         fetch('api_admin_action.php', {
@@ -1552,40 +1638,151 @@ $maxChartCount = max(5, max($chartCounts));
             credentials: 'include'
         })
         .then(res => {
-            if (!res.ok) {
-                console.error('Polling failed with status', res.status);
-                // If redirected to login, stop further polling
-                if (res.status === 302) {
-                    alert('Sesión expirada. Por favor, inicie sesión nuevamente.');
-                    window.location.href = '/php-delivery-app/login.php';
-                    return null;
-                }
-            }
-            const ct = res.headers.get('Content-Type') || '';
-            if (!ct.includes('application/json')) {
-                console.error('Unexpected content type:', ct);
-                return null;
-            }
-            return res.json();
+            if (!res.ok) { console.error('Polling failed with status', res.status); return null; }
+            return res.text().then(txt => { console.log('Polling response:', txt); try { return JSON.parse(txt); } catch(e){ console.error('JSON parse error:', e); return null; } });
         })
         .then(data => {
             if (!data) return;
-            console.log('Poll response:', data);
+            // Reset flag when no new payments
+            if (!data.new) {
+                paymentAlerted = false;
+                return;
+            }
             if (data.new && !paymentAlerted) {
-                const audio = document.getElementById('new-payment-sound');
-                if (audio) audio.play();
-                alert('Nuevo comprobante de pago recibido.');
-                paymentAlerted = true; // avoid repeated alerts until page reload
+                notificationSound.volume = 1.0;
+                notificationSound.play().catch(err => {
+                    console.warn('Audio playback blocked or failed:', err);
+                });
+                paymentAlerted = true;
+
+                // Crear y mostrar Toast flotante premium en el DOM
+                const payments = data.payments || [];
+                const firstPayment = payments[0] || {};
+                const driverName = firstPayment.driver_name || 'Un repartidor';
+                const driverId = firstPayment.driver_user_id || '';
+
+                const toast = document.createElement('div');
+                toast.id = 'floating-payment-toast';
+                toast.style.cssText = `
+                    position: fixed;
+                    bottom: 24px;
+                    right: 24px;
+                    z-index: 9999;
+                    background: #ffffff;
+                    border-left: 5px solid #10b981;
+                    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+                    padding: 16px 20px;
+                    border-radius: 20px;
+                    display: flex;
+                    align-items: center;
+                    gap: 14px;
+                    min-width: 320px;
+                    max-width: 400px;
+                    cursor: pointer;
+                    font-family: 'Plus Jakarta Sans', sans-serif;
+                    transition: all 0.3s ease;
+                    transform: translateY(20px);
+                    opacity: 0;
+                `;
+
+                toast.innerHTML = `
+                    <div style="font-size: 24px; flex-shrink: 0;">💰</div>
+                    <div style="flex-grow: 1;">
+                        <h4 style="margin: 0 0 4px 0; font-size: 13.5px; font-weight: 800; color: #0f172a;">¡Nuevo Pago Recibido!</h4>
+                        <p style="margin: 0; font-size: 12px; font-weight: 600; color: #64748b; line-height: 1.4;">
+                            ${driverName} ha subido su comprobante de suscripción.
+                        </p>
+                    </div>
+                    <button style="background: none; border: none; font-size: 14px; cursor: pointer; color: #94a3b8; font-weight: bold; padding: 0 4px;">✕</button>
+                `;
+
+                // Agregar efectos hover
+                toast.onmouseenter = () => { toast.style.transform = 'scale(1.02)'; };
+                toast.onmouseleave = () => { toast.style.transform = 'scale(1)'; };
+
+                document.body.appendChild(toast);
+
+                // Forzar reflow para animación de entrada
+                requestAnimationFrame(() => {
+                    toast.style.transform = 'translateY(0)';
+                    toast.style.opacity = '1';
+                });
+
+                const closeToast = () => {
+                    toast.style.transform = 'translateY(20px)';
+                    toast.style.opacity = '0';
+                    setTimeout(() => {
+                        toast.remove();
+                    }, 300);
+                };
+
+                // Redirigir o recargar al hacer click en el toast
+                toast.addEventListener('click', (e) => {
+                    if (e.target.tagName === 'BUTTON') return;
+                    if (driverId) {
+                        window.location.href = `admin_driver_detail.php?id=${driverId}`;
+                    } else {
+                        location.reload();
+                    }
+                });
+
+                toast.querySelector('button').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    closeToast();
+                });
+
+                // Autodestruirse tras 5 segundos
+                setTimeout(closeToast, 5000);
             }
         })
         .catch(err => console.error('Polling error:', err))
         .finally(() => {
-            // schedule next poll after 5 seconds
-            setTimeout(pollNewPayments, 5000);
+            setTimeout(pollNewPayments, 10000);
         });
     }
-    // Kick off the polling loop
-    pollNewPayments();
+
+    function verifyDashboardSubscription(status, driverId, paymentId) {
+        let notes = '';
+        if (status === 'rejected') {
+            notes = prompt('Por favor, ingresa el motivo del rechazo del comprobante:');
+            if (notes === null) return; // Canceló el prompt
+        }
+
+        const formData = new FormData();
+        formData.append('action', 'verify_driver_payment');
+        formData.append('driver_id', driverId);
+        formData.append('payment_id', paymentId);
+        formData.append('status', status);
+        formData.append('notes', notes);
+
+        fetch('api_admin_action.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success || res.message) {
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: res.message || 'Comprobante verificado con éxito.',
+                    timer: 3000,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
+            } else {
+                alert('Error: ' + (res.error || 'No se pudo verificar.'));
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error al procesar la verificación.');
+        });
+    }
 </script>
 
 </body>

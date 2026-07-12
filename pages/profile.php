@@ -87,6 +87,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
 $title = 'Perfil';
 require __DIR__ . '/_header.php';
 ?>
+<!-- SweetAlert2 local copy -->
+<script src="<?= esc(delivery_app_url('assets/js/sweetalert2.min.js')) ?>"></script>
 <?php if ($userData['role'] === 'local'): ?>
 <!-- Mapbox GL JS -->
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet">
@@ -754,24 +756,49 @@ require __DIR__ . '/_header.php';
             Por favor, sube tu comprobante de pago semanal para continuar activo en la plataforma.
         </p>
 
-        <?php if ($latestPayment && $latestPayment['status'] === 'rejected'): ?>
-            <div style="background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 600; margin-bottom: 15px; text-align: left;">
-                ❌ <b>Rechazado anterior:</b><br>
-                <?= esc($latestPayment['notes'] ?: 'No se especificaron motivos.') ?>
+        <?php if ($latestPayment && $latestPayment['status'] === 'pending'): ?>
+            <div style="
+                width: 80px; height: 80px; border-radius: 50%;
+                background: rgba(245, 158, 11, 0.08); color: #f59e0b;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 40px; margin: 0 auto 24px;
+                box-shadow: 0 0 20px rgba(245, 158, 11, 0.12);
+                animation: pulseGlow 2s infinite ease-in-out;
+            ">
+                ⏳
             </div>
-        <?php endif; ?>
+            <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 12px; letter-spacing: -0.5px; text-align: center;">Comprobante en verificación</h2>
+            <p style="font-size: 14px; color: #64748b; margin: 0 0 24px; line-height: 1.6; font-weight: 500; text-align: center;">
+                Tu comprobante de pago fue subido con éxito y está en revisión. El administrador te habilitará pronto.
+            </p>
+            <div style="
+                background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px;
+                font-size: 13px; color: #475569; font-weight: 700;
+                display: flex; align-items: center; justify-content: center; gap: 8px;
+            ">
+                <span>📅</span>
+                <span>Enviado el: <?= date('d/m/Y H:i', strtotime($latestPayment['uploaded_at'])) ?> (UTC-3)</span>
+            </div>
+        <?php else: ?>
+            <?php if ($latestPayment && $latestPayment['status'] === 'rejected'): ?>
+                <div style="background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 600; margin-bottom: 15px; text-align: left;">
+                    ❌ <b>Rechazado anterior:</b><br>
+                    <?= esc($latestPayment['notes'] ?: 'No se especificaron motivos.') ?>
+                </div>
+            <?php endif; ?>
 
-        <form id="payment-upload-form-profile" style="display: flex; flex-direction: column; gap: 16px;">
-            <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px dashed var(--border); border-radius: 16px; padding: 24px; cursor: pointer; background: #f8fafc; text-align:center;" id="upload-label-profile">
-                <span style="font-size: 32px; margin-bottom: 8px;">📷</span>
-                <span style="font-size: 14px; font-weight: 700; color: #475569;" id="file-label-text-profile">Seleccionar foto de comprobante</span>
-                <input type="file" name="payment_proof" id="payment_proof_profile" accept="image/*" style="display: none;" onchange="handleFileSelectProfile(this)">
-            </label>
-            
-            <button type="submit" id="btn-submit-payment-profile" style="width: 100%; padding: 16px; border-radius: 16px; background: var(--primary); color: #ffffff; font-size: 15px; font-weight: 800; border: none; cursor: pointer; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);">
-                Subir Comprobante
-            </button>
-        </form>
+            <form id="payment-upload-form-profile" style="display: flex; flex-direction: column; gap: 16px;">
+                <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px dashed var(--border); border-radius: 16px; padding: 24px; cursor: pointer; background: #f8fafc; text-align:center;" id="upload-label-profile">
+                    <span style="font-size: 32px; margin-bottom: 8px;">📷</span>
+                    <span style="font-size: 14px; font-weight: 700; color: #475569;" id="file-label-text-profile">Seleccionar foto de comprobante</span>
+                    <input type="file" name="payment_proof" id="payment_proof_profile" accept="image/*" style="display: none;" onchange="handleFileSelectProfile(this)">
+                </label>
+                
+                <button type="submit" id="btn-submit-payment-profile" style="width: 100%; padding: 16px; border-radius: 16px; background: var(--primary); color: #ffffff; font-size: 15px; font-weight: 800; border: none; cursor: pointer; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);">
+                    Subir Comprobante
+                </button>
+            </form>
+        <?php endif; ?>
     </div>
 </div>
 
@@ -941,7 +968,15 @@ require __DIR__ . '/_header.php';
             e.preventDefault();
             const fileInput = document.getElementById('payment_proof_profile');
             if (!fileInput.files || fileInput.files.length === 0) {
-                alert('Por favor selecciona una foto de tu comprobante de pago.');
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'warning',
+                    title: 'Por favor selecciona una foto de tu comprobante de pago.',
+                    timer: 3000,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
                 return;
             }
             const btn = document.getElementById('btn-submit-payment-profile');
@@ -956,16 +991,75 @@ require __DIR__ . '/_header.php';
                 });
                 const res = await resp.json();
                 if (res.success) {
-                    alert('¡Comprobante subido correctamente! Espera la validación del administrador.');
-                    window.location.reload();
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'success',
+                        title: res.message || 'Comprobante subido correctamente.',
+                        timer: 3000,
+                        timerProgressBar: true,
+                        showConfirmButton: false
+                    });
+                    
+                    const modalInner = document.querySelector('#subscription-modal-profile .modal-card');
+                    if (modalInner) {
+                        modalInner.innerHTML = `
+                            <button type="button" class="modal-close-top" onclick="closeSubscriptionModalProfile()" style="background:none; border:none; font-size:18px; cursor:pointer; color:#64748b; float:right;">✕</button>
+                            <h2 style="font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 6px; clear:both;">Suscripción Semanal</h2>
+                            <p style="font-size: 13.5px; color: var(--muted); font-weight: 600; margin-bottom: 20px; line-height: 1.4; text-align: center;">
+                                Por favor, sube tu comprobante de pago semanal para continuar activo en la plataforma.
+                            </p>
+                            <div style="
+                                width: 80px; height: 80px; border-radius: 50%;
+                                background: rgba(245, 158, 11, 0.08); color: #f59e0b;
+                                display: flex; align-items: center; justify-content: center;
+                                font-size: 40px; margin: 0 auto 24px;
+                                box-shadow: 0 0 20px rgba(245, 158, 11, 0.12);
+                                animation: pulseGlow 2s infinite ease-in-out;
+                            ">
+                                ⏳
+                            </div>
+                            <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 12px; letter-spacing: -0.5px; text-align: center;">Comprobante en verificación</h2>
+                            <p style="font-size: 14px; color: #64748b; margin: 0 0 24px; line-height: 1.6; font-weight: 500; text-align: center;">
+                                Tu comprobante de pago fue subido con éxito y está en revisión. El administrador te habilitará pronto.
+                            </p>
+                            <div style="
+                                background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px;
+                                font-size: 13px; color: #475569; font-weight: 700;
+                                display: flex; align-items: center; justify-content: center; gap: 8px;
+                            ">
+                                <span>📅</span>
+                                <span>Enviado el: Recién (UTC-3)</span>
+                            </div>
+                        `;
+                    }
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1500);
                 } else {
-                    alert(res.message || 'Error al subir el comprobante.');
+                    Swal.fire({
+                        toast: true,
+                        position: 'top-end',
+                        icon: 'error',
+                        title: res.message || 'Error al subir el comprobante.',
+                        timer: 4000,
+                        timerProgressBar: true,
+                        showConfirmButton: false
+                    });
                     btn.disabled = false;
                     btn.innerText = 'Subir Comprobante';
                 }
             } catch(err) {
                 console.error(err);
-                alert('Error de conexión.');
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'error',
+                    title: 'Error de conexión con el servidor.',
+                    timer: 4000,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                });
                 btn.disabled = false;
                 btn.innerText = 'Subir Comprobante';
             }

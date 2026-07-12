@@ -26,13 +26,36 @@ if ($userData['subscription_status'] === 'active' && !empty($userData['subscript
 }
 
 $isOnlineVal = $subscriptionExpired ? 0 : 1;
+$driverId = (int)$user['id'];
 
-// Actualizar latitud, longitud, timestamp y marcar como online/offline según suscripción
+// Log session state in driver_sessions based on ping status
+if ($isOnlineVal === 0) {
+    app_exec("
+        UPDATE driver_sessions 
+        SET disconnected_at = NOW() 
+        WHERE driver_user_id = ? AND disconnected_at IS NULL
+    ", 'i', [$driverId]);
+} else {
+    // Ensure there is an active session
+    $hasActiveSession = app_one("
+        SELECT id FROM driver_sessions 
+        WHERE driver_user_id = ? AND disconnected_at IS NULL 
+        LIMIT 1
+    ", 'i', [$driverId]);
+    if (!$hasActiveSession) {
+        app_exec("
+            INSERT INTO driver_sessions (driver_user_id, connected_at) 
+            VALUES (?, NOW())
+        ", 'i', [$driverId]);
+    }
+}
+
+// Actualizar latitud, longitud, timestamp, last_ping y marcar como online/offline según suscripción
 $updated = app_exec("
     UPDATE users 
-    SET latitude = ?, longitude = ?, ubicacion_actualizada_en = NOW(), is_online = ?, updated_at = NOW() 
+    SET latitude = ?, longitude = ?, ubicacion_actualizada_en = NOW(), is_online = ?, last_ping = NOW(), updated_at = NOW() 
     WHERE id = ?
-", 'ddii', [$lat, $lng, $isOnlineVal, (int)$user['id']]);
+", 'ddii', [$lat, $lng, $isOnlineVal, $driverId]);
 
 echo json_encode([
     'success' => true,

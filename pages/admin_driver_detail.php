@@ -34,7 +34,7 @@ $paymentHistory = app_all("
 ", "i", [$driverId]);
 
 // Verificar si hay alguna notificación pendiente de pago para este driver
-$hasPendingNotification = ($latestPayment && $latestPayment['status'] === 'pending') ? 1 : 0;
+$hasPendingNotification = app_one("SELECT COUNT(*) as count FROM driver_payments WHERE driver_user_id = ? AND status = 'pending'", "i", [$driverId])['count'] > 0 ? 1 : 0;
 
 // Obtener cantidad de pedidos activos
 $activeCountRow = app_one("
@@ -50,6 +50,7 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="data:,">
     <title>Detalle de Repartidor: <?= esc($driverData['name']) ?></title>
     
     <!-- Google Fonts -->
@@ -252,15 +253,21 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
         }
         .notif-badge {
             position: absolute;
-            top: -2px;
-            right: -2px;
+            top: -4px;
+            right: -4px;
             background: #ef4444;
             color: #ffffff;
-            font-size: 10px;
+            font-size: 9px;
             font-weight: 800;
-            padding: 3px 6px;
-            border-radius: 10px;
-            border: 2px solid #ffffff;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2.2px solid #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.4);
+            line-height: 1;
         }
         .btn-back-admin {
             display: flex;
@@ -769,7 +776,7 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                 </div>
                 <div class="quick-actions">
                     <!-- Campanita de comprobantes pendientes -->
-                    <button class="action-circle-btn" title="Notificaciones" onclick="scrollToSubscriptionCard()">
+                    <button id="bell-notif-btn" class="action-circle-btn" title="Notificaciones" onclick="scrollToSubscriptionCard()">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0M3.124 7.5A8.969 8.969 0 015.292 3m13.416 0a8.969 8.969 0 012.168 4.5"></path></svg>
                         <?php if ($hasPendingNotification): ?>
                             <span class="notif-badge">1</span>
@@ -1689,28 +1696,240 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
         }
 
         // Chequear estado en vivo del conductor
-        function checkDriverLiveStatus() {
-            // Haremos una simple inferencia basándonos en la última actualización del GPS
-            // Si tiene ubicación actualizada en los últimos 60 segundos está Conectado, si es más Viejo Desconectado
-            const lastGps = '<?= $driverData['ubicacion_actualizada_en'] ?>';
-            const isOnlineVal = <?= (int)$driverData['is_online'] ?>;
-            const activeDeliveriesCount = <?= (int)$activeCount ?>;
-            
-            const badge = document.getElementById('driver-live-status-badge');
-            if (isOnlineVal === 1) {
-                if (activeDeliveriesCount > 0) {
-                    badge.innerText = 'En curso 🟠';
-                    badge.className = 'status-pill pending';
-                } else {
-                    badge.innerText = 'Conectado 🟢';
-                    badge.className = 'status-pill approved';
+        // Chequear estado en vivo del conductor en tiempo real
+        function updateDriverLiveStatus() {
+            const formData = new FormData();
+            formData.append('action', 'get_driver_live_status');
+            formData.append('driver_id', driverId);
+
+            fetch('api_admin_action.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    const badge = document.getElementById('driver-live-status-badge');
+                    if (res.is_online === 1) {
+                        if (res.active_delivery_count > 0) {
+                            badge.innerHTML = 'En curso 🟠';
+                            badge.className = 'status-pill pending';
+                        } else {
+                            badge.innerHTML = 'Conectado 🟢';
+                            badge.className = 'status-pill approved';
+                        }
+                    } else {
+                        badge.innerHTML = 'Desconectado 🔴';
+                        badge.className = 'status-pill rejected';
+                    }
                 }
-            } else {
-                badge.innerText = 'Desconectado 🔴';
-                badge.className = 'status-pill rejected';
-            }
+            })
+            .catch(err => console.error("Error al consultar estado en vivo:", err));
         }
-        checkDriverLiveStatus();
+        
+        // Ejecutar inmediatamente y programar cada 3 segundos
+        updateDriverLiveStatus();
+        setInterval(updateDriverLiveStatus, 3000);
+    </script>
+    
+    <!-- SweetAlert2 local copy -->
+    <script src="<?= esc(delivery_app_url('assets/js/sweetalert2.min.js')) ?>"></script>
+    <script>
+        let paymentAlerted = false;
+        let audioUnlocked = false;
+        
+        // Crear instancia de audio con ruta dinámica
+        const notificationSound = new Audio('<?= esc(delivery_app_url('assets/sounds/delivered.mp3')) ?>');
+        notificationSound.preload = 'auto';
+
+        // Generar dinámicamente un banner flotante premium para habilitar el sonido
+        const banner = document.createElement('div');
+        banner.id = 'audio-unlock-banner';
+        banner.style.cssText = `
+            position: fixed; bottom: 24px; right: 24px; z-index: 999999;
+            background: #2563eb; color: #ffffff; padding: 14px 24px; border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(37, 99, 235, 0.4); display: flex; align-items: center; gap: 10px;
+            font-size: 13.5px; font-weight: 800; cursor: pointer; transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+        `;
+        banner.innerHTML = '<span>🔔</span> Habilitar alertas sonoras';
+        
+        banner.onmouseenter = () => {
+            banner.style.transform = 'scale(1.05)';
+            banner.style.boxShadow = '0 12px 35px rgba(37, 99, 235, 0.5)';
+        };
+        banner.onmouseleave = () => {
+            banner.style.transform = 'scale(1)';
+            banner.style.boxShadow = '0 10px 30px rgba(37, 99, 235, 0.4)';
+        };
+
+        function unlockAudio() {
+            if (audioUnlocked) return;
+            notificationSound.play().then(() => {
+                notificationSound.pause();
+                notificationSound.currentTime = 0;
+                audioUnlocked = true;
+                
+                // Animación de salida y remoción
+                banner.style.opacity = '0';
+                banner.style.transform = 'translateY(20px)';
+                setTimeout(() => banner.remove(), 500);
+
+                Swal.fire({
+                    toast: true,
+                    position: 'top-end',
+                    icon: 'success',
+                    title: 'Alertas sonoras activadas con éxito.',
+                    timer: 2000,
+                    showConfirmButton: false
+                });
+            }).catch(err => {
+                console.warn('Fallo al desbloquear audio:', err);
+            });
+        }
+
+        banner.addEventListener('click', (e) => {
+            e.stopPropagation();
+            unlockAudio();
+        });
+        
+        // También desbloquear si hacen click en cualquier parte del documento
+        document.addEventListener('click', () => {
+            if (!audioUnlocked) unlockAudio();
+        }, { once: true });
+
+        // Append banner once loaded
+        window.addEventListener('load', () => {
+            document.body.appendChild(banner);
+            pollNewPayments();
+        });
+
+        function pollNewPayments() {
+            const fd = new FormData();
+            fd.append('action', 'check_new_payment');
+            fetch('api_admin_action.php', {
+                method: 'POST',
+                body: fd,
+                credentials: 'include'
+            })
+            .then(res => {
+                if (!res.ok) { console.error('Polling failed with status', res.status); return null; }
+                return res.text().then(txt => { console.log('Polling response:', txt); try { return JSON.parse(txt); } catch(e){ console.error('JSON parse error:', e); return null; } });
+            })
+            .then(data => {
+                if (!data) return;
+                if (!data.new) {
+                    paymentAlerted = false;
+                    return;
+                }
+                if (data.new && !paymentAlerted) {
+                    notificationSound.volume = 1.0;
+                    notificationSound.play().catch(err => {
+                        console.warn('Audio playback blocked or failed:', err);
+                    });
+                    paymentAlerted = true;
+
+                    // Si el pago pertenece a este conductor actual, agregar dinámicamente el badge de notificación
+                    const payments = data.payments || [];
+                    const currentDriverId = parseInt(driverId);
+                    const isForThisDriver = payments.some(p => parseInt(p.driver_user_id) === currentDriverId);
+                    if (isForThisDriver) {
+                        const bellBtn = document.getElementById('bell-notif-btn');
+                        if (bellBtn && !bellBtn.querySelector('.notif-badge')) {
+                            const badge = document.createElement('span');
+                            badge.className = 'notif-badge';
+                            badge.innerText = '1';
+                            bellBtn.appendChild(badge);
+                        }
+                    }
+
+                    // Crear y mostrar Toast flotante premium en el DOM
+                    const firstPayment = payments[0] || {};
+                    const newDriverName = firstPayment.driver_name || 'Un repartidor';
+                    const newDriverId = firstPayment.driver_user_id || '';
+
+                    const toast = document.createElement('div');
+                    toast.id = 'floating-payment-toast';
+                    toast.style.cssText = `
+                        position: fixed;
+                        bottom: 24px;
+                        right: 24px;
+                        z-index: 9999;
+                        background: #ffffff;
+                        border-left: 5px solid #10b981;
+                        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+                        padding: 16px 20px;
+                        border-radius: 20px;
+                        display: flex;
+                        align-items: center;
+                        gap: 14px;
+                        min-width: 320px;
+                        max-width: 400px;
+                        cursor: pointer;
+                        font-family: 'Plus Jakarta Sans', sans-serif;
+                        transition: all 0.3s ease;
+                        transform: translateY(20px);
+                        opacity: 0;
+                    `;
+
+                    toast.innerHTML = `
+                        <div style="font-size: 24px; flex-shrink: 0;">💰</div>
+                        <div style="flex-grow: 1;">
+                            <h4 style="margin: 0 0 4px 0; font-size: 13.5px; font-weight: 800; color: #0f172a;">¡Nuevo Pago Recibido!</h4>
+                            <p style="margin: 0; font-size: 12px; font-weight: 600; color: #64748b; line-height: 1.4;">
+                                ${newDriverName} ha subido su comprobante de suscripción.
+                            </p>
+                        </div>
+                        <button style="background: none; border: none; font-size: 14px; cursor: pointer; color: #94a3b8; font-weight: bold; padding: 0 4px;">✕</button>
+                    `;
+
+                    // Agregar efectos hover
+                    toast.onmouseenter = () => { toast.style.transform = 'scale(1.02)'; };
+                    toast.onmouseleave = () => { toast.style.transform = 'scale(1)'; };
+
+                    document.body.appendChild(toast);
+
+                    // Forzar reflow para animación de entrada
+                    requestAnimationFrame(() => {
+                        toast.style.transform = 'translateY(0)';
+                        toast.style.opacity = '1';
+                    });
+
+                    const closeToast = () => {
+                        toast.style.transform = 'translateY(20px)';
+                        toast.style.opacity = '0';
+                        setTimeout(() => {
+                            toast.remove();
+                            if (isForThisDriver) {
+                                location.reload();
+                            }
+                        }, 300);
+                    };
+
+                    // Redirigir o recargar al hacer click en el toast
+                    toast.addEventListener('click', (e) => {
+                        if (e.target.tagName === 'BUTTON') return;
+                        if (newDriverId && parseInt(newDriverId) !== currentDriverId) {
+                            window.location.href = `admin_driver_detail.php?id=${newDriverId}`;
+                        } else {
+                            location.reload();
+                        }
+                    });
+
+                    toast.querySelector('button').addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        closeToast();
+                    });
+
+                    // Autodestruirse tras 5 segundos
+                    setTimeout(closeToast, 5000);
+                }
+            })
+            .catch(err => console.error('Polling error:', err))
+            .finally(() => {
+                setTimeout(pollNewPayments, 10000);
+            });
+        }
     </script>
 </body>
 </html>

@@ -45,6 +45,9 @@ $title = 'Escáner de Pedidos';
 require __DIR__ . '/_header.php';
 ?>
 
+<!-- SweetAlert2 local copy -->
+<script src="<?= esc(delivery_app_url('assets/js/sweetalert2.min.js')) ?>"></script>
+
 <!-- Mapbox GL JS -->
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
@@ -198,6 +201,38 @@ require __DIR__ . '/_header.php';
     .money-box b { font-size: 19px; color: var(--text); font-weight: 800; letter-spacing: -0.5px; }
     .money-box.earnings b { color: #10b981; }
     .money-box.local-pay b { color: #d97706; }
+
+    .btn-submit-payment {
+        width: 100%;
+        padding: 16px;
+        border: none;
+        border-radius: 20px;
+        background: var(--primary, #2563eb);
+        color: #ffffff;
+        font-size: 15px;
+        font-weight: 800;
+        cursor: pointer;
+        box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
+        transition: all 0.2s;
+        box-sizing: border-box;
+        max-width: 100%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        height: 56px; /* consistent height on mobile */
+    }
+
+    @media (max-width: 480px) {
+        .btn-submit-payment {
+            font-size: 14px;
+            padding: 14px;
+            border-radius: 16px;
+        }
+    }
+    .btn-submit-payment:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
 
     .btn-accept-now { 
         width: 100%; 
@@ -483,7 +518,7 @@ require __DIR__ . '/_header.php';
     display: flex; align-items: center; justify-content: center;
     padding: 20px;
 ">
-    <div style="
+    <div id="subscription-modal-content" style="
         background: #ffffff; border-radius: 28px; padding: 40px 30px;
         width: 100%; max-width: 420px; text-align: center;
         box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
@@ -549,15 +584,9 @@ require __DIR__ . '/_header.php';
                     <input type="file" name="payment_proof" id="payment_proof" accept="image/*" style="display: none;" onchange="handleFileSelect(this)">
                 </label>
                 
-                <button type="submit" id="btn-submit-payment" style="
-                    width: 100%; padding: 16px; border: none; border-radius: 16px;
-                    background: var(--primary, #2563eb); color: #ffffff;
-                    font-size: 15px; font-weight: 800; cursor: pointer;
-                    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);
-                    transition: all 0.2s;
-                ">
-                    Subir Comprobante
-                </button>
+                <button type="submit" id="btn-submit-payment" class="btn-submit-payment">
+    Subir Comprobante
+</button>
             </form>
             
             <script>
@@ -582,41 +611,119 @@ require __DIR__ . '/_header.php';
                     }
                 }
                 
-                document.getElementById('payment-upload-form').addEventListener('submit', async function(e) {
-                    e.preventDefault();
-                    
-                    const fileInput = document.getElementById('payment_proof');
-                    if (!fileInput.files || fileInput.files.length === 0) {
-                        alert('Por favor selecciona una foto de tu comprobante de pago.');
-                        return;
-                    }
-                    
-                    const btn = document.getElementById('btn-submit-payment');
-                    btn.disabled = true;
-                    btn.innerText = 'Subiendo...';
-                    
-                    const formData = new FormData(this);
-                    try {
-                        const resp = await fetch('api_driver_upload_payment.php', {
-                            method: 'POST',
-                            body: formData
-                        });
-                        const res = await resp.json();
-                        if (res.success) {
-                            alert('¡Comprobante subido correctamente! Espera la validación del administrador.');
-                            window.location.reload();
-                        } else {
-                            alert(res.message || 'Error al subir el comprobante.');
-                            btn.disabled = false;
-                            btn.innerText = 'Subir Comprobante';
-                        }
-                    } catch(err) {
-                        console.error(err);
-                        alert('Error de conexión con el servidor.');
-                        btn.disabled = false;
-                        btn.innerText = 'Subir Comprobante';
-                    }
+                const uploadForm = document.getElementById('payment-upload-form');
+                if (uploadForm) {
+                    uploadForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    const fileInput = document.getElementById('payment_proof');
+    if (!fileInput.files || fileInput.files.length === 0) {
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'warning',
+            title: 'Selecciona una foto del comprobante de pago.',
+            timer: 3000,
+            timerProgressBar: true,
+            showConfirmButton: false
+        });
+        return;
+    }
+
+    const btn = document.getElementById('btn-submit-payment');
+    btn.disabled = true;
+    btn.innerText = 'Subiendo...';
+
+    const formData = new FormData(this);
+    try {
+        const resp = await fetch('api_driver_upload_payment.php', {
+            method: 'POST',
+            body: formData
+        });
+        // Ensure HTTP success before parsing JSON
+        if (!resp.ok) {
+            throw new Error('Error HTTP ' + resp.status);
+        }
+        const res = await resp.json();
+        if (res.success) {
+            const audio = document.getElementById('upload-success-sound');
+            if (audio) {
+                audio.play().catch(err => {
+                    console.warn('Audio playback blocked or failed:', err);
                 });
+            }
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'success',
+                title: res.message || 'Comprobante subido correctamente.',
+                timer: 3000,
+                timerProgressBar: true,
+                showConfirmButton: false
+            });
+            // Update UI to show pending verification without reload
+            const modalContent = document.getElementById('subscription-modal-content');
+            if (modalContent) {
+                modalContent.innerHTML = `
+                    <div style="
+                        width: 80px; height: 80px; border-radius: 50%;
+                        background: rgba(245, 158, 11, 0.08); color: #f59e0b;
+                        display: flex; align-items: center; justify-content: center;
+                        font-size: 40px; margin: 0 auto 24px;
+                        box-shadow: 0 0 20px rgba(245, 158, 11, 0.12);
+                        animation: pulseGlow 2s infinite ease-in-out;
+                    ">
+                        ⏳
+                    </div>
+                    <h2 style="font-size: 24px; font-weight: 800; color: #0f172a; margin: 0 0 12px; letter-spacing: -0.5px;">Comprobante en verificación</h2>
+                    <p style="font-size: 15px; color: #64748b; margin: 0 0 24px; line-height: 1.6; font-weight: 500;">
+                        Tu comprobante de pago fue subido con éxito y está en revisión. El administrador te habilitará pronto.
+                    </p>
+                    <div style="
+                        background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px;
+                        font-size: 13.5px; color: #475569; font-weight: 700;
+                        display: flex; align-items: center; justify-content: center; gap: 8px;
+                    ">
+                        <span>📅</span>
+                        <span>Enviado el: Recién (UTC-3)</span>
+                    </div>
+                `;
+            }
+            // Recargar página después de breve pausa
+            setTimeout(() => {
+                location.reload();
+            }, 1500);
+        } else {
+            Swal.fire({
+                toast: true,
+                position: 'top-end',
+                icon: 'error',
+                title: res.message || 'Error al subir el comprobante.',
+                timer: 4000,
+                timerProgressBar: true,
+                showConfirmButton: false
+            });
+        }
+    } catch (err) {
+        console.error('Upload error:', err);
+        Swal.fire({
+            toast: true,
+            position: 'top-end',
+            icon: 'error',
+            title: err.message || 'Error de conexión con el servidor.',
+            timer: 4000,
+            timerProgressBar: true,
+            showConfirmButton: false
+        });
+    } finally {
+        // Ensure button state is restored unless we already reloaded
+        const btn = document.getElementById('btn-submit-payment');
+        if (btn) {
+            btn.disabled = false;
+            btn.innerText = 'Subir Comprobante';
+        }
+    }
+});
+}
             </script>
         <?php endif; ?>
     </div>
@@ -922,7 +1029,7 @@ function showToast(message) {
         
         const logoContainer = document.getElementById('m-shop-logo-container');
         if (order.local_logo) {
-            const baseUrl = '/php-delivery-app/';
+            const baseUrl = '<?= esc(delivery_app_url()) ?>/';
             logoContainer.innerHTML = `<img src="${baseUrl}${order.local_logo}" alt="Logo">`;
         } else {
             logoContainer.innerHTML = '🏢';
@@ -994,7 +1101,7 @@ function showToast(message) {
     let broadcastAudioHTML5 = null;
 
     async function playBroadcastSound() {
-        const src = '/php-delivery-app/assets/sounds/notification.mp3';
+        const src = '<?= esc(delivery_app_url('assets/sounds/notification.mp3')) ?>';
         
         try {
             const AudioContextClass = window.AudioContext || window.webkitAudioContext;
@@ -1037,7 +1144,7 @@ function showToast(message) {
 
     function playBroadcastSoundHTML5() {
         if (!broadcastAudioHTML5) {
-            broadcastAudioHTML5 = new Audio('/php-delivery-app/assets/sounds/notification.mp3');
+            broadcastAudioHTML5 = new Audio('<?= esc(delivery_app_url('assets/sounds/notification.mp3')) ?>');
             broadcastAudioHTML5.loop = true;
             broadcastAudioHTML5.volume = 1.0;
         }

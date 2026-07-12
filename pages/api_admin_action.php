@@ -1,8 +1,7 @@
 <?php
+ob_start();
 header('Content-Type: application/json');
 require_once __DIR__ . '/../bootstrap.php';
-
-header('Content-Type: application/json');
 
 // Validar que el usuario esté logueado y sea admin
 require_login();
@@ -343,19 +342,29 @@ if ($action === 'verify_driver_payment') {
             echo json_encode(['success' => true, 'message' => 'Comprobante eliminado y suscripción desactivada.']);
             exit;
         }
-        // Check for new pending payments (admin notification)
         if ($action === 'check_new_payment') {
-            // Retrieve any pending payment that hasn't been notified yet (status = 'pending')
-            $newPayments = app_all("SELECT dp.id, u.name AS driver_name, dp.payment_proof_path FROM driver_payments dp JOIN users u ON dp.driver_user_id = u.id WHERE dp.status = 'pending'", []);
+            // Retrieve any pending payment that hasn't been notified yet (status = 'pending' and not notified)
+            $newPayments = app_all("SELECT dp.id, dp.driver_user_id, u.name AS driver_name, dp.payment_proof_path FROM driver_payments dp JOIN users u ON dp.driver_user_id = u.id WHERE dp.status = 'pending' AND dp.notified = 0");
+            header('Content-Type: application/json');
             if ($newPayments) {
-                // Mark them as notified to avoid duplicate alerts (optional: add a notified column later)
-                // For now we simply return the list; admins will handle them and status will change.
+                // Mark them as notified to avoid duplicate alerts
+                $ids = array_column($newPayments, 'id');
+                if ($ids) {
+                    $placeholders = implode(',', array_fill(0, count($ids), '?')) ;
+                    $types = str_repeat('i', count($ids));
+                    app_exec("UPDATE driver_payments SET notified = 1 WHERE id IN ($placeholders)", $types, $ids);
+                }
+                // Ensure no previous output buffers interfere
+                if (ob_get_level()) { ob_end_clean(); }
                 echo json_encode(['new' => true, 'payments' => $newPayments]);
             } else {
+                header('Content-Type: application/json');
+                if (ob_get_level()) { ob_end_clean(); }
                 echo json_encode(['new' => false]);
             }
             exit;
         }
+        // continue with other actions
         // Disable subscription endpoint
 if ($action === 'disable_subscription') {
     $driverId = (int)($_POST['driver_id'] ?? 0);
@@ -471,9 +480,51 @@ if ($action === 'get_driver_kpis') {
     $cancelados = (int)($stats['cancelados'] ?? 0);
     $earnings = (float)($stats['earnings'] ?? 0);
 
-    // Simular horas conectadas y distancia basadas en entregados
-    $horasConectadas = $completados * 1.5 + $cancelados * 0.5;
-    if ($range === 'day' && $horasConectadas > 8) $horasConectadas = 8;
+    // Calcular horas conectadas reales basadas en la tabla driver_sessions
+    $sinceDate = '1970-01-01 00:00:00';
+    if ($range === 'day') {
+        $sinceDate = date('Y-m-d 00:00:00');
+    } elseif ($range === 'week') {
+        $sinceDate = date('Y-m-d H:i:s', strtotime('-7 days'));
+    } elseif ($range === 'month') {
+        $sinceDate = date('Y-m-d H:i:s', strtotime('-30 days'));
+    }
+
+    $sessions = app_all("
+        SELECT ds.connected_at, ds.disconnected_at, u.last_ping, u.is_online 
+        FROM driver_sessions ds
+        JOIN users u ON ds.driver_user_id = u.id
+        WHERE ds.driver_user_id = ? AND ds.connected_at >= ?
+    ", "is", [$driverId, $sinceDate]);
+
+    $totalSeconds = 0;
+    $nowTime = time();
+
+    foreach ($sessions as $session) {
+        $start = strtotime($session['connected_at']);
+        
+        if (!empty($session['disconnected_at'])) {
+            $end = strtotime($session['disconnected_at']);
+        } else {
+            // Sesión activa (disconnected_at es NULL)
+            $lastPing = !empty($session['last_ping']) ? strtotime($session['last_ping']) : $start;
+            $isOnlineUser = (int)$session['is_online'];
+            
+            // Si está activo y reportó en el último minuto, contamos hasta NOW()
+            if ($isOnlineUser === 1 && ($nowTime - $lastPing) <= 60) {
+                $end = $nowTime;
+            } else {
+                $end = $lastPing;
+            }
+        }
+        
+        if ($end > $start) {
+            $totalSeconds += ($end - $start);
+        }
+    }
+
+    // Convertir a horas con 1 decimal
+    $horasConectadas = round($totalSeconds / 3600, 1);
     $distanciaKm = $completados * 4.2;
 
     // Generar series para los gráficos del repartidor (agrupados por fecha de creación)
@@ -576,6 +627,33 @@ if ($action === 'get_driver_history') {
     exit;
 }
 
+if ($action === 'get_driver_live_status') {
+    $driverId = (int)($_POST['driver_id'] ?? 0);
+    if ($driverId <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'ID de repartidor inválido.']);
+        exit;
+    }
+    $driver = app_one("
+        SELECT is_online,
+               (SELECT COUNT(*) FROM deliveries WHERE repartidor_user_id = users.id AND status NOT IN ('entregado', 'cancelado', 'rechazado')) as active_delivery_count
+        FROM users
+        WHERE id = ? AND role = 'repartidor'
+    ", "i", [$driverId]);
+    
+    if (!$driver) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Repartidor no encontrado.']);
+        exit;
+    }
+    
+    echo json_encode([
+        'success' => true,
+        'is_online' => (int)$driver['is_online'],
+        'active_delivery_count' => (int)$driver['active_delivery_count']
+    ]);
+    exit;
+}
 
 if ($action === 'get_active_drivers') {
     $activeDrivers = app_all(
