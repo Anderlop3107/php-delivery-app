@@ -612,9 +612,9 @@ require __DIR__ . '/_header.php';
             if (res.success) {
                 if (newStatus === 'entregado') {
                     if (window.playNotificationSound) {
-                        window.playNotificationSound('/php-delivery-app/assets/sounds/delivered.mp3');
+                        window.playNotificationSound('<?= esc(delivery_app_url('assets/sounds/delivered.mp3')) ?>');
                     } else {
-                        new Audio('/php-delivery-app/assets/sounds/delivered.mp3').play().catch(e => console.log(e));
+                        new Audio('<?= esc(delivery_app_url('assets/sounds/delivered.mp3')) ?>').play().catch(e => console.log(e));
                     }
                     showSuccessModal();
                 } else {
