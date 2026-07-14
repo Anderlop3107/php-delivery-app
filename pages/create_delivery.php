@@ -4,12 +4,31 @@ require_login();
 require_role(['local']);
 
 $user = current_user();
-$localData = app_one('SELECT business_name, whatsapp, address, business_reference, latitude, longitude, logo_path FROM users WHERE id = ?', 'i', [(int) $user['id']]);
+$localData = app_one('SELECT business_name, whatsapp, address, business_reference, latitude, longitude, logo_path, subscription_status, subscription_expires_at FROM users WHERE id = ?', 'i', [(int) $user['id']]);
+
+$subscriptionExpired = true;
+if ($localData['subscription_status'] === 'active' && !empty($localData['subscription_expires_at'])) {
+    if (strtotime($localData['subscription_expires_at']) >= time()) {
+        $subscriptionExpired = false;
+    }
+}
+
+$latestPayment = null;
+if ($subscriptionExpired) {
+    $latestPayment = app_one("
+        SELECT * FROM driver_payments 
+        WHERE driver_user_id = ? 
+        ORDER BY id DESC LIMIT 1
+    ", "i", [(int)$user['id']]);
+}
 
 $errors = [];
 $ok = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if ($subscriptionExpired) {
+        $errors[] = 'Tu suscripción mensual ha vencido o requiere verificación. Por favor, sube tu comprobante de pago.';
+    }
     $cName = trim((string)($_POST['customer_name'] ?? ''));
     $cPhone = trim((string)($_POST['customer_phone'] ?? ''));
     $address = trim((string)($_POST['delivery_address'] ?? ''));
@@ -307,12 +326,81 @@ require __DIR__ . '/_header.php';
     </div>
 </div>
 
-<div class="chevron-stepper">
-    <div class="chevron-step active" id="step-1-chevron">1. Información</div>
-    <div class="chevron-step pending" id="step-2-chevron">2. Verificación</div>
-</div>
+<?php if ($subscriptionExpired): ?>
+    <!-- Tarjeta de Bloqueo por Suscripción Vencida -->
+    <div class="card" style="border:none; padding: 40px 24px; box-shadow: 0 4px 25px rgba(0,0,0,0.04); max-width: 480px; margin: 40px auto; text-align: center; border-radius: 28px; background:#fff; display:flex; flex-direction:column; align-items:center; justify-content:center;">
+        <?php if ($latestPayment && $latestPayment['status'] === 'pending'): ?>
+            <div style="
+                width: 80px; height: 80px; border-radius: 50%;
+                background: rgba(245, 158, 11, 0.08); color: #f59e0b;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 40px; margin: 0 auto 20px;
+                box-shadow: 0 0 20px rgba(245, 158, 11, 0.12);
+            ">
+                ⏳
+            </div>
+            <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 10px; letter-spacing: -0.5px;">Comprobante en verificación</h2>
+            <p style="font-size: 14px; color: #64748b; margin: 0 0 24px; line-height: 1.6; font-weight: 500;">
+                Tu comprobante de pago fue subido con éxito y está en revisión. El administrador te habilitará pronto para que puedas seguir utilizando la plataforma.
+            </p>
+            <div style="
+                background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px;
+                font-size: 13px; color: #475569; font-weight: 700;
+                display: flex; align-items: center; justify-content: center; gap: 8px; width:100%; box-sizing:border-box;
+            ">
+                <span>📅</span>
+                <span>Enviado el: <?= date('d/m/Y H:i', strtotime($latestPayment['uploaded_at'])) ?> (UTC-3)</span>
+            </div>
+        <?php else: ?>
+            <div style="
+                width: 80px; height: 80px; border-radius: 50%;
+                background: rgba(239, 68, 68, 0.1); color: #ef4444;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 40px; margin: 0 auto 20px;
+            ">
+                💳
+            </div>
+            <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 10px; letter-spacing: -0.5px;">Suscripción Vencida</h2>
+            <p style="font-size: 14px; color: #64748b; margin: 0 0 24px; line-height: 1.6; font-weight: 500;">
+                Tu suscripción mensual ha vencido o requiere renovación. Por favor, sube tu comprobante de pago para reactivar tu cuenta y poder crear nuevos pedidos.
+            </p>
+            
+            <?php if ($latestPayment && $latestPayment['status'] === 'rejected'): ?>
+                <div style="
+                    background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c;
+                    padding: 14px; border-radius: 16px; font-size: 13px; font-weight: 600;
+                    margin-bottom: 24px; text-align: left; line-height: 1.5; width:100%; box-sizing:border-box;
+                ">
+                    ❌ <b>Comprobante rechazado anterior:</b><br>
+                    <?= esc($latestPayment['notes'] ?: 'No se especificaron motivos.') ?>
+                </div>
+            <?php endif; ?>
 
-<form method="post" id="order-form">
+            <form id="payment-upload-form-create" style="display: flex; flex-direction: column; gap: 16px; width:100%;">
+                <input type="hidden" name="action" value="upload_payment">
+                <label style="
+                    display: flex; flex-direction: column; align-items: center; justify-content: center;
+                    border: 2.5px dashed #cbd5e1; border-radius: 16px; padding: 30px 20px; cursor: pointer;
+                    background: #f8fafc; transition: all 0.2s; text-align: center; width:100%; box-sizing:border-box;
+                " id="upload-label-create">
+                    <span style="font-size: 32px; margin-bottom: 8px;">📷</span>
+                    <span style="font-size: 14px; font-weight: 700; color: #475569;" id="file-label-text-create">Seleccionar foto de comprobante</span>
+                    <input type="file" name="payment_proof" id="payment_proof_create" accept="image/*" style="display: none;" onchange="handleFileSelectCreate(this)">
+                </label>
+                
+                <button type="submit" id="btn-submit-payment-create" style="width: 100%; padding: 16px; border-radius: 16px; background: var(--primary); color: #ffffff; font-size: 15px; font-weight: 800; border: none; cursor: pointer; box-shadow: 0 8px 20px rgba(37, 99, 235, 0.3);">
+                    Subir Comprobante
+                </button>
+            </form>
+        <?php endif; ?>
+    </div>
+<?php else: ?>
+    <div class="chevron-stepper">
+        <div class="chevron-step active" id="step-1-chevron">1. Información</div>
+        <div class="chevron-step pending" id="step-2-chevron">2. Verificación</div>
+    </div>
+
+    <form method="post" id="order-form">
     <!-- PASO 1: INFORMACIÓN -->
     <div class="form-step active" id="step-1">
         <div class="card" style="border:none; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">
@@ -448,6 +536,7 @@ require __DIR__ . '/_header.php';
         </div>
     </div>
 </form>
+<?php endif; ?>
 
 <script>
     mapboxgl.accessToken = 'pk.eyJ1IjoiYW5kZXJsb3AiLCJhIjoiY21uMGJ1ZXhzMGkxMDJycHRuYzEwcmp4NCJ9.Jn4uXN5yX4DFIImQjw_R4w';
@@ -653,6 +742,52 @@ require __DIR__ . '/_header.php';
     const urlParams = new URLSearchParams(window.location.search);
     if (urlParams.get('success') === '1') {
         showSuccessModal();
+    }
+    // --- LÓGICA DE CARGA DE COMPROBANTE (SUSCRIPCIÓN VENCIDA) ---
+    function handleFileSelectCreate(input) {
+        const text = document.getElementById('file-label-text-create');
+        if (input.files && input.files[0]) {
+            text.innerText = "📄 " + input.files[0].name;
+            document.getElementById('upload-label-create').style.borderColor = '#10b981';
+            document.getElementById('upload-label-create').style.background = '#f0fdf4';
+        }
+    }
+
+    const subFormCreate = document.getElementById('payment-upload-form-create');
+    if (subFormCreate) {
+        subFormCreate.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const fileInput = document.getElementById('payment_proof_create');
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Por favor selecciona una foto de tu comprobante de pago.');
+                return;
+            }
+            const btn = document.getElementById('btn-submit-payment-create');
+            btn.disabled = true;
+            btn.innerText = 'Subiendo...';
+            
+            const formData = new FormData(this);
+            try {
+                const resp = await fetch('api_driver_upload_payment.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const res = await resp.json();
+                if (res.success) {
+                    alert(res.message || 'Comprobante subido correctamente.');
+                    window.location.reload();
+                } else {
+                    alert(res.message || 'Error al subir el comprobante.');
+                    btn.disabled = false;
+                    btn.innerText = 'Subir Comprobante';
+                }
+            } catch(err) {
+                console.error(err);
+                alert('Error de conexión con el servidor.');
+                btn.disabled = false;
+                btn.innerText = 'Subir Comprobante';
+            }
+        });
     }
 </script>
 
