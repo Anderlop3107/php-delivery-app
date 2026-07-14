@@ -1118,7 +1118,6 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                 <div style="display: flex; gap: 10px; align-items: center;">
                     <button class="btn-sub-verify" style="background:#f1f5f9; color:var(--text-main); border:1.5px solid #cbd5e1; font-size:11px; padding:6px 12px; border-radius:8px;" onclick="document.getElementById('admin-upload-front').click()">📷 Frente</button>
                     <button class="btn-sub-verify" style="background:#f1f5f9; color:var(--text-main); border:1.5px solid #cbd5e1; font-size:11px; padding:6px 12px; border-radius:8px;" onclick="document.getElementById('admin-upload-back').click()">📷 Dorso</button>
-                    <button id="btn-save-uploaded-docs" class="btn-sub-verify btn-approve" style="display:none; font-size:11px; padding:6px 12px; border-radius:8px;" onclick="saveAdminUploadedDocs()">💾 Guardar Fotos</button>
                     <span id="admin-upload-status-text" style="font-size:11px; color:#10b981; font-weight:700;"></span>
                 </div>
                 <input type="file" id="admin-upload-front" accept="image/*" style="display:none;" onchange="handleAdminDocSelect('front')">
@@ -1637,8 +1636,6 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             document.getElementById('driver-doc-modal').style.display = 'none';
             selectedFrontFile = null;
             selectedBackFile = null;
-            const saveBtn = document.getElementById('btn-save-uploaded-docs');
-            if (saveBtn) saveBtn.style.display = 'none';
             const statusText = document.getElementById('admin-upload-status-text');
             if (statusText) statusText.innerText = '';
         }
@@ -1656,48 +1653,8 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                 if (side === 'front') selectedFrontFile = file;
                 if (side === 'back') selectedBackFile = file;
 
-                document.getElementById('btn-save-uploaded-docs').style.display = 'inline-block';
                 document.getElementById('admin-upload-status-text').innerText = 'Foto de ' + (side === 'front' ? 'frente' : 'dorso') + ' seleccionada.';
             }
-        }
-
-        function saveAdminUploadedDocs() {
-            const formData = new FormData();
-            formData.append('action', 'upload_local_doc');
-            formData.append('driver_id', localId);
-
-            if (selectedFrontFile) {
-                formData.append('doc_ci_front', selectedFrontFile);
-            }
-            if (selectedBackFile) {
-                formData.append('doc_ci_back', selectedBackFile);
-            }
-
-            const saveBtn = document.getElementById('btn-save-uploaded-docs');
-            saveBtn.disabled = true;
-            saveBtn.innerText = 'Guardando...';
-
-            fetch('api_admin_action.php', {
-                method: 'POST',
-                body: formData
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    alert(data.message);
-                    window.location.reload();
-                } else {
-                    alert(data.error || 'Error al subir fotos.');
-                    saveBtn.disabled = false;
-                    saveBtn.innerText = '💾 Guardar Fotos';
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                alert('Error al subir los documentos.');
-                saveBtn.disabled = false;
-                saveBtn.innerText = '💾 Guardar Fotos';
-            });
         }
 
         function updateDocStatus(action) {
@@ -1705,6 +1662,13 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             formData.append('action', action);
             formData.append('driver_id', localId);
             formData.append('doc_type', currentDocType);
+
+            if (selectedFrontFile) {
+                formData.append('doc_ci_front', selectedFrontFile);
+            }
+            if (selectedBackFile) {
+                formData.append('doc_ci_back', selectedBackFile);
+            }
 
             fetch('api_admin_action.php', {
                 method: 'POST',
