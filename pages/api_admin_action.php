@@ -831,6 +831,48 @@ if ($action === 'get_active_drivers') {
     exit;
 }
 
+if ($action === 'upload_local_doc') {
+    $driverId = (int)($_POST['driver_id'] ?? 0);
+    
+    $driver = app_one("SELECT id FROM users WHERE id = ? AND role IN ('repartidor', 'local')", 'i', [$driverId]);
+    if (!$driver) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Usuario no encontrado.']);
+        exit;
+    }
+
+    $uploadDir = __DIR__ . '/../uploads/documents/';
+    if (!is_dir($uploadDir)) {
+        mkdir($uploadDir, 0777, true);
+    }
+    
+    $uploadedAny = false;
+    if (!empty($_FILES['doc_ci_front']['name'])) {
+        $ext = pathinfo($_FILES['doc_ci_front']['name'], PATHINFO_EXTENSION);
+        $fileNameFront = 'doc_ci_front_' . $driverId . '_' . time() . '.' . $ext;
+        if (move_uploaded_file($_FILES['doc_ci_front']['tmp_name'], $uploadDir . $fileNameFront)) {
+            app_exec("UPDATE users SET doc_ci_path = ? WHERE id = ?", 'si', ['uploads/documents/' . $fileNameFront, $driverId]);
+            $uploadedAny = true;
+        }
+    }
+    
+    if (!empty($_FILES['doc_ci_back']['name'])) {
+        $ext = pathinfo($_FILES['doc_ci_back']['name'], PATHINFO_EXTENSION);
+        $fileNameBack = 'doc_ci_back_' . $driverId . '_' . time() . '.' . $ext;
+        if (move_uploaded_file($_FILES['doc_ci_back']['tmp_name'], $uploadDir . $fileNameBack)) {
+            app_exec("UPDATE users SET doc_ci_back_path = ? WHERE id = ?", 'si', ['uploads/documents/' . $fileNameBack, $driverId]);
+            $uploadedAny = true;
+        }
+    }
+
+    if ($uploadedAny) {
+        app_exec("UPDATE users SET status_doc_ci = 'pending' WHERE id = ?", 'i', [$driverId]);
+    }
+    
+    echo json_encode(['success' => true, 'message' => 'Cédula cargada y guardada con éxito.']);
+    exit;
+}
+
 http_response_code(400);
 echo json_encode(['error' => 'Acción no especificada o no soportada.']);
 exit;
