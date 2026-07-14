@@ -3,7 +3,7 @@ require_once __DIR__ . '/../bootstrap.php';
 header('Content-Type: application/json');
 
 $user = current_user();
-if (!$user || $user['role'] !== 'repartidor') {
+if (!$user || ($user['role'] !== 'repartidor' && $user['role'] !== 'local')) {
     echo json_encode(['success' => false, 'message' => 'No autorizado']);
     exit;
 }
