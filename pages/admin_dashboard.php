@@ -844,7 +844,7 @@ $maxChartCount = max(5, max($chartCounts));
                     <div style="text-align:center; padding: 40px; color:var(--text-muted);">No hay comercios registrados.</div>
                 <?php else: ?>
                     <?php foreach ($activeLocals as $l): ?>
-                        <div class="table-row-item">
+                        <div class="table-row-item" onclick="if (event.target.tagName !== 'SELECT' && event.target.tagName !== 'OPTION') window.location.href='admin_local_detail.php?id=<?= (int)$l['id']; ?>'" style="cursor:pointer; position:relative; padding-right:50px;">
                             <div class="driver-mini-info">
                                 <div class="driver-mini-avatar">
                                     <?php if ($l['logo_path']): ?>
@@ -855,17 +855,19 @@ $maxChartCount = max(5, max($chartCounts));
                                 </div>
                                 <div class="driver-text">
                                     <b><?= esc($l['business_name'] ?: $l['name']) ?></b>
-                                    <b><?= esc($l['business_name'] ?: $l['name']) ?></b>
                                     <span style="color:var(--text-muted); font-size:10px;">Vence: <?= $l['subscription_expires_at'] ? date('d/m/Y', strtotime($l['subscription_expires_at'])) : 'N/A' ?></span>
                                 </div>
                             </div>
                             
-                            <div>
-                                <select class="status-pill-select" onchange="updateSubscription(<?= $l['id']; ?>, this.value)">
-                                    <option value="active" <?php echo $l['subscription_status'] === 'active' ? 'selected' : '' ?>>Activo (+30d)</option>
-                                    <option value="expired" <?php echo $l['subscription_status'] === 'expired' ? 'selected' : '' ?>>Expirado</option>
-                                    <option value="pending" <?php echo $l['subscription_status'] === 'pending' ? 'selected' : '' ?>>Pendiente</option>
-                                </select>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <div>
+                                    <select class="status-pill-select" onchange="updateSubscription(<?= $l['id']; ?>, this.value)">
+                                        <option value="active" <?php echo $l['subscription_status'] === 'active' ? 'selected' : '' ?>>Activo (+30d)</option>
+                                        <option value="expired" <?php echo $l['subscription_status'] === 'expired' ? 'selected' : '' ?>>Expirado</option>
+                                        <option value="pending" <?php echo $l['subscription_status'] === 'pending' ? 'selected' : '' ?>>Pendiente</option>
+                                    </select>
+                                </div>
+                                <div class="btn-view-chevron">&rsaquo;</div>
                             </div>
                         </div>
                     <?php endforeach; ?>

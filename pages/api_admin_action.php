@@ -35,11 +35,11 @@ if ($action === 'approve_document' || $action === 'reject_document') {
     $column = 'status_doc_' . $docType;
     $status = ($action === 'approve_document') ? 'approved' : 'rejected';
     
-    // Verificar que el conductor exista
-    $driver = app_one("SELECT id FROM users WHERE id = ? AND role = 'repartidor'", 'i', [$driverId]);
+    // Verificar que el usuario exista y sea repartidor o local
+    $driver = app_one("SELECT id FROM users WHERE id = ? AND role IN ('repartidor', 'local')", 'i', [$driverId]);
     if (!$driver) {
         http_response_code(404);
-        echo json_encode(['error' => 'Conductor no encontrado.']);
+        echo json_encode(['error' => 'Usuario no encontrado.']);
         exit;
     }
     
@@ -258,22 +258,27 @@ if ($action === 'verify_driver_payment') {
         exit;
     }
 
-    // Verificar que el conductor exista
-    $driver = app_one("SELECT id FROM users WHERE id = ? AND role = 'repartidor'", 'i', [$driverId]);
+    // Verificar que el usuario exista y sea repartidor o local
+    $driver = app_one("SELECT id, role FROM users WHERE id = ? AND role IN ('repartidor', 'local')", 'i', [$driverId]);
     if (!$driver) {
         http_response_code(404);
-        echo json_encode(['error' => 'Repartidor no encontrado.']);
+        echo json_encode(['error' => 'Usuario no encontrado.']);
         exit;
     }
 
     if ($status === 'approved') {
-        // Calcular próximo lunes 10:30 AM
-        $now = time();
-        $todayMonday1030 = strtotime('this Monday 10:30:00');
-        if ($now < $todayMonday1030) {
-            $expiresAt = date('Y-m-d H:i:s', $todayMonday1030);
+        if ($driver['role'] === 'local') {
+            // El 1 del próximo mes 00:00:00
+            $expiresAt = date('Y-m-d H:i:s', strtotime('first day of next month 00:00:00'));
         } else {
-            $expiresAt = date('Y-m-d H:i:s', strtotime('next Monday 10:30:00'));
+            // Calcular próximo lunes 10:30 AM
+            $now = time();
+            $todayMonday1030 = strtotime('this Monday 10:30:00');
+            if ($now < $todayMonday1030) {
+                $expiresAt = date('Y-m-d H:i:s', $todayMonday1030);
+            } else {
+                $expiresAt = date('Y-m-d H:i:s', strtotime('next Monday 10:30:00'));
+            }
         }
 
         // Actualizar tabla users
@@ -596,6 +601,161 @@ if ($action === 'get_driver_kpis') {
         'series_earnings' => $seriesEarnings,
         'series_cancelled' => $seriesCancelled,
         'points' => $deliveriesPoints
+    ]);
+    exit;
+}
+
+if ($action === 'get_local_kpis') {
+    $localId = (int)($_POST['local_id'] ?? 0);
+    $range = $_POST['range'] ?? 'week';
+
+    if ($localId <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Datos inválidos.']);
+        exit;
+    }
+
+    $whereClause = "local_user_id = $localId";
+    if ($range === 'day') {
+        $whereClause .= " AND created_at >= DATE(NOW())";
+    } elseif ($range === 'week') {
+        $whereClause .= " AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+    } elseif ($range === 'month') {
+        $whereClause .= " AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+    }
+
+    // 1. Entregados y Cancelados
+    $stats = app_one("
+        SELECT 
+            COUNT(CASE WHEN status = 'entregado' THEN 1 END) as completados,
+            COUNT(CASE WHEN status = 'cancelado' THEN 1 END) as cancelados
+        FROM deliveries
+        WHERE $whereClause
+    ");
+
+    $completados = (int)($stats['completados'] ?? 0);
+    $cancelados = (int)($stats['cancelados'] ?? 0);
+
+    // 2. Horarios de pedidos (distribución por hora de 00h a 23h)
+    $hourlyData = app_all("
+        SELECT HOUR(created_at) as order_hour, COUNT(*) as count 
+        FROM deliveries
+        WHERE $whereClause
+        GROUP BY HOUR(created_at)
+        ORDER BY order_hour ASC
+    ");
+
+    $hourlyCounts = array_fill(0, 24, 0);
+    foreach ($hourlyData as $hd) {
+        $hour = (int)$hd['order_hour'];
+        if ($hour >= 0 && $hour < 24) {
+            $hourlyCounts[$hour] = (int)$hd['count'];
+        }
+    }
+
+    $hourLabels = [];
+    for ($i = 0; $i < 24; $i++) {
+        $hourLabels[] = sprintf("%02dh", $i);
+    }
+
+    // 3. Generar series agrupadas por día para el rango
+    $seriesData = app_all("
+        SELECT DATE(created_at) as date_label,
+               COUNT(CASE WHEN status = 'entregado' THEN 1 END) as count_delivered,
+               COUNT(CASE WHEN status = 'cancelado' THEN 1 END) as count_cancelled
+        FROM deliveries
+        WHERE $whereClause
+        GROUP BY DATE(created_at)
+        ORDER BY DATE(created_at) ASC
+    ");
+
+    $labels = [];
+    $seriesDelivered = [];
+    $seriesCancelled = [];
+
+    foreach ($seriesData as $sd) {
+        $labels[] = date('d/m', strtotime($sd['date_label']));
+        $seriesDelivered[] = (int)$sd['count_delivered'];
+        $seriesCancelled[] = (int)$sd['count_cancelled'];
+    }
+
+    // Fallbacks si no hay datos
+    if (empty($labels)) {
+        if ($range === 'day') {
+            $labels = [date('d/m')];
+            $seriesDelivered = [0];
+            $seriesCancelled = [0];
+        } else {
+            $days = ($range === 'week') ? 7 : 30;
+            for ($i = $days - 1; $i >= 0; $i--) {
+                $labels[] = date('d/m', strtotime("-$i days"));
+                $seriesDelivered[] = 0;
+                $seriesCancelled[] = 0;
+            }
+        }
+    }
+
+    // Obtener los puntos de entrega en el mapa (pickup y delivery) para este local
+    $points = app_all("
+        SELECT d.id, d.delivery_latitude as lat, d.delivery_longitude as lng, d.delivery_address as address, d.status,
+               COALESCE(d.pickup_latitude, l.latitude) as local_lat, COALESCE(d.pickup_longitude, l.longitude) as local_lng
+        FROM deliveries d
+        JOIN users l ON l.id = d.local_user_id
+        WHERE d.local_user_id = ? AND d.delivery_latitude IS NOT NULL AND d.delivery_longitude IS NOT NULL
+        ORDER BY d.id DESC LIMIT 100
+    ", "i", [$localId]);
+
+    // Calcular distancia estimada total
+    $distanciaKm = $completados * 4.2;
+
+    echo json_encode([
+        'success' => true,
+        'completados' => $completados,
+        'cancelados' => $cancelados,
+        'distancia_km' => round($distanciaKm, 1),
+        'labels' => $labels,
+        'series_delivered' => $seriesDelivered,
+        'series_cancelled' => $seriesCancelled,
+        'hourly_labels' => $hourLabels,
+        'hourly_data' => $hourlyCounts,
+        'points' => $points
+    ]);
+    exit;
+}
+
+if ($action === 'get_local_history') {
+    $localId = (int)($_POST['local_id'] ?? 0);
+    $limit = 15;
+    $page = (int)($_POST['page'] ?? 1);
+    if ($page < 1) $page = 1;
+    $offset = ($page - 1) * $limit;
+
+    if ($localId <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Datos inválidos.']);
+        exit;
+    }
+
+    $totalRow = app_one("SELECT COUNT(*) as count FROM deliveries WHERE local_user_id = ?", 'i', [$localId]);
+    $totalCount = (int)($totalRow['count'] ?? 0);
+    $totalPages = ceil($totalCount / $limit);
+
+    $history = app_all("
+        SELECT d.*, l.business_name as local_name, r.name as driver_name
+        FROM deliveries d
+        JOIN users l ON l.id = d.local_user_id
+        LEFT JOIN users r ON r.id = d.repartidor_user_id
+        WHERE d.local_user_id = ?
+        ORDER BY d.created_at DESC
+        LIMIT ? OFFSET ?
+    ", "iii", [$localId, $limit, $offset]);
+
+    echo json_encode([
+        'success' => true,
+        'history' => $history,
+        'page' => $page,
+        'total_pages' => $totalPages,
+        'total_count' => $totalCount
     ]);
     exit;
 }
