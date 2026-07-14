@@ -408,6 +408,17 @@ require __DIR__ . '/_header.php';
         color: #d97706;
         opacity: 0.7;
     }
+    
+    /* Rejected document state styling */
+    .upload-card-interactive.rejected {
+        background: rgba(239, 68, 68, 0.04);
+        border: 1px solid rgba(239, 68, 68, 0.12);
+        color: #ef4444;
+    }
+    .upload-card-interactive.rejected .arrow-icon {
+        color: #ef4444;
+        opacity: 0.7;
+    }
 </style>
 
 <div class="profile-hero">
@@ -492,9 +503,9 @@ require __DIR__ . '/_header.php';
                 if ($subscriptionStatus === 'active') {
                     $receipt_class = 'uploaded';
                 } elseif ($receiptStatus === 'pending') {
-                    $receipt_class = 'incomplete';
+                    $receipt_class = 'blue-shimmer';
                 } elseif ($receiptStatus === 'rejected') {
-                    $receipt_class = 'incomplete';
+                    $receipt_class = 'rejected';
                 }
                 ?>
                 <div class="upload-card-interactive <?= $receipt_class ?>" id="card-weekly_subscription" onclick="openSubscriptionUploadModal()" style="margin-top: 15px; margin-bottom: 25px;">
@@ -626,7 +637,7 @@ require __DIR__ . '/_header.php';
                 if (!function_exists('get_doc_status_class')) {
                     function get_doc_status_class($status, $has_front, $has_back) {
                         if ($status === 'approved') return 'uploaded';
-                        if ($status === 'rejected') return 'incomplete';
+                        if ($status === 'rejected') return 'rejected';
                         if ($status === 'pending') return 'blue-shimmer';
                         
                         if ($has_front && $has_back) return 'uploaded';
@@ -741,9 +752,9 @@ require __DIR__ . '/_header.php';
                 if ($subscriptionStatus === 'active') {
                     $receipt_class = 'uploaded';
                 } elseif ($receiptStatus === 'pending') {
-                    $receipt_class = 'incomplete';
+                    $receipt_class = 'blue-shimmer';
                 } elseif ($receiptStatus === 'rejected') {
-                    $receipt_class = 'incomplete';
+                    $receipt_class = 'rejected';
                 }
                 ?>
                 <div class="upload-card-interactive <?= $receipt_class ?>" id="card-weekly_subscription" onclick="openSubscriptionUploadModal()" style="margin-top: 15px;">
