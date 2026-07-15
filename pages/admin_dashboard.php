@@ -698,6 +698,44 @@ $maxChartCount = max(5, max($chartCounts));
         .status-pill-select:hover {
             border-color: #94a3b8;
         }
+
+        /* Document Dots / Badges in Lists */
+        .doc-badges {
+            display: flex;
+            gap: 6px;
+            margin-top: 5px;
+        }
+        .doc-dot {
+            font-size: 9px;
+            font-weight: 700;
+            padding: 3px 6px;
+            border-radius: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.2px;
+            display: inline-flex;
+            align-items: center;
+            line-height: 1;
+        }
+        .doc-dot.doc-approved {
+            background: rgba(16, 185, 129, 0.08);
+            color: #065f46;
+            border: 1px solid rgba(16, 185, 129, 0.15);
+        }
+        .doc-dot.doc-pending {
+            background: rgba(245, 158, 11, 0.08);
+            color: #92400e;
+            border: 1px solid rgba(245, 158, 11, 0.15);
+        }
+        .doc-dot.doc-rejected {
+            background: rgba(239, 68, 68, 0.08);
+            color: #991b1b;
+            border: 1px solid rgba(239, 68, 68, 0.15);
+        }
+        .doc-dot.doc-none {
+            background: rgba(148, 163, 184, 0.08);
+            color: #475569;
+            border: 1px solid rgba(148, 163, 184, 0.15);
+        }
     </style>
 </head>
 <body>
