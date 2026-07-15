@@ -749,6 +749,40 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             max-width: 90%; max-height: 90%; border-radius: 12px;
             box-shadow: 0 25px 50px rgba(0,0,0,0.3);
         }
+
+        /* Numerical Pagination Styling */
+        .pagination-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            border: 1px solid #cbd5e1;
+            background: #ffffff;
+            color: #475569;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .pagination-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+            background: var(--primary-soft);
+        }
+        .pagination-btn.active {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: #ffffff;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+        }
+        .pagination-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #f1f5f9;
+            border-color: #e2e8f0;
+        }
     </style>
 </head>
 <body>
@@ -1100,7 +1134,7 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                         </tbody>
                     </table>
                 </div>
-                <button class="btn-load-more" id="btn-history-load-more" onclick="loadMoreHistory()">Cargar más entregas</button>
+                <div class="pagination-container" id="history-pagination" style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-top: 20px;"></div>
             </div>
 
         </div>
@@ -1160,7 +1194,7 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
         let chartCancelled = null;
         
         // Paginación Historial
-        let historyOffset = 0;
+        let historyCurrentPage = 1;
         const historyLimit = 15;
 
         // Documentos modal variables
@@ -1175,7 +1209,7 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             updateKPIsRange('week');
 
             // Cargar historial inicial
-            loadMoreHistory(true);
+            loadHistoryPage(1);
         };
 
         // --- MAPA LOGICA ---
@@ -1451,21 +1485,18 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
         }
 
         // --- HISTORIAL PAGINADO ---
-        function loadMoreHistory(reset = false) {
-            if (reset) {
-                historyOffset = 0;
-                document.getElementById('driver-history-table-body').innerHTML = '';
-            }
+        function loadHistoryPage(page) {
+            historyCurrentPage = page;
+            const offset = (page - 1) * historyLimit;
 
-            const btn = document.getElementById('btn-history-load-more');
-            btn.disabled = true;
-            btn.innerText = 'Cargando...';
+            const tbody = document.getElementById('driver-history-table-body');
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">Cargando entregas...</td></tr>';
 
             const formData = new FormData();
             formData.append('action', 'get_driver_history');
             formData.append('driver_id', driverId);
             formData.append('limit', historyLimit);
-            formData.append('offset', historyOffset);
+            formData.append('offset', offset);
 
             fetch('api_admin_action.php', {
                 method: 'POST',
@@ -1473,9 +1504,8 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             })
             .then(res => res.json())
             .then(data => {
+                tbody.innerHTML = '';
                 if (data.success && Array.isArray(data.history) && data.history.length > 0) {
-                    const tbody = document.getElementById('driver-history-table-body');
-                    
                     data.history.forEach(order => {
                         const dateFormatted = new Date(order.created_at).toLocaleString('es-PY', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
                         const tr = document.createElement('tr');
@@ -1496,26 +1526,93 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                         tbody.appendChild(tr);
                     });
 
-                    historyOffset += data.history.length;
-                    btn.disabled = false;
-                    btn.innerText = 'Cargar más entregas';
-
-                    if (data.history.length < historyLimit) {
-                        btn.style.display = 'none';
-                    } else {
-                        btn.style.display = 'block';
-                    }
+                    // Render pagination buttons
+                    renderHistoryPagination(data.total || data.history.length);
                 } else {
-                    btn.disabled = true;
-                    btn.innerText = 'Sin más registros';
-                    btn.style.display = 'none';
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--text-muted);">No hay entregas registradas en este historial.</td></tr>';
+                    document.getElementById('history-pagination').innerHTML = '';
                 }
             })
             .catch(err => {
                 console.error(err);
-                btn.disabled = false;
-                btn.innerText = 'Error al cargar';
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:var(--danger);">Error de red al cargar el historial.</td></tr>';
             });
+        }
+
+        function renderHistoryPagination(totalCount) {
+            const container = document.getElementById('history-pagination');
+            container.innerHTML = '';
+
+            const totalPages = Math.ceil(totalCount / historyLimit);
+            if (totalPages <= 1) return; // No pagination needed if 1 or less pages
+
+            // Max visible page buttons
+            const maxVisible = 5;
+            let startPage = Math.max(1, historyCurrentPage - Math.floor(maxVisible / 2));
+            let endPage = Math.min(totalPages, startPage + maxVisible - 1);
+
+            if (endPage - startPage + 1 < maxVisible) {
+                startPage = Math.max(1, endPage - maxVisible + 1);
+            }
+
+            // Prev Button
+            const prevBtn = document.createElement('button');
+            prevBtn.className = 'pagination-btn';
+            prevBtn.innerHTML = '&lsaquo;';
+            prevBtn.disabled = historyCurrentPage === 1;
+            prevBtn.onclick = () => loadHistoryPage(historyCurrentPage - 1);
+            container.appendChild(prevBtn);
+
+            // First Page + Ellipsis if needed
+            if (startPage > 1) {
+                const firstBtn = document.createElement('button');
+                firstBtn.className = 'pagination-btn';
+                firstBtn.innerText = '1';
+                firstBtn.onclick = () => loadHistoryPage(1);
+                container.appendChild(firstBtn);
+
+                if (startPage > 2) {
+                    const dots = document.createElement('span');
+                    dots.innerText = '...';
+                    dots.style.color = 'var(--text-muted)';
+                    dots.style.fontSize = '12px';
+                    container.appendChild(dots);
+                }
+            }
+
+            // Page numbers
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.className = 'pagination-btn' + (i === historyCurrentPage ? ' active' : '');
+                pageBtn.innerText = i;
+                pageBtn.onclick = () => loadHistoryPage(i);
+                container.appendChild(pageBtn);
+            }
+
+            // Last Page + Ellipsis if needed
+            if (endPage < totalPages) {
+                if (endPage < totalPages - 1) {
+                    const dots = document.createElement('span');
+                    dots.innerText = '...';
+                    dots.style.color = 'var(--text-muted)';
+                    dots.style.fontSize = '12px';
+                    container.appendChild(dots);
+                }
+
+                const lastBtn = document.createElement('button');
+                lastBtn.className = 'pagination-btn';
+                lastBtn.innerText = totalPages;
+                lastBtn.onclick = () => loadHistoryPage(totalPages);
+                container.appendChild(lastBtn);
+            }
+
+            // Next Button
+            const nextBtn = document.createElement('button');
+            nextBtn.className = 'pagination-btn';
+            nextBtn.innerHTML = '&rsaquo;';
+            nextBtn.disabled = historyCurrentPage === totalPages;
+            nextBtn.onclick = () => loadHistoryPage(historyCurrentPage + 1);
+            container.appendChild(nextBtn);
         }
 
 
