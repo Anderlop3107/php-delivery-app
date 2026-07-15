@@ -1319,7 +1319,13 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             chartDelivered = new ApexCharts(document.querySelector("#chart-delivered"), {
                 chart: { type: 'bar', height: '100%', sparkline: { enabled: true } },
                 colors: ['#2563eb'],
-                plotOptions: { bar: { columnWidth: '60%', borderRadius: 3 } },
+                plotOptions: {
+                    bar: {
+                        columnWidth: '60%',
+                        borderRadius: 5,
+                        borderRadiusApplication: 'end'
+                    }
+                },
                 series: [{ data: [] }],
                 xaxis: { categories: [] },
                 tooltip: { fixed: { enabled: false }, x: { show: false } }

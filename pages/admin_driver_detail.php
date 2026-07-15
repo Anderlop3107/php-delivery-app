@@ -1405,6 +1405,13 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             chartDelivered = new ApexCharts(document.querySelector("#chart-delivered"), {
                 ...baseOptions,
                 chart: { type: 'bar', sparkline: { enabled: true } },
+                plotOptions: {
+                    bar: {
+                        columnWidth: '65%',
+                        borderRadius: 5,
+                        borderRadiusApplication: 'end'
+                    }
+                },
                 colors: ['#2563eb'],
                 series: [{ name: 'Entregados', data: [] }]
             });
