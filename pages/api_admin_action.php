@@ -898,6 +898,57 @@ if ($action === 'upload_local_doc') {
     exit;
 }
 
+if ($action === 'update_user_account') {
+    $targetUserId = (int)($_POST['target_user_id'] ?? 0);
+    $name = trim($_POST['name'] ?? '');
+    $businessName = trim($_POST['business_name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
+    $whatsapp = trim($_POST['whatsapp'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if ($targetUserId <= 0 || empty($name) || empty($email) || empty($phone)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Por favor completa todos los campos requeridos (Nombre, Email, Teléfono).']);
+        exit;
+    }
+
+    // Verificar que el usuario exista
+    $exists = app_one("SELECT id FROM users WHERE id = ?", 'i', [$targetUserId]);
+    if (!$exists) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Usuario no encontrado.']);
+        exit;
+    }
+
+    // Verificar duplicado de email
+    $dup = app_one("SELECT id FROM users WHERE email = ? AND id != ?", 'si', [$email, $targetUserId]);
+    if ($dup) {
+        http_response_code(400);
+        echo json_encode(['error' => 'El correo electrónico ingresado ya está registrado por otro usuario.']);
+        exit;
+    }
+
+    // Actualizar datos básicos
+    app_exec(
+        "UPDATE users SET name = ?, business_name = ?, email = ?, phone = ?, whatsapp = ?, updated_at = NOW() WHERE id = ?",
+        'sssssi',
+        [$name, $businessName, $email, $phone, $whatsapp, $targetUserId]
+    );
+
+    // Si se especificó una nueva contraseña, encriptarla y guardarla
+    if (!empty($password)) {
+        $hashed = password_hash($password, PASSWORD_DEFAULT);
+        app_exec("UPDATE users SET password = ? WHERE id = ?", 'si', [$hashed, $targetUserId]);
+    }
+
+    echo json_encode([
+        'success' => true,
+        'message' => 'Datos de acceso actualizados correctamente.'
+    ]);
+    exit;
+}
+
 http_response_code(400);
 echo json_encode(['error' => 'Acción no especificada o no soportada.']);
 exit;

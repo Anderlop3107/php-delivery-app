@@ -792,6 +792,17 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             max-width: 90%; max-height: 90%; border-radius: 12px;
             box-shadow: 0 25px 50px rgba(0,0,0,0.3);
         }
+
+        .toggle-pass-admin {
+            position: absolute;
+            right: 14px;
+            top: 36px;
+            cursor: pointer;
+            color: #94a3b8;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+        }
     </style>
 </head>
 <body>
@@ -919,24 +930,41 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                         <div style="font-size:12px; color:#64748b; margin-top:2px;">Rol: Comercio / Local</div>
                     </div>
                     
-                    <div class="account-inputs">
-                        <div class="input-group">
-                            <label>Email</label>
-                            <input type="text" value="<?= esc($localData['email']) ?>" readonly>
+                    <form id="admin-account-form" onsubmit="saveAdminAccount(event)">
+                        <input type="hidden" name="action" value="update_user_account">
+                        <input type="hidden" name="target_user_id" value="<?= (int)$localData['id'] ?>">
+                        <div class="account-inputs">
+                            <div class="input-group">
+                                <label>Usuario (Nombre Propietario)</label>
+                                <input type="text" name="name" value="<?= esc($localData['name']) ?>" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Nombre del Local</label>
+                                <input type="text" name="business_name" value="<?= esc($localData['business_name']) ?>" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Email (Gmail)</label>
+                                <input type="email" name="email" value="<?= esc($localData['email']) ?>" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Teléfono</label>
+                                <input type="text" name="phone" value="<?= esc($localData['phone']) ?>" required>
+                            </div>
+                            <div class="input-group">
+                                <label>Whatsapp</label>
+                                <input type="text" name="whatsapp" value="<?= esc($localData['whatsapp'] ?: $localData['phone']) ?>">
+                            </div>
+                            <div class="input-group" style="position:relative;">
+                                <label>Nueva Contraseña</label>
+                                <input type="password" name="password" id="acc-password" placeholder="Nueva contraseña (vacío para no cambiar)" style="padding-right:40px;">
+                                <span class="toggle-pass-admin" onclick="togglePassAdmin()" style="position:absolute; right:12px; top:36px; cursor:pointer; color:#94a3b8; font-size:16px; user-select:none;">👁️</span>
+                            </div>
+                            
+                            <button type="submit" id="btn-save-account" style="width: 100%; padding: 12px; margin-top: 10px; font-size: 13px; font-weight: 800; border: none; border-radius: 12px; background: var(--primary); color: #ffffff; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);">
+                                💾 Guardar Cambios
+                            </button>
                         </div>
-                        <div class="input-group">
-                            <label>Teléfono</label>
-                            <input type="text" value="<?= esc($localData['phone']) ?>" readonly>
-                        </div>
-                        <div class="input-group">
-                            <label>Whatsapp</label>
-                            <input type="text" value="<?= esc($localData['whatsapp'] ?: $localData['phone']) ?>" readonly>
-                        </div>
-                        <div class="input-group">
-                            <label>Contraseña Hashed</label>
-                            <input type="text" value="••••••••••••" readonly>
-                        </div>
-                    </div>
+                    </form>
                 </div>
 
                 <!-- Columna Central: Documentación & Suscripción -->
@@ -1528,6 +1556,66 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                 container.appendChild(nextBtn);
             }
         }
+
+        // --- GUARDAR Y MOSTRAR DATOS DE ACCESO (ADMIN) ---
+        function togglePassAdmin() {
+            const passField = document.getElementById('acc-password');
+            const passToggle = document.querySelector('.toggle-pass-admin');
+            if (passField.type === 'password') {
+                passField.type = 'text';
+                passToggle.innerText = '🔒';
+            } else {
+                passField.type = 'password';
+                passToggle.innerText = '👁️';
+            }
+        }
+
+        async function saveAdminAccount(e) {
+            e.preventDefault();
+            const form = document.getElementById('admin-account-form');
+            const btn = document.getElementById('btn-save-account');
+            
+            btn.disabled = true;
+            btn.innerText = 'Guardando...';
+
+            const formData = new FormData(form);
+            try {
+                const resp = await fetch('api_admin_action.php', {
+                    method: 'POST',
+                    body: formData
+                });
+                const res = await resp.json();
+                if (res.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: '¡Guardado!',
+                        text: res.message || 'Datos actualizados con éxito.',
+                        timer: 1500,
+                        showConfirmButton: false
+                    }).then(() => {
+                        window.location.reload();
+                    });
+                } else {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        text: res.error || 'No se pudo guardar la información.'
+                    });
+                    btn.disabled = false;
+                    btn.innerText = '💾 Guardar Cambios';
+                }
+            } catch (err) {
+                console.error(err);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error de Red',
+                    text: 'Ocurrió un error al conectar con el servidor.'
+                });
+                btn.disabled = false;
+                btn.innerText = '💾 Guardar Cambios';
+            }
+        }
+
 
         // --- VERIFICACIÓN SUSCRIPCIÓN ---
         function verifySubscription(status, paymentId) {
