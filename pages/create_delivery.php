@@ -799,7 +799,7 @@ require __DIR__ . '/_header.php';
                 clearInterval(approvalCheckInterval);
                 
                 // Sonar notification sound
-                const audio = new Audio('<?= delivery_app_url("assets/sounds/notification.mp3") ?>');
+                const audio = new Audio('<?= delivery_app_url("assets/sounds/delivered.mp3") ?>');
                 audio.play().catch(e => console.log("Autoplay de audio prevenido:", e));
                 
                 alert('¡Suscripción aprobada! Tu cuenta ha sido reactivada. 🎉');
