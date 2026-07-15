@@ -802,9 +802,12 @@ if ($action === 'get_driver_history') {
         LIMIT ? OFFSET ?
     ", 'iii', [$driverId, $limit, $offset]);
 
+    $total = (int)app_one("SELECT COUNT(*) as cnt FROM deliveries WHERE repartidor_user_id = ?", 'i', [$driverId])['cnt'];
+
     echo json_encode([
         'success' => true,
-        'history' => $history
+        'history' => $history,
+        'total' => $total
     ]);
     exit;
 }
