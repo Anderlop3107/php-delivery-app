@@ -64,6 +64,9 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
     
     <!-- ApexCharts CDN -->
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    
+    <!-- SweetAlert2 local copy (avoids Tracking‑Prevention blocks) -->
+    <script src="<?= esc(delivery_app_url('assets/js/sweetalert2.min.js')) ?>"></script>
 
     <style>
         :root {
