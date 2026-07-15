@@ -376,7 +376,11 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
 
         /* Access details */
         .avatar-uploader-section {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
             text-align: center;
+            margin-bottom: 20px;
         }
         .driver-profile-avatar {
             width: 80px;
