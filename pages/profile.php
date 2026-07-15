@@ -419,6 +419,44 @@ require __DIR__ . '/_header.php';
         color: #ef4444;
         opacity: 0.7;
     }
+    
+    /* Input-styled interactive card for premium consistent design */
+    .upload-card-interactive-input {
+        display: flex; align-items: center; justify-content: space-between;
+        padding: 14px 16px 14px 48px; border-radius: 16px;
+        border: 1.5px solid #cbd5e1; font-weight: 600; font-size: 14px;
+        background: #fff; height: 52px; box-sizing: border-box; width: 100%;
+        color: #475569; transition: all 0.2s;
+    }
+    .upload-card-interactive-input:active { transform: scale(0.99); }
+    
+    .upload-card-interactive-input.uploaded {
+        border-color: #a7f3d0;
+        background: #f0fdf4;
+    }
+    .upload-card-interactive-input.blue-shimmer {
+        border-color: #bfdbfe;
+        background: #eff6ff;
+        position: relative;
+        overflow: hidden;
+    }
+    .upload-card-interactive-input.blue-shimmer::after {
+        content: '';
+        position: absolute;
+        top: 0; left: -150%;
+        width: 60%; height: 100%;
+        background: linear-gradient(to right, rgba(255,255,255,0) 0%, rgba(255,255,255,0.6) 50%, rgba(255,255,255,0) 100%);
+        transform: skewX(-25deg);
+        animation: shineSweep 3.5s infinite ease-in-out;
+    }
+    .upload-card-interactive-input.rejected {
+        border-color: #fca5a5;
+        background: #fef2f2;
+    }
+    .upload-card-interactive-input.incomplete {
+        border-color: #cbd5e1;
+        background: #fff;
+    }
 </style>
 
 <div class="profile-hero">
@@ -508,27 +546,24 @@ require __DIR__ . '/_header.php';
                     $receipt_class = 'rejected';
                 }
                 ?>
-                <div class="upload-card-interactive <?= $receipt_class ?>" id="card-weekly_subscription" onclick="openSubscriptionUploadModal()" style="margin-top: 15px; margin-bottom: 25px;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
-                        <div style="display: flex; align-items: center;">
-                            <span class="user-icon">💳</span>
-                            <div style="display: flex; flex-direction: column;">
-                                <span style="font-weight: 800; font-size: 15px; color: var(--text);">Suscripción Mensual</span>
-                                <span id="status-weekly_subscription" style="font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
-                                    <?php if ($subscriptionStatus === 'active' && !empty($latestPayment['payment_proof_path']) && $latestPayment['status'] !== 'rejected'): ?>
-                                        <span class="status-badge-interactive uploaded" style="background:#d1fae5; color:#065f46; padding: 2px 8px; border-radius: 8px; font-size: 10px; text-transform: uppercase;">Activo ✓</span>
-                                    <?php elseif ($receiptStatus === 'pending'): ?>
-                                        <span class="status-badge-interactive incomplete" style="background:#fef3c7; color:#92400e; padding: 2px 8px; border-radius: 8px; font-size: 10px; text-transform: uppercase;">En revisión ⏳</span>
-                                    <?php elseif ($receiptStatus === 'rejected'): ?>
-                                        <span class="status-badge-interactive incomplete" style="background:#fee2e2; color:#991b1b; padding: 2px 8px; border-radius: 8px; font-size: 10px; text-transform: uppercase;">Rechazado ❌</span>
-                                    <?php else: ?>
-                                        <span class="status-badge-interactive incomplete" style="background:#f1f5f9; color:#64748b; padding: 2px 8px; border-radius: 8px; font-size: 10px; text-transform: uppercase;">Sin pagar ⚠️</span>
-                                    <?php endif; ?>
-                                </span>
-                            </div>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 10px;">
-                            <span class="arrow-icon">></span>
+                <div class="form-group" onclick="openSubscriptionUploadModal()" style="cursor: pointer; margin-top: 15px; margin-bottom: 25px;">
+                    <div class="input-wrapper">
+                        <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                        </svg>
+                        <div class="upload-card-interactive-input <?= $receipt_class ?>">
+                            <span style="font-weight: 600;">Suscripción Mensual</span>
+                            <span id="status-weekly_subscription" style="display: flex; align-items: center; gap: 4px;">
+                                <?php if ($subscriptionStatus === 'active' && !empty($latestPayment['payment_proof_path']) && $latestPayment['status'] !== 'rejected'): ?>
+                                    <span class="status-badge-interactive uploaded" style="background:#d1fae5; color:#065f46; padding: 2px 8px; border-radius: 8px; font-size: 10px; text-transform: uppercase; font-weight: 700;">Activo ✓</span>
+                                <?php elseif ($receiptStatus === 'pending'): ?>
+                                    <span class="status-badge-interactive incomplete" style="background:#fef3c7; color:#92400e; padding: 2px 8px; border-radius: 8px; font-size: 10px; text-transform: uppercase; font-weight: 700;">En revisión ⏳</span>
+                                <?php elseif ($receiptStatus === 'rejected'): ?>
+                                    <span class="status-badge-interactive incomplete" style="background:#fee2e2; color:#991b1b; padding: 2px 8px; border-radius: 8px; font-size: 10px; text-transform: uppercase; font-weight: 700;">Rechazado ❌</span>
+                                <?php else: ?>
+                                    <span class="status-badge-interactive incomplete" style="background:#f1f5f9; color:#64748b; padding: 2px 8px; border-radius: 8px; font-size: 10px; text-transform: uppercase; font-weight: 700;">Sin pagar ⚠️</span>
+                                <?php endif; ?>
+                            </span>
                         </div>
                     </div>
                 </div>
