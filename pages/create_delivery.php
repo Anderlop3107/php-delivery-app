@@ -789,6 +789,27 @@ require __DIR__ . '/_header.php';
             }
         });
     }
+
+    <?php if ($subscriptionExpired): ?>
+    let approvalCheckInterval = setInterval(async () => {
+        try {
+            const resp = await fetch('api_check_approval.php?_t=' + Date.now());
+            const res = await resp.json();
+            if (res.success && res.approved) {
+                clearInterval(approvalCheckInterval);
+                
+                // Sonar notification sound
+                const audio = new Audio('<?= delivery_app_url("assets/sounds/notification.mp3") ?>');
+                audio.play().catch(e => console.log("Autoplay de audio prevenido:", e));
+                
+                alert('¡Suscripción aprobada! Tu cuenta ha sido reactivada. 🎉');
+                window.location.reload();
+            }
+        } catch (e) {
+            console.error("Error al consultar aprobación:", e);
+        }
+    }, 5000);
+    <?php endif; ?>
 </script>
 
 <?php require __DIR__ . '/_footer.php'; ?>
