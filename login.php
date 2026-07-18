@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         :root {
             --primary: #2563eb;
             --primary-hover: #1d4ed8;
-            --bg-translucent: rgba(255, 255, 255, 0.03);
+            --bg-translucent: rgba(0, 0, 0, 0.45);
         }
 
         * {
@@ -55,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             top: 0; left: 0; right: 0; bottom: 0;
             background: url('<?= delivery_app_url("uploads/images/login_goo!.jpg") ?>') no-repeat center center;
             background-size: cover;
-            filter: grayscale(100%) brightness(85%) contrast(95%);
+            filter: grayscale(100%) brightness(100%) contrast(95%);
             z-index: -1;
         }
 
@@ -76,9 +76,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         /* Animated Toggle Switch Logo */
         .switch-logo-container {
-            width: 120px;
-            height: 72px;
-            margin-top: -20px;
+            width: 150px;
+            height: 86px;
+            margin-top: -25px;
             margin-bottom: 24px;
             display: flex;
             align-items: center;
@@ -86,11 +86,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .switch-track {
-            width: 90px;
-            height: 50px;
+            width: 110px;
+            height: 60px;
             background: rgba(255, 255, 255, 0.08);
             border: 2px solid rgba(255, 255, 255, 0.25);
-            border-radius: 30px;
+            border-radius: 40px;
             position: relative;
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
@@ -100,13 +100,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         .switch-handle {
-            width: 36px;
-            height: 36px;
+            width: 44px;
+            height: 44px;
             background: #ffffff;
             border-radius: 50%;
             position: absolute;
-            top: 5px;
-            left: 5px;
+            top: 6px;
+            left: 8px;
             box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
             transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             animation: autoToggleHandle 5s ease-in-out infinite;
@@ -133,17 +133,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         @keyframes autoToggleHandle {
             0%, 10% {
-                left: 5px;
+                left: 8px;
                 background: #ffffff;
                 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
             }
             40%, 60% {
-                left: 45px;
+                left: 58px;
                 background: #ffffff;
                 box-shadow: 0 6px 15px rgba(37, 99, 235, 0.6), 0 0 10px #2563eb;
             }
             90%, 100% {
-                left: 5px;
+                left: 8px;
                 background: #ffffff;
                 box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
             }
@@ -159,6 +159,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         .logo-container h1 span {
             color: var(--primary);
+        }
+
+        .logo-subtitle {
+            font-size: 13.5px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+            margin-top: 6px;
+            letter-spacing: 0.2px;
         }
 
         /* Error Box Styling */
@@ -306,6 +314,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: #3b82f6;
             text-decoration: underline;
         }
+
+        /* App Version tag at the absolute bottom of the screen */
+        .version-tag {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            text-align: center;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 500;
+            letter-spacing: 0.5px;
+            z-index: 10;
+        }
     </style>
 </head>
 <body>
@@ -319,7 +341,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     <div class="switch-handle"></div>
                 </div>
             </div>
-            <h1>Goo<span>!</span></h1>
+            <h1>Bienvenido<span>!</span></h1>
+            <p class="logo-subtitle">Inicia sesión para continuar</p>
         </div>
 
         <?php if ($error): ?>
@@ -340,7 +363,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     </svg>
                 </div>
                 <div class="input-field-wrapper">
-                    <input type="email" name="email" placeholder="E-mail address" required>
+                    <input type="email" name="email" placeholder="ejemplo@gmail.com" required>
                 </div>
             </div>
 
@@ -377,6 +400,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <!-- Recovery / Contact Support -->
         <div class="support-link-box">
             ¿Problemas para acceder? <a href="https://wa.me/595986107629" target="_blank" rel="noopener noreferrer">Contacta a Soporte</a>
+        </div>
+
+        <!-- App Version -->
+        <div class="version-tag">
+            Versión 1.0
         </div>
 
     </div>
