@@ -27,7 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         :root {
             --primary: #2563eb;
             --primary-hover: #1d4ed8;
-            --bg-translucent: rgba(15, 23, 42, 0.65);
+            --bg-translucent: rgba(255, 255, 255, 0.03);
         }
 
         * {
@@ -53,9 +53,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             content: '';
             position: fixed;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: url('<?= delivery_app_url("uploads/images/login_bg_cityscape.jpg") ?>') no-repeat center center;
+            background: url('<?= delivery_app_url("uploads/images/login_goo!.jpg") ?>') no-repeat center center;
             background-size: cover;
-            filter: grayscale(100%) brightness(20%) contrast(110%);
+            filter: grayscale(100%) brightness(85%) contrast(95%);
             z-index: -1;
         }
 
@@ -63,6 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             width: 100%;
             max-width: 380px;
             z-index: 10;
+            margin-top: -8vh;
         }
 
         .logo-container {
@@ -73,17 +74,79 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             text-align: center;
         }
 
-        /* 3D Geometric Cube Logo in #2563eb */
-        .brand-logo-cube {
-            width: 72px;
+        /* Animated Toggle Switch Logo */
+        .switch-logo-container {
+            width: 120px;
             height: 72px;
-            filter: drop-shadow(0 8px 20px rgba(37, 99, 235, 0.4));
-            animation: floatCube 4s ease-in-out infinite;
+            margin-top: -20px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        @keyframes floatCube {
-            0%, 100% { transform: translateY(0px) rotate(0deg); }
-            50% { transform: translateY(-5px) rotate(3deg); }
+        .switch-track {
+            width: 90px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 2px solid rgba(255, 255, 255, 0.25);
+            border-radius: 30px;
+            position: relative;
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            animation: autoToggleTrack 5s ease-in-out infinite;
+        }
+
+        .switch-handle {
+            width: 36px;
+            height: 36px;
+            background: #ffffff;
+            border-radius: 50%;
+            position: absolute;
+            top: 5px;
+            left: 5px;
+            box-shadow: 0 4px 10px rgba(37, 99, 235, 0.3);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            animation: autoToggleHandle 5s ease-in-out infinite;
+        }
+
+        /* Auto toggling loop animation */
+        @keyframes autoToggleTrack {
+            0%, 10% {
+                background: rgba(255, 255, 255, 0.08);
+                border-color: rgba(255, 255, 255, 0.25);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            }
+            40%, 60% {
+                background: rgba(37, 99, 235, 0.25);
+                border-color: #2563eb;
+                box-shadow: 0 8px 30px rgba(37, 99, 235, 0.4);
+            }
+            90%, 100% {
+                background: rgba(255, 255, 255, 0.08);
+                border-color: rgba(255, 255, 255, 0.25);
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+            }
+        }
+
+        @keyframes autoToggleHandle {
+            0%, 10% {
+                left: 5px;
+                background: #ffffff;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            }
+            40%, 60% {
+                left: 45px;
+                background: #ffffff;
+                box-shadow: 0 6px 15px rgba(37, 99, 235, 0.6), 0 0 10px #2563eb;
+            }
+            90%, 100% {
+                left: 5px;
+                background: #ffffff;
+                box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+            }
         }
 
         .logo-container h1 {
@@ -123,21 +186,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             width: 100%;
             margin-bottom: 16px;
             background: var(--bg-translucent);
-            border: 1.5px solid rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15); /* Glass edge */
             border-radius: 14px;
             padding: 14px 18px;
             display: flex;
             align-items: center;
             gap: 14px;
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(2px);
+            -webkit-backdrop-filter: blur(2px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.25);
             transition: all 0.25s ease;
         }
 
         .form-group-translucent:focus-within {
-            border-color: var(--primary);
-            background: rgba(15, 23, 42, 0.8);
-            box-shadow: 0 0 15px rgba(37, 99, 235, 0.15);
+            border-color: rgba(255, 255, 255, 0.4);
+            background: rgba(255, 255, 255, 0.16);
+            box-shadow: 0 8px 32px 0 rgba(37, 99, 235, 0.2);
         }
 
         .input-icon {
@@ -165,7 +229,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             color: #ffffff;
             font-size: 14.5px;
             font-weight: 600;
-            padding: 0;
+            padding-right: 32px; /* Prevent text from typing under the eye icon */
             height: 24px;
         }
 
@@ -181,8 +245,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             user-select: none;
             display: flex;
             align-items: center;
-            padding-left: 8px;
             transition: color 0.2s ease;
+            position: absolute;
+            right: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 5; /* Ensure it is clickable on top of the input */
         }
 
         .toggle-eye-btn:hover {
@@ -191,18 +259,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         /* Pill Action Button */
         .btn-ingresar {
-            width: 100%;
+            width: 80%;
             height: 52px;
             background: var(--primary);
             color: #ffffff;
             border: none;
             border-radius: 50px; /* Estilo píldora */
-            font-size: 15px;
-            font-weight: 700;
+            font-size: 18px;
+            font-weight: 600; /* semi-bold */
             cursor: pointer;
             transition: all 0.2s ease;
             box-shadow: 0 6px 20px rgba(37, 99, 235, 0.3);
-            margin-top: 14px;
+            margin: 25px auto 0; /* Center horizontally inside the form */
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .btn-ingresar:hover {
@@ -243,18 +314,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         <!-- Top Logotipo -->
         <div class="logo-container">
-            <div class="brand-logo-cube">
-                <!-- SVG: Geometric Isometric 3D Cube in #2563eb -->
-                <svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:100%; height:100%;">
-                    <!-- Left Face -->
-                    <path d="M 50 15 L 15 35 L 15 65 L 50 85 Z" fill="#1d4ed8" opacity="0.85" />
-                    <!-- Right Face -->
-                    <path d="M 50 15 L 85 35 L 85 65 L 50 85 Z" fill="#2563eb" />
-                    <!-- Top Face -->
-                    <path d="M 50 15 L 15 35 L 50 55 L 85 35 Z" fill="#3b82f6" />
-                    <!-- White Inner Geometric Outlines -->
-                    <path d="M 50 55 L 50 85 M 15 35 L 50 55 L 85 35" stroke="#ffffff" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" opacity="0.4" />
-                </svg>
+            <div class="switch-logo-container">
+                <div class="switch-track">
+                    <div class="switch-handle"></div>
+                </div>
             </div>
             <h1>Goo<span>!</span></h1>
         </div>
