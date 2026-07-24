@@ -306,6 +306,17 @@ require __DIR__ . '/_header.php';
         animation: waveRipple 2s infinite; 
     }
     @keyframes waveRipple { from { transform: scale(1); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+    @keyframes pulseGlow {
+        0%, 100% { transform: scale(1); box-shadow: 0 0 20px rgba(245, 158, 11, 0.15); }
+        50% { transform: scale(1.08); box-shadow: 0 0 35px rgba(245, 158, 11, 0.35); }
+    }
+    @keyframes spinSandglass {
+        0% { transform: rotate(0deg); }
+        40% { transform: rotate(180deg); }
+        50% { transform: rotate(180deg); }
+        90% { transform: rotate(360deg); }
+        100% { transform: rotate(360deg); }
+    }
     .check-mark { font-size: 36px; color: var(--primary); font-weight: 800; z-index: 2; }
 
     .modal-card h2 { font-size: 22px; font-weight: 800; margin: 0 0 8px; color: var(--text); letter-spacing: -0.5px; }
@@ -620,7 +631,7 @@ require __DIR__ . '/_header.php';
                 <!-- Ubicación en el Mapa -->
                 <div class="form-group">
                     <label class="muted" style="font-weight: 700; font-size: 11px; text-transform: uppercase;">Ubicación en el Mapa</label>
-                    <div id="local-map" style="height: 200px; border-radius: 16px; margin-top: 8px; border: 1px solid var(--border);"></div>
+                    <div id="local-map" style="width: 100%; height: 220px; min-height: 220px; border-radius: 16px; margin-top: 8px; border: 1px solid var(--border); overflow: hidden; position: relative;"></div>
                     <input type="hidden" name="latitude" id="local_lat" value="<?= esc($userData['latitude']) ?>">
                     <input type="hidden" name="longitude" id="local_lng" value="<?= esc($userData['longitude']) ?>">
                 </div>
@@ -836,12 +847,9 @@ require __DIR__ . '/_header.php';
 
 <!-- Modal de Carga de Suscripción en el Perfil -->
 <div id="subscription-modal-profile" class="modal-overlay" style="display: none; z-index: 3000;">
-    <div class="modal-card" style="max-width: 420px; background: #ffffff; border-radius: 28px; padding: 30px;">
-        <button type="button" class="modal-close-top" onclick="closeSubscriptionModalProfile()" style="background:none; border:none; font-size:18px; cursor:pointer; color:#64748b; float:right;">✕</button>
-        <h2 style="font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 6px; clear:both;"><?= $userData['role'] === 'local' ? 'Suscripción Mensual' : 'Suscripción Semanal' ?></h2>
-        <p style="font-size: 13.5px; color: var(--muted); font-weight: 600; margin-bottom: 20px; line-height: 1.4; text-align: center;">
-            Por favor, sube tu comprobante de pago <?= $userData['role'] === 'local' ? 'mensual' : 'semanal' ?> para continuar activo en la plataforma.
-        </p>
+    <div class="modal-card" style="max-width: 420px; background: #ffffff; border-radius: 28px; padding: 30px; position:relative;">
+        <button type="button" class="modal-close-top" onclick="closeSubscriptionModalProfile()" style="position:absolute; top:16px; right:16px; left:auto; transform:none; background:#f1f5f9; border:none; width:32px; height:32px; border-radius:50%; font-size:16px; cursor:pointer; color:#64748b; display:flex; align-items:center; justify-content:center; z-index:1;">✕</button>
+        <h2 style="font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 20px; clear:both; text-align: center;"><?= $userData['role'] === 'local' ? 'Suscripción Mensual' : 'Suscripción Semanal' ?></h2>
 
         <?php if ($latestPayment && $latestPayment['status'] === 'pending'): ?>
             <div style="
@@ -852,11 +860,11 @@ require __DIR__ . '/_header.php';
                 box-shadow: 0 0 20px rgba(245, 158, 11, 0.12);
                 animation: pulseGlow 2s infinite ease-in-out;
             ">
-                ⏳
+                <span style="display:inline-block; animation: spinSandglass 2.5s infinite cubic-bezier(0.4, 0, 0.2, 1);">⏳</span>
             </div>
             <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 12px; letter-spacing: -0.5px; text-align: center;">Comprobante en verificación</h2>
             <p style="font-size: 14px; color: #64748b; margin: 0 0 24px; line-height: 1.6; font-weight: 500; text-align: center;">
-                Tu comprobante de pago fue subido con éxito y está en revisión. El administrador te habilitará pronto.
+                El administrador te habilitará pronto.
             </p>
             <div style="
                 background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px;
@@ -864,9 +872,12 @@ require __DIR__ . '/_header.php';
                 display: flex; align-items: center; justify-content: center; gap: 8px;
             ">
                 <span>📅</span>
-                <span>Enviado el: <?= date('d/m/Y H:i', strtotime($latestPayment['uploaded_at'])) ?> (UTC-3)</span>
+                <span>Enviado el: <?= date('d/m/Y H:i', strtotime($latestPayment['uploaded_at'])) ?></span>
             </div>
         <?php else: ?>
+            <p style="font-size: 13.5px; color: var(--muted); font-weight: 600; margin-bottom: 20px; line-height: 1.4; text-align: center;">
+                Por favor, sube tu comprobante de pago <?= $userData['role'] === 'local' ? 'mensual' : 'semanal' ?> para continuar activo en la plataforma.
+            </p>
             <?php if ($latestPayment && $latestPayment['status'] === 'rejected'): ?>
                 <div style="background: #fef2f2; border: 1px solid #fca5a5; color: #b91c1c; padding: 12px; border-radius: 12px; font-size: 13px; font-weight: 600; margin-bottom: 15px; text-align: left;">
                     ❌ <b>Rechazado anterior:</b><br>
@@ -924,9 +935,10 @@ require __DIR__ . '/_header.php';
             document.getElementById('tab-' + tab).classList.add('active');
         }
         
-        // Redimensionar el mapa si se activa la pestaña del local
+        // Redimensionar el mapa si se activa la pestaña del local (soluciona renderizado en teléfonos)
         if (tab === 'local' && typeof localMap !== 'undefined') {
-            setTimeout(() => { localMap.resize(); }, 100);
+            setTimeout(() => { localMap.resize(); }, 50);
+            setTimeout(() => { localMap.resize(); }, 300);
         }
     }
 
@@ -988,11 +1000,24 @@ require __DIR__ . '/_header.php';
         }, 5000);
     }
 
+    let isSubscriptionApprovedModal = false;
+
+    function showSuccessModal(title, message, isSubApproved = false) {
+        if (title) document.getElementById('success-modal-title').innerText = title;
+        if (message) document.getElementById('success-modal-message').innerText = message;
+        isSubscriptionApprovedModal = isSubApproved;
+        document.getElementById('success-modal').style.display = 'flex';
+    }
+
     function closeSuccessModal() {
         // Remover el parámetro 'toast' del URL para evitar que aparezca de nuevo al refrescar
         const cleanUrl = window.location.protocol + "//" + window.location.host + window.location.pathname;
         window.history.replaceState({ path: cleanUrl }, '', cleanUrl);
         document.getElementById('success-modal').style.display = 'none';
+
+        if (isSubscriptionApprovedModal) {
+            window.location.reload();
+        }
     }
 
     // Inicializar mapa de Mapbox para el comercio (Local)
@@ -1013,6 +1038,7 @@ require __DIR__ . '/_header.php';
     });
     
     localMap.on('load', () => {
+        localMap.resize();
         const el = document.createElement('div');
         el.innerHTML = '📍'; el.style.fontSize = '32px'; el.style.cursor = 'pointer';
         
@@ -1031,6 +1057,10 @@ require __DIR__ . '/_header.php';
             document.getElementById('local_lat').value = e.lngLat.lat;
             document.getElementById('local_lng').value = e.lngLat.lng;
         });
+    });
+
+    window.addEventListener('resize', () => {
+        if (localMap) localMap.resize();
     });
     <?php endif; ?>
 
@@ -1091,12 +1121,10 @@ require __DIR__ . '/_header.php';
                     
                     const modalInner = document.querySelector('#subscription-modal-profile .modal-card');
                     if (modalInner) {
+                        const nowStr = new Date().toLocaleString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                         modalInner.innerHTML = `
-                            <button type="button" class="modal-close-top" onclick="closeSubscriptionModalProfile()" style="background:none; border:none; font-size:18px; cursor:pointer; color:#64748b; float:right;">✕</button>
-                            <h2 style="font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 6px; clear:both;">${userRole === 'local' ? 'Suscripción Mensual' : 'Suscripción Semanal'}</h2>
-                            <p style="font-size: 13.5px; color: var(--muted); font-weight: 600; margin-bottom: 20px; line-height: 1.4; text-align: center;">
-                                Por favor, sube tu comprobante de pago ${userRole === 'local' ? 'mensual' : 'semanal'} para continuar activo en la plataforma.
-                            </p>
+                            <button type="button" class="modal-close-top" onclick="closeSubscriptionModalProfile()" style="position:absolute; top:16px; right:16px; left:auto; transform:none; background:#f1f5f9; border:none; width:32px; height:32px; border-radius:50%; font-size:16px; cursor:pointer; color:#64748b; display:flex; align-items:center; justify-content:center; z-index:1;">✕</button>
+                            <h2 style="font-size: 20px; font-weight: 800; color: var(--text); margin-bottom: 20px; clear:both; text-align: center;">${userRole === 'local' ? 'Suscripción Mensual' : 'Suscripción Semanal'}</h2>
                             <div style="
                                 width: 80px; height: 80px; border-radius: 50%;
                                 background: rgba(245, 158, 11, 0.08); color: #f59e0b;
@@ -1105,11 +1133,11 @@ require __DIR__ . '/_header.php';
                                 box-shadow: 0 0 20px rgba(245, 158, 11, 0.12);
                                 animation: pulseGlow 2s infinite ease-in-out;
                             ">
-                                ⏳
+                                <span style="display:inline-block; animation: spinSandglass 2.5s infinite cubic-bezier(0.4, 0, 0.2, 1);">⏳</span>
                             </div>
                             <h2 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 12px; letter-spacing: -0.5px; text-align: center;">Comprobante en verificación</h2>
                             <p style="font-size: 14px; color: #64748b; margin: 0 0 24px; line-height: 1.6; font-weight: 500; text-align: center;">
-                                Tu comprobante de pago fue subido con éxito y está en revisión. El administrador te habilitará pronto.
+                                El administrador te habilitará pronto.
                             </p>
                             <div style="
                                 background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px;
@@ -1117,13 +1145,10 @@ require __DIR__ . '/_header.php';
                                 display: flex; align-items: center; justify-content: center; gap: 8px;
                             ">
                                 <span>📅</span>
-                                <span>Enviado el: Recién (UTC-3)</span>
+                                <span>Enviado el: ${nowStr}</span>
                             </div>
                         `;
                     }
-                    setTimeout(() => {
-                        window.location.reload();
-                    }, 1500);
                 } else {
                     Swal.fire({
                         toast: true,
@@ -1153,6 +1178,29 @@ require __DIR__ . '/_header.php';
             }
         });
     }
+
+    // --- SONDEO EN TIEMPO REAL PARA APROBACIÓN DE SUSCRIPCIÓN ---
+    <?php if (($userData['subscription_status'] ?? '') !== 'active'): ?>
+    let subCheckInterval = setInterval(async () => {
+        try {
+            const resp = await fetch('api_check_approval.php?_t=' + Date.now());
+            const res = await resp.json();
+            if (res.success && res.approved) {
+                clearInterval(subCheckInterval);
+                
+                // Reproducir sonido de notificación
+                const audio = new Audio('<?= delivery_app_url("assets/sounds/delivered.mp3") ?>');
+                audio.play().catch(e => console.log("Autoplay prevenido:", e));
+
+                // Ocultar modal de perfil si estaba abierto y mostrar modal de éxito
+                closeSubscriptionModalProfile();
+                showSuccessModal('¡Suscripción Activada!', 'El administrador ha aprobado tu comprobante. Tu cuenta está activa con acceso completo.', true);
+            }
+        } catch (e) {
+            console.error("Error al consultar estado de suscripción:", e);
+        }
+    }, 4000);
+    <?php endif; ?>
 </script>
 
 <?php require __DIR__ . '/_footer.php'; ?>

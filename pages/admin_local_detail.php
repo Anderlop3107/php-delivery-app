@@ -325,6 +325,67 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             outline: none;
             cursor: pointer;
         }
+
+        /* Custom date range popover styling */
+        .kpi-select-container {
+            position: relative;
+            display: inline-block;
+        }
+
+        .custom-date-popover {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 14px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+            z-index: 99;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 6px;
+            width: 200px;
+            text-align: left;
+            animation: popoverFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes popoverFadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .custom-date-popover input[type="date"] {
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 6px 10px;
+            font-size: 12px;
+            width: 100%;
+            color: #1e293b;
+            font-weight: 500;
+            outline: none;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.05);
+            box-sizing: border-box;
+        }
+
+        .custom-date-popover button {
+            background: #2563eb;
+            color: #ffffff;
+            border: none;
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+        }
+
+        .custom-date-popover button:hover {
+            background: #1d4ed8;
+        }
         .kpi-body {
             display: flex;
             align-items: center;
@@ -763,11 +824,76 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             grid-template-columns: 1fr 1fr;
             gap: 14px;
         }
-        .doc-preview-box {
+        /* Success Modal Styles */
+        .success-modal-card {
+            background: #ffffff;
+            width: 90%;
+            max-width: 320px;
+            border-radius: 28px;
+            padding: 40px 24px 30px;
+            text-align: center;
+            position: relative;
+            border-top: 6px solid var(--primary);
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+            animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             display: flex;
             flex-direction: column;
-            gap: 6px;
+            align-items: center;
         }
+        @keyframes modalPop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .modal-close-top { 
+            position: absolute; 
+            top: 16px; right: 16px; 
+            width: 32px; height: 32px; 
+            background: #f1f5f9; 
+            border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; 
+            border: none; 
+            font-weight: 800; 
+            color: #94a3b8; 
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .modal-close-top:hover { background: #e2e8f0; color: #475569; }
+        .modal-close-top:active { transform: scale(0.9); }
+        
+        .status-icon-container { 
+            width: 80px; height: 80px; 
+            border-radius: 50%; 
+            background: var(--primary-soft); 
+            margin: 0 auto 20px; 
+            display: flex; align-items: center; justify-content: center; 
+            position: relative; 
+        }
+        .status-icon-waves { 
+            position: absolute; 
+            width: 100%; height: 100%; 
+            border-radius: 50%; 
+            border: 2px solid var(--primary-soft); 
+            animation: waveRipple 2s infinite; 
+        }
+        @keyframes waveRipple { from { transform: scale(1); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+        .check-mark { font-size: 36px; color: var(--primary); font-weight: 800; z-index: 2; }
+
+        .success-modal-card h2 { font-size: 20px; font-weight: 800; margin: 0 0 8px; color: var(--text-main); letter-spacing: -0.5px; }
+        .success-modal-card p { font-size: 13.5px; color: var(--text-muted); margin: 0 0 24px; font-weight: 600; line-height: 1.4; }
+        
+        .btn-listo { 
+            background: var(--primary); 
+            color: #ffffff; 
+            width: 100%; 
+            padding: 14px; 
+            border-radius: 16px; 
+            font-weight: 800; 
+            font-size: 14px;
+            border: none; 
+            cursor: pointer; 
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25); 
+            transition: all 0.2s; 
+        }
+        .btn-listo:active { transform: scale(0.97); opacity: 0.95; }
         .doc-preview-box span {
             font-size: 11px;
             font-weight: 700;
@@ -815,7 +941,7 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
         <div class="sidebar">
             <div class="sidebar-logo">🏢</div>
             <div class="sidebar-menu">
-                <a href="admin_dashboard.php" class="menu-item active" title="Volver al Panel Principal">
+                <a href="admin_dashboard.php?tab=locales" class="menu-item active" title="Volver Atrás">
                     <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"></path></svg>
                 </a>
             </div>
@@ -857,11 +983,25 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                 <div class="kpi-card">
                     <div class="kpi-header">
                         <span class="kpi-title">Pedidos Entregados</span>
-                        <select class="kpi-select" onchange="updateKPIsRange(this.value)">
-                            <option value="day">Hoy</option>
-                            <option value="week" selected>Esta Semana</option>
-                            <option value="month">Este Mes</option>
-                        </select>
+                        <div class="kpi-select-container">
+                            <select class="kpi-select" onchange="handleKPISelectChange(this)">
+                                <option value="day" selected>Hoy</option>
+                                <option value="week">Esta Semana</option>
+                                <option value="month">Este Mes</option>
+                                <option value="custom">Rango Personalizado...</option>
+                            </select>
+                            <div class="custom-date-popover" style="display: none;">
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <span style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Desde:</span>
+                                    <input type="date" class="custom-date-start" value="<?= date('Y-m-d') ?>">
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+                                    <span style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Hasta:</span>
+                                    <input type="date" class="custom-date-end" value="<?= date('Y-m-d') ?>">
+                                </div>
+                                <button type="button" style="margin-top: 8px;" onclick="applyCustomDatesFromPopover(this)">Filtrar</button>
+                            </div>
+                        </div>
                     </div>
                     <div class="kpi-body">
                         <div class="kpi-value-box">
@@ -878,11 +1018,25 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                 <div class="kpi-card">
                     <div class="kpi-header">
                         <span class="kpi-title">Pedidos por Horario</span>
-                        <select class="kpi-select" onchange="updateKPIsRange(this.value)">
-                            <option value="day">Hoy</option>
-                            <option value="week" selected>Esta Semana</option>
-                            <option value="month">Este Mes</option>
-                        </select>
+                        <div class="kpi-select-container">
+                            <select class="kpi-select" onchange="handleKPISelectChange(this)">
+                                <option value="day" selected>Hoy</option>
+                                <option value="week">Esta Semana</option>
+                                <option value="month">Este Mes</option>
+                                <option value="custom">Rango Personalizado...</option>
+                            </select>
+                            <div class="custom-date-popover" style="display: none;">
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <span style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Desde:</span>
+                                    <input type="date" class="custom-date-start" value="<?= date('Y-m-d') ?>">
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+                                    <span style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Hasta:</span>
+                                    <input type="date" class="custom-date-end" value="<?= date('Y-m-d') ?>">
+                                </div>
+                                <button type="button" style="margin-top: 8px;" onclick="applyCustomDatesFromPopover(this)">Filtrar</button>
+                            </div>
+                        </div>
                     </div>
                     <div class="kpi-body">
                         <div class="kpi-value-box">
@@ -899,11 +1053,25 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                 <div class="kpi-card">
                     <div class="kpi-header">
                         <span class="kpi-title">Pedidos Cancelados</span>
-                        <select class="kpi-select" onchange="updateKPIsRange(this.value)">
-                            <option value="day">Hoy</option>
-                            <option value="week" selected>Esta Semana</option>
-                            <option value="month">Este Mes</option>
-                        </select>
+                        <div class="kpi-select-container">
+                            <select class="kpi-select" onchange="handleKPISelectChange(this)">
+                                <option value="day" selected>Hoy</option>
+                                <option value="week">Esta Semana</option>
+                                <option value="month">Este Mes</option>
+                                <option value="custom">Rango Personalizado...</option>
+                            </select>
+                            <div class="custom-date-popover" style="display: none;">
+                                <div style="display: flex; flex-direction: column; gap: 4px;">
+                                    <span style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Desde:</span>
+                                    <input type="date" class="custom-date-start" value="<?= date('Y-m-d') ?>">
+                                </div>
+                                <div style="display: flex; flex-direction: column; gap: 4px; margin-top: 4px;">
+                                    <span style="font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase;">Hasta:</span>
+                                    <input type="date" class="custom-date-end" value="<?= date('Y-m-d') ?>">
+                                </div>
+                                <button type="button" style="margin-top: 8px;" onclick="applyCustomDatesFromPopover(this)">Filtrar</button>
+                            </div>
+                        </div>
                     </div>
                     <div class="kpi-body">
                         <div class="kpi-value-box">
@@ -1092,8 +1260,9 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                     
                     <div style="font-size:12px; font-weight:700; color:var(--text-muted); border-top:1px solid #f1f5f9; padding-top:10px; display:flex; justify-content:space-between;">
                         <span>Conexión Actual:</span>
-                        <span id="driver-live-status-badge" class="status-pill <?= $localData['is_online'] ? 'approved' : 'rejected' ?>">
-                            <?= $localData['is_online'] ? 'Conectado 🟢' : 'Desconectado 🔴' ?>
+                        <?php $isActive = ($localData['subscription_status'] ?? '') === 'active'; ?>
+                        <span id="driver-live-status-badge" class="status-pill <?= $isActive ? 'approved' : 'rejected' ?>">
+                            <?= $isActive ? 'Conectado 🟢' : 'Desconectado 🔴' ?>
                         </span>
                     </div>
                 </div>
@@ -1176,6 +1345,20 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
         <img class="lightbox-img" id="lightbox-target-img" src="" alt="Ampliado">
     </div>
 
+    <!-- Modal de Éxito Al Guardar Cambios -->
+    <div id="success-modal" class="modal-overlay" style="display: none; z-index: 9999;">
+        <div class="success-modal-card">
+            <button type="button" class="modal-close-top" onclick="closeSuccessModal()">✕</button>
+            <div class="status-icon-container">
+                <div class="status-icon-waves"></div>
+                <span class="check-mark">✓</span>
+            </div>
+            <h2 id="success-modal-title">¡Perfil actualizado!</h2>
+            <p id="success-modal-message">Datos de acceso actualizados correctamente.</p>
+            <button type="button" class="btn-listo" onclick="closeSuccessModal()">Listo</button>
+        </div>
+    </div>
+
     <!-- Audio para sonido de notificaciones -->
     <audio id="realtime-notification-sound" src="<?= esc(delivery_app_url('assets/sounds/notification.mp3')) ?>" preload="auto"></audio>
 
@@ -1183,6 +1366,8 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
         // Variables globales
         const localId = <?= $localId ?>;
         const localName = "<?= esc($localData['business_name'] ?: $localData['name']) ?>";
+        const savedLocalLat = <?= (float)($localData['latitude'] ?? 0) ?>;
+        const savedLocalLng = <?= (float)($localData['longitude'] ?? 0) ?>;
         let map;
         let chartDelivered, chartHourlyDistribution, chartCancelled;
         let currentDocType = '';
@@ -1196,7 +1381,7 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
         window.onload = function() {
             initMap();
             initCharts();
-            updateKPIsRange('week');
+            updateKPIsRange('day');
             loadLocalHistory(1);
 
             // Iniciar sondeo en tiempo real
@@ -1205,13 +1390,37 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
 
         // --- MAPA LOGICA ---
         function initMap() {
+            const initialCenter = (savedLocalLat && savedLocalLng) ? [savedLocalLng, savedLocalLat] : [-57.5759, -25.2637];
+            const initialZoom = (savedLocalLat && savedLocalLng) ? 14 : 11;
+            
             map = new mapboxgl.Map({
                 container: 'driver-detail-map',
                 style: 'mapbox://styles/mapbox/light-v11',
-                center: [-57.5759, -25.2637], // Asunción
-                zoom: 11,
+                center: initialCenter,
+                zoom: initialZoom,
                 attributionControl: false
             });
+
+            if (savedLocalLat && savedLocalLng) {
+                map.on('load', () => {
+                    const localMarkerEl = document.createElement('div');
+                    localMarkerEl.style.width = '28px';
+                    localMarkerEl.style.height = '28px';
+                    localMarkerEl.style.borderRadius = '50%';
+                    localMarkerEl.style.background = '#2563eb';
+                    localMarkerEl.style.border = '3px solid #fff';
+                    localMarkerEl.style.boxShadow = '0 2px 10px rgba(37, 99, 235, 0.4)';
+                    localMarkerEl.style.display = 'flex';
+                    localMarkerEl.style.alignItems = 'center';
+                    localMarkerEl.style.justifyContent = 'center';
+                    localMarkerEl.innerHTML = '<span style="font-size:13px; color:#fff;">🏢</span>';
+
+                    new mapboxgl.Marker(localMarkerEl)
+                        .setLngLat([savedLocalLng, savedLocalLat])
+                        .setPopup(new mapboxgl.Popup({ offset: 10 }).setHTML(`<b>Local:</b> ${localName}`))
+                        .addTo(map);
+                });
+            }
         }
 
         function zoomMap(delta) {
@@ -1243,8 +1452,30 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             }
 
             if (points.length === 0) {
-                map.setCenter([-57.5759, -25.2637]);
-                map.setZoom(11);
+                if (savedLocalLat && savedLocalLng) {
+                    map.setCenter([savedLocalLng, savedLocalLat]);
+                    map.setZoom(14);
+
+                    const localMarkerEl = document.createElement('div');
+                    localMarkerEl.style.width = '28px';
+                    localMarkerEl.style.height = '28px';
+                    localMarkerEl.style.borderRadius = '50%';
+                    localMarkerEl.style.background = '#2563eb';
+                    localMarkerEl.style.border = '3px solid #fff';
+                    localMarkerEl.style.boxShadow = '0 2px 10px rgba(37, 99, 235, 0.4)';
+                    localMarkerEl.style.display = 'flex';
+                    localMarkerEl.style.alignItems = 'center';
+                    localMarkerEl.style.justifyContent = 'center';
+                    localMarkerEl.innerHTML = '<span style="font-size:13px; color:#fff;">🏢</span>';
+
+                    new mapboxgl.Marker(localMarkerEl)
+                        .setLngLat([savedLocalLng, savedLocalLat])
+                        .setPopup(new mapboxgl.Popup({ offset: 10 }).setHTML(`<b>Local:</b> ${localName}`))
+                        .addTo(map);
+                } else {
+                    map.setCenter([-57.5759, -25.2637]);
+                    map.setZoom(11);
+                }
                 return;
             }
 
@@ -1394,13 +1625,95 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             chartCancelled.render();
         }
 
-        function updateKPIsRange(range) {
+        let lastValidRange = 'day';
+
+        function handleKPISelectChange(sel) {
+            const range = sel.value;
+            const container = sel.closest('.kpi-select-container');
+            const popover = container.querySelector('.custom-date-popover');
+            
+            // Ocultar otros popovers
+            document.querySelectorAll('.custom-date-popover').forEach(p => {
+                if (p !== popover) p.style.display = 'none';
+            });
+
+            if (range === 'custom') {
+                popover.style.display = 'flex';
+            } else {
+                popover.style.display = 'none';
+                updateKPIsRange(range);
+            }
+        }
+
+        function applyCustomDatesFromPopover(btn) {
+            const container = btn.closest('.kpi-select-container');
+            const startInput = container.querySelector('.custom-date-start');
+            const endInput = container.querySelector('.custom-date-end');
+            
+            const start = startInput.value;
+            const end = endInput.value;
+            
+            if (!start || !end) {
+                alert('Por favor selecciona ambas fechas.');
+                return;
+            }
+            if (new Date(start) > new Date(end)) {
+                alert('La fecha de inicio no puede ser posterior a la de fin.');
+                return;
+            }
+
+            const startFormatted = start.split('-').reverse().slice(0,2).join('/');
+            const endFormatted = end.split('-').reverse().slice(0,2).join('/');
+            const customLabel = `Rango: ${startFormatted} - ${endFormatted}`;
+            
+            document.querySelectorAll('.kpi-select').forEach(sel => {
+                let customOpt = sel.querySelector('option[value="custom"]');
+                if (customOpt) {
+                    customOpt.textContent = customLabel;
+                }
+                sel.value = 'custom';
+            });
+
+            // Ocultar popover
+            container.querySelector('.custom-date-popover').style.display = 'none';
+            lastValidRange = 'custom';
+            updateKPIsRange('custom', start, end);
+        }
+
+        // Cerrar popovers al hacer clic afuera
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.kpi-select-container')) {
+                document.querySelectorAll('.custom-date-popover').forEach(p => {
+                    p.style.display = 'none';
+                });
+                document.querySelectorAll('.kpi-select').forEach(sel => {
+                    if (sel.value === 'custom' && lastValidRange !== 'custom') {
+                        sel.value = lastValidRange;
+                    }
+                });
+            }
+        });
+
+        function updateKPIsRange(range, startDate = '', endDate = '') {
             document.querySelectorAll('.kpi-select').forEach(sel => sel.value = range);
+            if (range !== 'custom') {
+                lastValidRange = range;
+                document.querySelectorAll('.kpi-select').forEach(sel => {
+                    let customOpt = sel.querySelector('option[value="custom"]');
+                    if (customOpt) {
+                        customOpt.textContent = 'Rango Personalizado...';
+                    }
+                });
+            }
 
             const formData = new FormData();
             formData.append('action', 'get_local_kpis');
             formData.append('local_id', localId);
             formData.append('range', range);
+            if (range === 'custom') {
+                formData.append('start_date', startDate);
+                formData.append('end_date', endDate);
+            }
 
             fetch('api_admin_action.php', {
                 method: 'POST',
@@ -1573,6 +1886,17 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             }
         }
 
+        function showSuccessModal(title, message) {
+            if (title) document.getElementById('success-modal-title').textContent = title;
+            if (message) document.getElementById('success-modal-message').textContent = message;
+            document.getElementById('success-modal').style.display = 'flex';
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('success-modal').style.display = 'none';
+            window.location.reload();
+        }
+
         async function saveAdminAccount(e) {
             e.preventDefault();
             const form = document.getElementById('admin-account-form');
@@ -1589,31 +1913,15 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                 });
                 const res = await resp.json();
                 if (res.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Guardado!',
-                        text: res.message || 'Datos actualizados con éxito.',
-                        timer: 1500,
-                        showConfirmButton: false
-                    }).then(() => {
-                        window.location.reload();
-                    });
+                    showSuccessModal('¡Perfil actualizado!', res.message || 'Tus cambios se han guardado con éxito.');
                 } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: res.error || 'No se pudo guardar la información.'
-                    });
+                    alert('Error: ' + (res.error || 'No se pudo guardar la información.'));
                     btn.disabled = false;
                     btn.innerText = '💾 Guardar Cambios';
                 }
             } catch (err) {
                 console.error(err);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error de Red',
-                    text: 'Ocurrió un error al conectar con el servidor.'
-                });
+                alert('Ocurrió un error al conectar con el servidor.');
                 btn.disabled = false;
                 btn.innerText = '💾 Guardar Cambios';
             }
@@ -1641,8 +1949,11 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             })
             .then(res => res.json())
             .then(res => {
-                alert(res.message || 'Verificación procesada con éxito.');
-                window.location.reload();
+                if (res.success) {
+                    showSuccessModal('¡Comprobante verificado!', res.message || 'El estado de la suscripción ha sido actualizado con éxito.');
+                } else {
+                    alert('Error: ' + (res.error || 'No se pudo procesar la verificación.'));
+                }
             })
             .catch(err => {
                 console.error(err);

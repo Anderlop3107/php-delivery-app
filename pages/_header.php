@@ -160,6 +160,25 @@ $user = current_user();
             from { opacity: 0; transform: translate(-50%, 20px); }
             to { opacity: 1; transform: translate(-50%, 0); }
         }
+
+        /* ── Nav badge (subscription alert) ─────────────────── */
+        .nav-badge-wrapper { position: relative; display: flex; flex: 1; justify-content: center; }
+        .nav-badge-wrapper .nav-item { flex: none; }
+        .nav-badge-dot {
+            position: absolute;
+            top: 6px;
+            right: calc(50% - 20px);
+            width: 9px; height: 9px;
+            border-radius: 50%;
+            background: #ef4444;
+            border: 2px solid var(--glass);
+            animation: navBadgePulse 1.8s ease-in-out infinite;
+            z-index: 10;
+        }
+        @keyframes navBadgePulse {
+            0%, 100% { transform: scale(1);   box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
+            50%       { transform: scale(1.15); box-shadow: 0 0 0 5px rgba(239,68,68,0); }
+        }
     </style>
 </head>
 <body>
@@ -190,9 +209,31 @@ $user = current_user();
         <a href="<?= delivery_app_url('pages/history.php') ?>" class="nav-item <?= str_contains($_SERVER['PHP_SELF'], 'history.php') ? 'active' : '' ?>">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
         </a>
+        <?php
+            // Show nav badge only for local users with non-active subscription
+            if ($user && $user['role'] === 'local') {
+                $navUserFull = app_one("
+                    SELECT u.subscription_status,
+                           (SELECT dp.status FROM driver_payments dp WHERE dp.driver_user_id = u.id ORDER BY dp.id DESC LIMIT 1) as last_payment_status
+                    FROM users u WHERE u.id = ?
+                ", 'i', [(int)$user['id']]);
+                $showNavBadge = $navUserFull && ($navUserFull['subscription_status'] !== 'active');
+            } else {
+                $showNavBadge = false;
+            }
+        ?>
+        <?php if ($showNavBadge): ?>
+        <div class="nav-badge-wrapper">
+            <a href="<?= delivery_app_url('pages/profile.php') ?>" class="nav-item <?= str_contains($_SERVER['PHP_SELF'], 'profile.php') ? 'active' : '' ?>">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            </a>
+            <span class="nav-badge-dot" title="Acción requerida: activá tu suscripción"></span>
+        </div>
+        <?php else: ?>
         <a href="<?= delivery_app_url('pages/profile.php') ?>" class="nav-item <?= str_contains($_SERVER['PHP_SELF'], 'profile.php') ? 'active' : '' ?>">
             <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
         </a>
+        <?php endif; ?>
     </nav>
 
     <?php if ($user): ?>

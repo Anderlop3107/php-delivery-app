@@ -30,8 +30,9 @@ $activeDrivers = app_all("
 
 $onlineDriversCount = 0;
 foreach ($activeDrivers as $d) {
-    // Si reportó en los últimos 60 segundos
-    if ($d['is_online'] == 1 && $d['latitude'] && $d['longitude']) {
+    // Activo = is_online=1 Y hizo ping en los últimos 2 minutos
+    $recentPing = !empty($d['last_ping']) && (time() - strtotime($d['last_ping'])) < 120;
+    if ($d['is_online'] == 1 && $recentPing && $d['latitude'] && $d['longitude']) {
         $onlineDriversCount++;
     }
 }
@@ -93,25 +94,6 @@ $topDrivers = app_all("
     LIMIT 5
 ");
 
-// Previews de datos ficticios si la base de datos está vacía para pruebas
-if (empty($topLocals)) {
-    $topLocals = [
-        ['name' => 'Pizza Hut', 'count' => 15],
-        ['name' => 'Burger King', 'count' => 12],
-        ['name' => 'Lomitos El Gordito', 'count' => 8],
-        ['name' => 'Farmacia Catedral', 'count' => 6],
-        ['name' => 'Supermercado Stock', 'count' => 4]
-    ];
-}
-if (empty($topDrivers)) {
-    $topDrivers = [
-        ['name' => 'Juan Perez', 'count' => 14],
-        ['name' => 'Carlos Gomez', 'count' => 11],
-        ['name' => 'Maria Benitez', 'count' => 9],
-        ['name' => 'Lucas Silva', 'count' => 6],
-        ['name' => 'Jose Cardozo', 'count' => 4]
-    ];
-}
 
 // 3. Conductores con verificaciones pendientes
 $pendingVerifications = [];
@@ -441,6 +423,59 @@ $maxChartCount = max(5, max($chartCounts));
             background: #e2e8f0;
         }
 
+        /* Chart filter popover */
+        .chart-filter-container {
+            position: relative;
+            display: inline-block;
+        }
+        .chart-date-popover {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 12px;
+            padding: 14px;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.12), 0 8px 10px -6px rgba(0,0,0,0.08);
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 6px;
+            width: 200px;
+            text-align: left;
+            animation: popoverFadeIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes popoverFadeIn {
+            from { opacity: 0; transform: translateY(-5px); }
+            to   { opacity: 1; transform: translateY(0); }
+        }
+        .chart-date-popover input[type="date"] {
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 5px 8px;
+            font-size: 12px;
+            width: 100%;
+            color: #1e293b;
+            font-weight: 500;
+            outline: none;
+            box-sizing: border-box;
+        }
+        .chart-date-popover button {
+            background: #2563eb;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 4px;
+            transition: background 0.2s;
+        }
+        .chart-date-popover button:hover { background: #1d4ed8; }
+
         /* Overview Graph Card with Warm/Cream Gradient */
         .overview-graph-card {
             background: linear-gradient(135deg, #fdf6ec 0%, #ffffff 100%);
@@ -699,6 +734,59 @@ $maxChartCount = max(5, max($chartCounts));
             border-color: #94a3b8;
         }
 
+        .status-select-active {
+            background: #dcfce7 !important;
+            color: #15803d !important;
+            border-color: #bbf7d0 !important;
+        }
+        .status-select-expired {
+            background: #fee2e2 !important;
+            color: #b91c1c !important;
+            border-color: #fecaca !important;
+        }
+        .status-select-pending {
+            background: #fef3c7 !important;
+            color: #d97706 !important;
+            border-color: #fde68a !important;
+        }
+
+        /* Row subscription status borders & backgrounds */
+        .table-row-item.row-expired {
+            border-left: 4px solid #ef4444 !important;
+            background: rgba(239, 68, 68, 0.02) !important;
+        }
+        .table-row-item.row-expired .driver-mini-avatar {
+            border: 2.5px solid #ef4444 !important;
+            background: #fee2e2 !important;
+            color: #b91c1c !important;
+        }
+
+        .table-row-item.row-pending {
+            border-left: 4px solid #f59e0b !important;
+            background: rgba(245, 158, 11, 0.02) !important;
+        }
+        .table-row-item.row-pending .driver-mini-avatar {
+            border: 2.5px solid #f59e0b !important;
+            background: #fef3c7 !important;
+            color: #d97706 !important;
+            animation: pulse-avatar-glow 2s infinite;
+        }
+
+        .table-row-item.row-active {
+            border-left: 4px solid #10b981 !important;
+        }
+        .table-row-item.row-active .driver-mini-avatar {
+            border: 2.5px solid #10b981 !important;
+            background: #dcfce7 !important;
+            color: #15803d !important;
+        }
+
+        @keyframes pulse-avatar-glow {
+            0% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(245, 158, 11, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0); }
+        }
+
         /* Document Dots / Badges in Lists */
         .doc-badges {
             display: flex;
@@ -820,11 +908,25 @@ $maxChartCount = max(5, max($chartCounts));
                 <div class="live-map-card" style="margin-bottom: 0; justify-content: space-between; display: flex; flex-direction: column;">
                     <div class="map-title-row">
                         <h3>Rendimiento de Entregas</h3>
-                        <select id="filter-rendimiento" class="donut-filter-select" onchange="updateDonutFilter(this.value)">
-                            <option value="day">Hoy</option>
-                            <option value="week" selected>Esta Semana</option>
-                            <option value="month">Este Mes</option>
-                        </select>
+                        <div class="chart-filter-container">
+                            <select id="filter-rendimiento" class="donut-filter-select" onchange="handleChartFilterChange('donut', this)">
+                                <option value="day">Hoy</option>
+                                <option value="week" selected>Esta Semana</option>
+                                <option value="month">Este Mes</option>
+                                <option value="custom">Rango Personalizado...</option>
+                            </select>
+                            <div class="chart-date-popover" id="popover-donut" style="display:none;">
+                                <div style="display:flex;flex-direction:column;gap:4px;">
+                                    <span style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;">Desde:</span>
+                                    <input type="date" id="donut-start" value="<?= date('Y-m-d') ?>">
+                                </div>
+                                <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px;">
+                                    <span style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;">Hasta:</span>
+                                    <input type="date" id="donut-end" value="<?= date('Y-m-d') ?>">
+                                </div>
+                                <button type="button" onclick="applyChartCustomRange('donut')">Filtrar</button>
+                            </div>
+                        </div>
                     </div>
                     <div id="rendimiento-entregas-chart" style="width: 100%; min-height: 250px; display: flex; align-items: center; justify-content: center;"></div>
                 </div>
@@ -833,11 +935,25 @@ $maxChartCount = max(5, max($chartCounts));
                 <div class="live-map-card" style="margin-bottom: 0; justify-content: space-between; display: flex; flex-direction: column;">
                     <div class="map-title-row">
                         <h3>Top 5 Comercios (Más Demandados)</h3>
-                        <select id="filter-top-locales" class="donut-filter-select" onchange="updateTopLocalesFilter(this.value)">
-                            <option value="day">Hoy</option>
-                            <option value="week" selected>Esta Semana</option>
-                            <option value="month">Este Mes</option>
-                        </select>
+                        <div class="chart-filter-container">
+                            <select id="filter-top-locales" class="donut-filter-select" onchange="handleChartFilterChange('locales', this)">
+                                <option value="day">Hoy</option>
+                                <option value="week" selected>Esta Semana</option>
+                                <option value="month">Este Mes</option>
+                                <option value="custom">Rango Personalizado...</option>
+                            </select>
+                            <div class="chart-date-popover" id="popover-locales" style="display:none;">
+                                <div style="display:flex;flex-direction:column;gap:4px;">
+                                    <span style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;">Desde:</span>
+                                    <input type="date" id="locales-start" value="<?= date('Y-m-d') ?>">
+                                </div>
+                                <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px;">
+                                    <span style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;">Hasta:</span>
+                                    <input type="date" id="locales-end" value="<?= date('Y-m-d') ?>">
+                                </div>
+                                <button type="button" onclick="applyChartCustomRange('locales')">Filtrar</button>
+                            </div>
+                        </div>
                     </div>
                     <div id="top-locales-chart" style="width: 100%; min-height: 250px;"></div>
                 </div>
@@ -846,11 +962,25 @@ $maxChartCount = max(5, max($chartCounts));
                 <div class="live-map-card" style="margin-bottom: 0; justify-content: space-between; display: flex; flex-direction: column;">
                     <div class="map-title-row">
                         <h3>Repartidores Estrella (Top Entregas)</h3>
-                        <select id="filter-top-repartidores" class="donut-filter-select" onchange="updateTopRepartidoresFilter(this.value)">
-                            <option value="day">Hoy</option>
-                            <option value="week" selected>Esta Semana</option>
-                            <option value="month">Este Mes</option>
-                        </select>
+                        <div class="chart-filter-container">
+                            <select id="filter-top-repartidores" class="donut-filter-select" onchange="handleChartFilterChange('repartidores', this)">
+                                <option value="day">Hoy</option>
+                                <option value="week" selected>Esta Semana</option>
+                                <option value="month">Este Mes</option>
+                                <option value="custom">Rango Personalizado...</option>
+                            </select>
+                            <div class="chart-date-popover" id="popover-repartidores" style="display:none;">
+                                <div style="display:flex;flex-direction:column;gap:4px;">
+                                    <span style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;">Desde:</span>
+                                    <input type="date" id="repartidores-start" value="<?= date('Y-m-d') ?>">
+                                </div>
+                                <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px;">
+                                    <span style="font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;">Hasta:</span>
+                                    <input type="date" id="repartidores-end" value="<?= date('Y-m-d') ?>">
+                                </div>
+                                <button type="button" onclick="applyChartCustomRange('repartidores')">Filtrar</button>
+                            </div>
+                        </div>
                     </div>
                     <div id="top-repartidores-chart" style="width: 100%; min-height: 250px;"></div>
                 </div>
@@ -873,8 +1003,16 @@ $maxChartCount = max(5, max($chartCounts));
         <!-- Tab 2: Locales & Suscripciones -->
         <div id="tab-locales" class="bento-section">
             <div class="header-title-row">
-                <h1>Locales y Comercios</h1>
-                <p>Gestiona los accesos y estado de suscripción de los comercios.</p>
+                <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+                    <div>
+                        <h1>Locales y Comercios</h1>
+                        <p>Gestiona los accesos y estado de suscripción de los comercios.</p>
+                    </div>
+                    <button onclick="openCreateUserModal('local')" style="background:var(--accent-green); color:#fff; border:none; border-radius:14px; padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(16,185,129,0.3); white-space:nowrap; transition:all 0.2s;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                        Nuevo Comercio
+                    </button>
+                </div>
             </div>
             
             <div class="table-card-list">
@@ -882,7 +1020,10 @@ $maxChartCount = max(5, max($chartCounts));
                     <div style="text-align:center; padding: 40px; color:var(--text-muted);">No hay comercios registrados.</div>
                 <?php else: ?>
                     <?php foreach ($activeLocals as $l): ?>
-                        <div class="table-row-item" onclick="if (event.target.tagName !== 'SELECT' && event.target.tagName !== 'OPTION') window.location.href='admin_local_detail.php?id=<?= (int)$l['id']; ?>'" style="cursor:pointer; position:relative; padding-right:50px;">
+                        <?php 
+                            $status = $l['subscription_status'] ?? 'pending';
+                        ?>
+                        <div class="table-row-item row-<?= esc($status) ?>" onclick="if (event.target.tagName !== 'SELECT' && event.target.tagName !== 'OPTION') window.location.href='admin_local_detail.php?id=<?= (int)$l['id']; ?>'" style="cursor:pointer; position:relative; padding-right:50px;">
                             <div class="driver-mini-info">
                                 <div class="driver-mini-avatar">
                                     <?php if ($l['logo_path']): ?>
@@ -899,10 +1040,10 @@ $maxChartCount = max(5, max($chartCounts));
                             
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <div>
-                                    <select class="status-pill-select" onchange="updateSubscription(<?= $l['id']; ?>, this.value)">
-                                        <option value="active" <?php echo $l['subscription_status'] === 'active' ? 'selected' : '' ?>>Activo (+30d)</option>
-                                        <option value="expired" <?php echo $l['subscription_status'] === 'expired' ? 'selected' : '' ?>>Expirado</option>
-                                        <option value="pending" <?php echo $l['subscription_status'] === 'pending' ? 'selected' : '' ?>>Pendiente</option>
+                                    <select class="status-pill-select status-select-<?= esc($status) ?>" onchange="updateSubscription(<?= $l['id']; ?>, this.value)">
+                                        <option value="active" <?php echo $status === 'active' ? 'selected' : '' ?>>Activo (+30d)</option>
+                                        <option value="expired" <?php echo $status === 'expired' ? 'selected' : '' ?>>Expirado</option>
+                                        <option value="pending" <?php echo $status === 'pending' ? 'selected' : '' ?>>Pendiente</option>
                                     </select>
                                 </div>
                                 <div class="btn-view-chevron">&rsaquo;</div>
@@ -916,8 +1057,16 @@ $maxChartCount = max(5, max($chartCounts));
         <!-- Tab 3: Repartidores & Documentos -->
         <div id="tab-repartidores" class="bento-section">
             <div class="header-title-row">
-                <h1>Repartidores Registrados</h1>
-                <p>Verifica y edita estados de conductores y sus documentos.</p>
+                <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
+                    <div>
+                        <h1>Repartidores Registrados</h1>
+                        <p>Verifica y edita estados de conductores y sus documentos.</p>
+                    </div>
+                    <button onclick="openCreateUserModal('repartidor')" style="background:var(--primary); color:#fff; border:none; border-radius:14px; padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(37,99,235,0.3); white-space:nowrap; transition:all 0.2s;">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
+                        Nuevo Repartidor
+                    </button>
+                </div>
             </div>
             
             <div class="table-card-list">
@@ -925,7 +1074,8 @@ $maxChartCount = max(5, max($chartCounts));
                     <div style="text-align:center; padding: 40px; color:var(--text-muted);">No hay repartidores registrados.</div>
                 <?php else: ?>
                     <?php foreach ($activeDrivers as $d): ?>
-                        <div class="table-row-item" onclick="window.location.href='admin_driver_detail.php?id=<?= (int)$d['id']; ?>'" style="cursor:pointer;">
+                        <?php $dStatus = $d['subscription_status'] ?? 'pending'; ?>
+                        <div class="table-row-item row-<?= esc($dStatus) ?>" onclick="if (event.target.tagName !== 'SELECT' && event.target.tagName !== 'OPTION') window.location.href='admin_driver_detail.php?id=<?= (int)$d['id']; ?>'" style="cursor:pointer; position:relative; padding-right:50px;">
                             <div class="driver-mini-info">
                                 <div class="driver-mini-avatar">
                                     <?php if ($d['avatar_path']): ?>
@@ -944,7 +1094,16 @@ $maxChartCount = max(5, max($chartCounts));
                                     </div>
                                 </div>
                             </div>
-                            <div class="btn-view-chevron">&rsaquo;</div>
+                            <div style="display:flex; align-items:center; gap:8px;">
+                                <div>
+                                    <select class="status-pill-select status-select-<?= esc($dStatus) ?>" onchange="updateDriverSubscription(<?= (int)$d['id']; ?>, this.value)">
+                                        <option value="active"  <?= $dStatus === 'active'  ? 'selected' : '' ?>>Activo (+30d)</option>
+                                        <option value="expired" <?= $dStatus === 'expired' ? 'selected' : '' ?>>Expirado</option>
+                                        <option value="pending" <?= $dStatus === 'pending' ? 'selected' : '' ?>>Pendiente</option>
+                                    </select>
+                                </div>
+                                <div class="btn-view-chevron">&rsaquo;</div>
+                            </div>
                         </div>
                     <?php endforeach; ?>
                 <?php endif; ?>
@@ -1083,18 +1242,82 @@ $maxChartCount = max(5, max($chartCounts));
     let map = null;
     let markers = [];
     let donutChart = null;
-    let topLocalsChart = null;
+    let topLocalesChart = null;
     let topDriversChart = null;
 
-    function updateDonutFilter(range) {
+    // ── Popover helpers ──────────────────────────────────────────────
+    const chartLastRange = { donut: 'week', locales: 'week', repartidores: 'week' };
+
+    function handleChartFilterChange(chartKey, sel) {
+        const range = sel.value;
+        const popover = document.getElementById('popover-' + chartKey);
+        // Close all other popovers
+        ['donut','locales','repartidores'].forEach(k => {
+            if (k !== chartKey) document.getElementById('popover-' + k).style.display = 'none';
+        });
+        if (range === 'custom') {
+            popover.style.display = 'flex';
+        } else {
+            popover.style.display = 'none';
+            chartLastRange[chartKey] = range;
+            // Reset custom label
+            const customOpt = sel.querySelector('option[value="custom"]');
+            if (customOpt) customOpt.textContent = 'Rango Personalizado...';
+            if (chartKey === 'donut')        updateDonutFilter(range);
+            if (chartKey === 'locales')      updateTopLocalesFilter(range);
+            if (chartKey === 'repartidores') updateTopRepartidoresFilter(range);
+        }
+    }
+
+    function applyChartCustomRange(chartKey) {
+        const start = document.getElementById(chartKey + '-start').value;
+        const end   = document.getElementById(chartKey + '-end').value;
+        if (!start || !end) { alert('Selecciona ambas fechas.'); return; }
+        if (new Date(start) > new Date(end)) { alert('La fecha inicio no puede ser posterior a la de fin.'); return; }
+        // Close popover
+        document.getElementById('popover-' + chartKey).style.display = 'none';
+        // Update select label
+        const selMap = { donut: 'filter-rendimiento', locales: 'filter-top-locales', repartidores: 'filter-top-repartidores' };
+        const sel = document.getElementById(selMap[chartKey]);
+        const sf = start.split('-').reverse().slice(0,2).join('/');
+        const ef = end.split('-').reverse().slice(0,2).join('/');
+        const customOpt = sel.querySelector('option[value="custom"]');
+        if (customOpt) customOpt.textContent = `Rango: ${sf} - ${ef}`;
+        sel.value = 'custom';
+        chartLastRange[chartKey] = 'custom';
+        if (chartKey === 'donut')        updateDonutFilter('custom', start, end);
+        if (chartKey === 'locales')      updateTopLocalesFilter('custom', start, end);
+        if (chartKey === 'repartidores') updateTopRepartidoresFilter('custom', start, end);
+    }
+
+    // Close all popovers when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.chart-filter-container')) {
+            ['donut','locales','repartidores'].forEach(k => {
+                const pop = document.getElementById('popover-' + k);
+                if (pop) pop.style.display = 'none';
+            });
+            // Revert any 'custom' select that wasn't confirmed
+            const selMap = { donut: 'filter-rendimiento', locales: 'filter-top-locales', repartidores: 'filter-top-repartidores' };
+            Object.keys(selMap).forEach(k => {
+                const sel = document.getElementById(selMap[k]);
+                if (sel && sel.value === 'custom' && chartLastRange[k] !== 'custom') {
+                    sel.value = chartLastRange[k];
+                }
+            });
+        }
+    });
+
+    // ── Chart filter functions ───────────────────────────────────────
+    function updateDonutFilter(range, startDate = '', endDate = '') {
         const formData = new FormData();
         formData.append('action', 'get_delivery_performance');
         formData.append('range', range);
-        
-        fetch('api_admin_action.php', {
-            method: 'POST',
-            body: formData
-        })
+        if (range === 'custom') {
+            formData.append('start_date', startDate);
+            formData.append('end_date', endDate);
+        }
+        fetch('api_admin_action.php', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
             if (data.success && donutChart) {
@@ -1104,53 +1327,77 @@ $maxChartCount = max(5, max($chartCounts));
         .catch(err => console.error("Error al actualizar filtro:", err));
     }
 
-    function updateTopLocalesFilter(range) {
+    function updateTopLocalesFilter(range, startDate = '', endDate = '') {
         const formData = new FormData();
         formData.append('action', 'get_top_locals');
         formData.append('range', range);
-        
-        fetch('api_admin_action.php', {
-            method: 'POST',
-            body: formData
-        })
+        if (range === 'custom') {
+            formData.append('start_date', startDate);
+            formData.append('end_date', endDate);
+        }
+        fetch('api_admin_action.php', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
-            if (data.success && topLocalesChart) {
-                topLocalesChart.updateOptions({
-                    xaxis: {
-                        categories: data.categories
+            const chartEl  = document.getElementById('top-locales-chart');
+            let   emptyMsg = document.getElementById('empty-msg-locales');
+            if (data.success) {
+                if (data.empty) {
+                    chartEl.style.display = 'none';
+                    if (!emptyMsg) {
+                        emptyMsg = document.createElement('div');
+                        emptyMsg.id = 'empty-msg-locales';
+                        emptyMsg.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;color:#94a3b8;font-size:13px;font-weight:600;gap:8px;';
+                        emptyMsg.innerHTML = '<span style="font-size:32px;">📭</span>Sin pedidos en este período';
+                        chartEl.parentNode.appendChild(emptyMsg);
+                    } else {
+                        emptyMsg.style.display = 'flex';
                     }
-                });
-                topLocalesChart.updateSeries([{
-                    name: 'Pedidos',
-                    data: data.series
-                }]);
+                } else {
+                    chartEl.style.display = '';
+                    if (emptyMsg) emptyMsg.style.display = 'none';
+                    if (topLocalesChart) {
+                        topLocalesChart.updateOptions({ xaxis: { categories: data.categories } });
+                        topLocalesChart.updateSeries([{ name: 'Pedidos', data: data.series }]);
+                    }
+                }
             }
         })
         .catch(err => console.error("Error al actualizar filtro locales:", err));
     }
 
-    function updateTopRepartidoresFilter(range) {
+    function updateTopRepartidoresFilter(range, startDate = '', endDate = '') {
         const formData = new FormData();
         formData.append('action', 'get_top_drivers');
         formData.append('range', range);
-        
-        fetch('api_admin_action.php', {
-            method: 'POST',
-            body: formData
-        })
+        if (range === 'custom') {
+            formData.append('start_date', startDate);
+            formData.append('end_date', endDate);
+        }
+        fetch('api_admin_action.php', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
-            if (data.success && topDriversChart) {
-                topDriversChart.updateOptions({
-                    xaxis: {
-                        categories: data.categories
+            const chartEl  = document.getElementById('top-repartidores-chart');
+            let   emptyMsg = document.getElementById('empty-msg-repartidores');
+            if (data.success) {
+                if (data.empty) {
+                    chartEl.style.display = 'none';
+                    if (!emptyMsg) {
+                        emptyMsg = document.createElement('div');
+                        emptyMsg.id = 'empty-msg-repartidores';
+                        emptyMsg.style.cssText = 'display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;color:#94a3b8;font-size:13px;font-weight:600;gap:8px;';
+                        emptyMsg.innerHTML = '<span style="font-size:32px;">🏍️</span>Sin entregas en este período';
+                        chartEl.parentNode.appendChild(emptyMsg);
+                    } else {
+                        emptyMsg.style.display = 'flex';
                     }
-                });
-                topDriversChart.updateSeries([{
-                    name: 'Entregas',
-                    data: data.series
-                }]);
+                } else {
+                    chartEl.style.display = '';
+                    if (emptyMsg) emptyMsg.style.display = 'none';
+                    if (topDriversChart) {
+                        topDriversChart.updateOptions({ xaxis: { categories: data.categories } });
+                        topDriversChart.updateSeries([{ name: 'Entregas', data: data.series }]);
+                    }
+                }
             }
         })
         .catch(err => console.error("Error al actualizar filtro repartidores:", err));
@@ -1232,6 +1479,15 @@ $maxChartCount = max(5, max($chartCounts));
         });
         
         map.addControl(new mapboxgl.NavigationControl());
+        
+        // Parse query parameter to auto-switch to a tab if requested
+        const urlParams = new URLSearchParams(window.location.search);
+        const requestedTab = urlParams.get('tab');
+        if (requestedTab) {
+            if (document.getElementById('menu-' + requestedTab)) {
+                switchAdminTab(requestedTab);
+            }
+        }
         
         // Cargar marcadores iniciales y configurar auto-refresco en tiempo real (cada 8 segundos)
         refreshMapMarkers();
@@ -1318,158 +1574,89 @@ $maxChartCount = max(5, max($chartCounts));
         flowChart.render();
 
         // Inicializar ApexCharts Donut Chart: RENDIMIENTO DE ENTREGAS
-        const donutOptions = {
-            series: [<?= $completadosCount ?>, <?= $canceladosCount ?>, <?= $enCursoCount ?>],
-            labels: ['Entregados', 'Cancelados', 'En Curso'],
-            chart: {
-                type: 'donut',
-                height: 240
-            },
-            colors: ['#10b981', '#ef4444', '#f59e0b'],
-            legend: {
-                position: 'bottom',
-                fontSize: '11px',
-                fontFamily: 'Plus Jakarta Sans, sans-serif',
-                fontWeight: 600,
-                labels: {
-                    colors: '#475569'
-                }
-            },
-            dataLabels: {
-                enabled: true,
-                style: {
-                    fontSize: '11px',
-                    fontFamily: 'Plus Jakarta Sans, sans-serif',
-                    fontWeight: 700
-                }
-            },
-            plotOptions: {
-                pie: {
-                    donut: {
-                        size: '65%',
-                        labels: {
-                            show: true,
-                            total: {
+        const donutTotal = <?= $completadosCount + $canceladosCount + $enCursoCount ?>;
+        if (donutTotal > 0) {
+            const donutOptions = {
+                series: [<?= $completadosCount ?>, <?= $canceladosCount ?>, <?= $enCursoCount ?>],
+                labels: ['Entregados', 'Cancelados', 'En Curso'],
+                chart: { type: 'donut', height: 240 },
+                colors: ['#10b981', '#ef4444', '#f59e0b'],
+                legend: {
+                    position: 'bottom', fontSize: '11px',
+                    fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600,
+                    labels: { colors: '#475569' }
+                },
+                dataLabels: {
+                    enabled: true,
+                    style: { fontSize: '11px', fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700 }
+                },
+                plotOptions: {
+                    pie: {
+                        donut: {
+                            size: '65%',
+                            labels: {
                                 show: true,
-                                label: 'Total',
-                                fontSize: '12px',
-                                fontFamily: 'Plus Jakarta Sans, sans-serif',
-                                fontWeight: 700,
-                                color: '#64748b',
-                                formatter: function (w) {
-                                    return w.globals.seriesTotals.reduce((a, b) => a + b, 0)
+                                total: {
+                                    show: true, label: 'Total', fontSize: '12px',
+                                    fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700, color: '#64748b',
+                                    formatter: function (w) { return w.globals.seriesTotals.reduce((a, b) => a + b, 0) }
                                 }
                             }
                         }
                     }
                 }
-            }
-        };
+            };
+            donutChart = new ApexCharts(document.querySelector("#rendimiento-entregas-chart"), donutOptions);
+            donutChart.render();
+        } else {
+            document.querySelector("#rendimiento-entregas-chart").innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;color:#94a3b8;font-size:13px;font-weight:600;gap:8px;"><span style="font-size:32px;">📊</span>Sin entregas en este período</div>';
+        }
 
-        donutChart = new ApexCharts(document.querySelector("#rendimiento-entregas-chart"), donutOptions);
-        donutChart.render();
+        // Inicializar ApexCharts: TOP LOCALES
+        const topLocalesData = <?php echo json_encode(array_column($topLocals, 'count')); ?>;
+        const topLocalesNames = <?php echo json_encode(array_column($topLocals, 'name')); ?>;
+        if (topLocalesData.length > 0) {
+            const topLocalsOptions = {
+                series: [{ name: 'Pedidos', data: topLocalesData }],
+                chart: { type: 'bar', height: 240, toolbar: { show: false } },
+                plotOptions: { bar: { horizontal: true, barHeight: '20%', borderRadius: 10, borderRadiusApplication: 'end' } },
+                colors: ['#2563eb'],
+                xaxis: {
+                    categories: topLocalesNames,
+                    labels: { style: { colors: '#94a3b8', fontSize: '10px', fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 } }
+                },
+                yaxis: { labels: { style: { colors: '#475569', fontSize: '10px', fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 700 } } },
+                grid: { borderColor: 'rgba(148, 163, 184, 0.1)', xaxis: { lines: { show: true } }, yaxis: { lines: { show: false } } },
+                tooltip: { theme: 'light' }
+            };
+            topLocalesChart = new ApexCharts(document.querySelector("#top-locales-chart"), topLocalsOptions);
+            topLocalesChart.render();
+        } else {
+            document.querySelector("#top-locales-chart").innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;color:#94a3b8;font-size:13px;font-weight:600;gap:8px;"><span style="font-size:32px;">📭</span>Sin pedidos en este período</div>';
+        }
 
-        // Inicializar ApexCharts Donut Chart: TOP LOCALES
-        const topLocalsOptions = {
-            series: [{
-                name: 'Pedidos',
-                data: <?php echo json_encode(array_column($topLocals, 'count')); ?>
-            }],
-            chart: {
-                type: 'bar',
-                height: 240,
-                toolbar: { show: false }
-            },
-            plotOptions: {
-                bar: {
-                    horizontal: true,
-                    barHeight: '20%',
-                    borderRadius: 10,
-                    borderRadiusApplication: 'end'
-                }
-            },
-            colors: ['#2563eb'],
-            xaxis: {
-                categories: <?php echo json_encode(array_column($topLocals, 'name')); ?>,
-                labels: {
-                    style: {
-                        colors: '#94a3b8',
-                        fontSize: '10px',
-                        fontFamily: 'Plus Jakarta Sans, sans-serif',
-                        fontWeight: 600
-                    }
-                }
-            },
-            yaxis: {
-                labels: {
-                    style: {
-                        colors: '#475569',
-                        fontSize: '10px',
-                        fontFamily: 'Plus Jakarta Sans, sans-serif',
-                        fontWeight: 700
-                    }
-                }
-            },
-            grid: {
-                borderColor: 'rgba(148, 163, 184, 0.1)',
-                xaxis: { lines: { show: true } },
-                yaxis: { lines: { show: false } }
-            },
-            tooltip: { theme: 'light' }
-        };
-        topLocalsChart = new ApexCharts(document.querySelector("#top-locales-chart"), topLocalsOptions);
-        topLocalsChart.render();
-
-        // Inicializar ApexCharts Donut Chart: REPARTIDORES ESTRELLA
-        const topDriversOptions = {
-            series: [{
-                name: 'Entregas',
-                data: <?php echo json_encode(array_column($topDrivers, 'count')); ?>
-            }],
-            chart: {
-                type: 'bar',
-                height: 240,
-                toolbar: { show: false }
-            },
-            plotOptions: {
-                bar: {
-                    horizontal: false,
-                    columnWidth: '12%',
-                    borderRadius: 8,
-                    borderRadiusApplication: 'end'
-                }
-            },
-            colors: ['#10b981'],
-            xaxis: {
-                categories: <?php echo json_encode(array_column($topDrivers, 'name')); ?>,
-                labels: {
-                    style: {
-                        colors: '#94a3b8',
-                        fontSize: '9px',
-                        fontFamily: 'Plus Jakarta Sans, sans-serif',
-                        fontWeight: 600
-                    }
-                }
-            },
-            yaxis: {
-                labels: {
-                    style: {
-                        colors: '#94a3b8',
-                        fontSize: '10px',
-                        fontFamily: 'Plus Jakarta Sans, sans-serif',
-                        fontWeight: 600
-                    }
-                }
-            },
-            grid: {
-                borderColor: 'rgba(148, 163, 184, 0.1)',
-                xaxis: { lines: { show: false } },
-                yaxis: { lines: { show: true } }
-            },
-            tooltip: { theme: 'light' }
-        };
-        topDriversChart = new ApexCharts(document.querySelector("#top-repartidores-chart"), topDriversOptions);
-        topDriversChart.render();
+        // Inicializar ApexCharts: REPARTIDORES ESTRELLA
+        const topDriversData = <?php echo json_encode(array_column($topDrivers, 'count')); ?>;
+        const topDriversNames = <?php echo json_encode(array_column($topDrivers, 'name')); ?>;
+        if (topDriversData.length > 0) {
+            const topDriversOptions = {
+                series: [{ name: 'Entregas', data: topDriversData }],
+                chart: { type: 'bar', height: 240, toolbar: { show: false } },
+                plotOptions: { bar: { horizontal: false, columnWidth: '12%', borderRadius: 8, borderRadiusApplication: 'end' } },
+                colors: ['#10b981'],
+                xaxis: {
+                    categories: topDriversNames,
+                    labels: { style: { colors: '#94a3b8', fontSize: '9px', fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 } }
+                },
+                yaxis: { labels: { style: { colors: '#94a3b8', fontSize: '10px', fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: 600 } } },
+                grid: { borderColor: 'rgba(148, 163, 184, 0.1)', xaxis: { lines: { show: false } }, yaxis: { lines: { show: true } } },
+                tooltip: { theme: 'light' }
+            };
+            topDriversChart = new ApexCharts(document.querySelector("#top-repartidores-chart"), topDriversOptions);
+            topDriversChart.render();
+        } else {
+            document.querySelector("#top-repartidores-chart").innerHTML = '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:200px;color:#94a3b8;font-size:13px;font-weight:600;gap:8px;"><span style="font-size:32px;">🏍️</span>Sin entregas en este período</div>';
+        }
     };
 
     let activeDriverData = null;
@@ -1577,26 +1764,34 @@ $maxChartCount = max(5, max($chartCounts));
         const formData = new FormData();
         formData.append('action', 'update_subscription');
         formData.append('local_id', localId);
+        formData.append('role', 'local');
         formData.append('status', status);
         formData.append('days', 30);
         
-        fetch('api_admin_action.php', {
-            method: 'POST',
-            body: formData
-        })
+        fetch('api_admin_action.php', { method: 'POST', body: formData })
         .then(res => res.json())
         .then(data => {
-            if (data.success) {
-                alert(data.message);
-                location.reload();
-            } else {
-                alert('Error: ' + data.error);
-            }
+            if (data.success) { alert(data.message); location.reload(); }
+            else { alert('Error: ' + data.error); }
         })
-        .catch(err => {
-            console.error(err);
-            alert('Error de conexión.');
-        });
+        .catch(err => { console.error(err); alert('Error de conexión.'); });
+    }
+
+    function updateDriverSubscription(driverId, status) {
+        const formData = new FormData();
+        formData.append('action', 'update_subscription');
+        formData.append('local_id', driverId);
+        formData.append('role', 'repartidor');
+        formData.append('status', status);
+        formData.append('days', 30);
+
+        fetch('api_admin_action.php', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) { alert(data.message); location.reload(); }
+            else { alert('Error: ' + data.error); }
+        })
+        .catch(err => { console.error(err); alert('Error de conexión.'); });
     }
 </script>
 <script>
@@ -1823,6 +2018,175 @@ $maxChartCount = max(5, max($chartCounts));
             alert('Error al procesar la verificación.');
         });
     }
+</script>
+
+<!-- Modal: Crear Nuevo Usuario -->
+<div id="create-user-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(6px); z-index:5000; justify-content:center; align-items:center;">
+    <div style="background:#fff; border-radius:24px; padding:32px; max-width:420px; width:90%; position:relative; animation:modalPop 0.3s cubic-bezier(0.16,1,0.3,1);">
+        <button onclick="closeCreateUserModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; width:32px; height:32px; border-radius:50%; font-size:16px; cursor:pointer; color:#64748b; display:flex; align-items:center; justify-content:center;">✕</button>
+        <h2 id="create-user-title" style="font-size:20px; font-weight:800; color:#0f172a; margin:0 0 4px;">Nuevo Comercio</h2>
+        <p id="create-user-subtitle" style="font-size:13px; color:#64748b; font-weight:500; margin:0 0 24px;">Completá los datos para dar de alta al comercio.</p>
+        
+        <form id="create-user-form" onsubmit="submitCreateUser(event)" style="display:flex; flex-direction:column; gap:14px;">
+            <input type="hidden" id="cu-role" name="role" value="local">
+            
+            <div id="cu-business-wrap">
+                <label style="font-size:11px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; display:block;">Nombre del Comercio / Local</label>
+                <input type="text" id="cu-business" name="business_name" placeholder="Ej: Pizzería Don Carlos" style="border-radius:14px; border:1.5px solid #e2e8f0; padding:12px 16px; font-size:14px; font-weight:500; width:100%; transition:border 0.2s;">
+            </div>
+            
+            <div>
+                <label style="font-size:11px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; display:block;">Usuario / Nombre de Responsable</label>
+                <input type="text" id="cu-name" name="name" placeholder="Ej: Juan Pérez" required style="border-radius:14px; border:1.5px solid #e2e8f0; padding:12px 16px; font-size:14px; font-weight:500; width:100%; transition:border 0.2s;">
+            </div>
+            
+            <div>
+                <label style="font-size:11px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; display:block;">Correo Electrónico (Login)</label>
+                <input type="email" id="cu-email" name="email" placeholder="correo@ejemplo.com" required style="border-radius:14px; border:1.5px solid #e2e8f0; padding:12px 16px; font-size:14px; font-weight:500; width:100%; transition:border 0.2s;">
+            </div>
+            
+            <div>
+                <label style="font-size:11px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; display:block;">Teléfono (WhatsApp)</label>
+                <input type="tel" id="cu-phone" name="phone" placeholder="Ej: 0981123456" style="border-radius:14px; border:1.5px solid #e2e8f0; padding:12px 16px; font-size:14px; font-weight:500; width:100%; transition:border 0.2s;">
+            </div>
+            
+            <div>
+                <label style="font-size:11px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; display:block;">Contraseña de Acceso</label>
+                <div style="position:relative;">
+                    <input type="password" id="cu-password" name="password" placeholder="Mínimo 6 caracteres" required minlength="6" style="border-radius:14px; border:1.5px solid #e2e8f0; padding:12px 16px; font-size:14px; font-weight:500; width:100%; transition:border 0.2s; padding-right:44px;">
+                    <button type="button" onclick="togglePasswordVisibility()" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:#94a3b8; font-size:18px;" id="cu-eye">👁️</button>
+                </div>
+            </div>
+            
+            <div id="cu-error" style="display:none; background:#fef2f2; border:1px solid #fca5a5; color:#991b1b; padding:10px 14px; border-radius:12px; font-size:12px; font-weight:600;"></div>
+            
+            <button type="submit" id="cu-submit-btn" style="background:var(--primary); color:#fff; border:none; border-radius:16px; padding:14px; font-size:15px; font-weight:800; cursor:pointer; margin-top:4px; box-shadow:0 8px 20px rgba(37,99,235,0.25); transition:all 0.2s;">
+                Crear Usuario
+            </button>
+        </form>
+    </div>
+</div>
+
+<style>
+    @keyframes modalPop {
+        from { transform: scale(0.9); opacity: 0; }
+        to   { transform: scale(1); opacity: 1; }
+    }
+    #create-user-modal input:focus {
+        outline: none;
+        border-color: var(--primary) !important;
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.08);
+    }
+</style>
+
+<script>
+    function openCreateUserModal(role) {
+        const modal = document.getElementById('create-user-modal');
+        const title = document.getElementById('create-user-title');
+        const subtitle = document.getElementById('create-user-subtitle');
+        const businessWrap = document.getElementById('cu-business-wrap');
+        const roleInput = document.getElementById('cu-role');
+        const submitBtn = document.getElementById('cu-submit-btn');
+        
+        roleInput.value = role;
+        document.getElementById('create-user-form').reset();
+        document.getElementById('cu-error').style.display = 'none';
+        
+        if (role === 'local') {
+            title.textContent = 'Nuevo Comercio';
+            subtitle.textContent = 'Completá los datos para dar de alta al comercio.';
+            businessWrap.style.display = 'block';
+            submitBtn.style.background = 'var(--accent-green)';
+            submitBtn.style.boxShadow = '0 8px 20px rgba(16,185,129,0.25)';
+            submitBtn.textContent = 'Crear Comercio';
+        } else {
+            title.textContent = 'Nuevo Repartidor';
+            subtitle.textContent = 'Completá los datos para dar de alta al repartidor.';
+            businessWrap.style.display = 'none';
+            submitBtn.style.background = 'var(--primary)';
+            submitBtn.style.boxShadow = '0 8px 20px rgba(37,99,235,0.25)';
+            submitBtn.textContent = 'Crear Repartidor';
+        }
+        
+        modal.style.display = 'flex';
+    }
+    
+    function closeCreateUserModal() {
+        document.getElementById('create-user-modal').style.display = 'none';
+    }
+    
+    function togglePasswordVisibility() {
+        const input = document.getElementById('cu-password');
+        const eye = document.getElementById('cu-eye');
+        if (input.type === 'password') {
+            input.type = 'text';
+            eye.textContent = '🙈';
+        } else {
+            input.type = 'password';
+            eye.textContent = '👁️';
+        }
+    }
+    
+    function submitCreateUser(e) {
+        e.preventDefault();
+        const errorDiv = document.getElementById('cu-error');
+        const submitBtn = document.getElementById('cu-submit-btn');
+        errorDiv.style.display = 'none';
+        
+        const formData = new FormData();
+        formData.append('action', 'create_user');
+        formData.append('role', document.getElementById('cu-role').value);
+        formData.append('name', document.getElementById('cu-name').value.trim());
+        formData.append('email', document.getElementById('cu-email').value.trim());
+        formData.append('phone', document.getElementById('cu-phone').value.trim());
+        formData.append('password', document.getElementById('cu-password').value);
+        
+        const role = document.getElementById('cu-role').value;
+        if (role === 'local') {
+            formData.append('business_name', document.getElementById('cu-business').value.trim());
+        }
+        
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Creando...';
+        
+        fetch('api_admin_action.php', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success) {
+                closeCreateUserModal();
+                if (typeof Swal !== 'undefined') {
+                    Swal.fire({
+                        icon: 'success',
+                        title: role === 'local' ? 'Comercio creado' : 'Repartidor creado',
+                        html: `<b>${document.getElementById('cu-name').value}</b><br><small style="color:#64748b;">Email: ${document.getElementById('cu-email').value}</small>`,
+                        timer: 2500,
+                        timerProgressBar: true,
+                        showConfirmButton: false
+                    });
+                } else {
+                    alert(data.message);
+                }
+                setTimeout(() => window.location.reload(), 1500);
+            } else {
+                errorDiv.textContent = data.error || 'Error desconocido.';
+                errorDiv.style.display = 'block';
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            errorDiv.textContent = 'Error de conexión con el servidor.';
+            errorDiv.style.display = 'block';
+        })
+        .finally(() => {
+            submitBtn.disabled = false;
+            submitBtn.textContent = role === 'local' ? 'Crear Comercio' : 'Crear Repartidor';
+        });
+    }
+    
+    // Close modal on backdrop click
+    document.getElementById('create-user-modal').addEventListener('click', function(e) {
+        if (e.target === this) closeCreateUserModal();
+    });
 </script>
 
 </body>

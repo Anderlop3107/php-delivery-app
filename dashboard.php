@@ -22,6 +22,12 @@ if ($userData['role'] === 'admin') {
     exit;
 }
 
+// Redirect local users to profile if subscription is not active
+if ($userData['role'] === 'local' && ($userData['subscription_status'] ?? 'pending') !== 'active') {
+    header('Location: ' . delivery_app_url('pages/profile.php'));
+    exit;
+}
+
 // Lógica de datos reales para los gráficos
 $stats = app_one("
     SELECT 
@@ -221,6 +227,7 @@ require __DIR__ . '/pages/_header.php';
         <p class="muted" style="font-weight: 600;">Panel de Gestión</p>
     </div>
 </div>
+
 
 <div class="bento-grid">
     <!-- Hero Activity Card: Pedidos del día -->
