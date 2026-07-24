@@ -970,6 +970,54 @@ if ($action === 'update_user_account') {
     exit;
 }
 
+if ($action === 'get_pending_verifications') {
+    $activeDrivers = app_all("
+        SELECT id, name, logo_path as avatar_path, latitude, longitude, is_online, 
+               status_doc_ci, status_doc_licencia, status_doc_habilitacion, status_doc_cedula_verde,
+               doc_ci_path, doc_ci_back_path, doc_licencia_path, doc_licencia_back_path,
+               doc_habilitacion_path, doc_habilitacion_back_path, doc_cedula_verde_path, doc_cedula_verde_back_path,
+               phone, email, subscription_status,
+               (SELECT payment_proof_path FROM driver_payments WHERE driver_user_id = users.id AND status = 'pending' ORDER BY id DESC LIMIT 1) as payment_proof_path,
+               (SELECT id FROM driver_payments WHERE driver_user_id = users.id AND status = 'pending' ORDER BY id DESC LIMIT 1) as payment_id
+        FROM users 
+        WHERE role = 'repartidor'
+    ");
+
+    $pending = [];
+    foreach ($activeDrivers as $d) {
+        if (
+            $d['status_doc_ci'] === 'pending' ||
+            $d['status_doc_licencia'] === 'pending' ||
+            $d['status_doc_habilitacion'] === 'pending' ||
+            $d['status_doc_cedula_verde'] === 'pending' ||
+            ($d['subscription_status'] ?? '') === 'pending'
+        ) {
+            $d['user_type'] = 'repartidor';
+            $pending[] = $d;
+        }
+    }
+
+    $pendingLocals = app_all("
+        SELECT u.id, u.name, u.business_name, u.logo_path as avatar_path, u.phone, u.email, u.subscription_status, 'local' as user_type,
+               (SELECT payment_proof_path FROM driver_payments WHERE driver_user_id = u.id AND status = 'pending' ORDER BY id DESC LIMIT 1) as payment_proof_path,
+               (SELECT id FROM driver_payments WHERE driver_user_id = u.id AND status = 'pending' ORDER BY id DESC LIMIT 1) as payment_id
+        FROM users u
+        WHERE u.role = 'local'
+          AND ((SELECT COUNT(*) FROM driver_payments WHERE driver_user_id = u.id AND status = 'pending') > 0 OR u.subscription_status = 'pending')
+    ");
+
+    foreach ($pendingLocals as $l) {
+        $pending[] = $l;
+    }
+
+    echo json_encode([
+        'success' => true,
+        'count'   => count($pending),
+        'items'   => $pending
+    ]);
+    exit;
+}
+
 http_response_code(400);
 echo json_encode(['error' => 'Acción no especificada o no soportada.']);
 exit;

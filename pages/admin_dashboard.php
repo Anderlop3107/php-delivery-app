@@ -95,7 +95,7 @@ $topDrivers = app_all("
 ");
 
 
-// 3. Conductores con verificaciones pendientes
+// 3. Usuarios (Repartidores y Locales) con verificaciones o pagos pendientes
 $pendingVerifications = [];
 foreach ($activeDrivers as $d) {
     if (
@@ -105,8 +105,23 @@ foreach ($activeDrivers as $d) {
         $d['status_doc_cedula_verde'] === 'pending' ||
         ($d['subscription_status'] ?? '') === 'pending'
     ) {
+        $d['user_type'] = 'repartidor';
         $pendingVerifications[] = $d;
     }
+}
+
+// Agregar Locales que tengan pagos pendientes de verificación
+$pendingLocals = app_all("
+    SELECT u.id, u.name, u.business_name, u.logo_path as avatar_path, u.phone, u.email, u.subscription_status, 'local' as user_type,
+           (SELECT payment_proof_path FROM driver_payments WHERE driver_user_id = u.id AND status = 'pending' ORDER BY id DESC LIMIT 1) as payment_proof_path,
+           (SELECT id FROM driver_payments WHERE driver_user_id = u.id AND status = 'pending' ORDER BY id DESC LIMIT 1) as payment_id
+    FROM users u
+    WHERE u.role = 'local'
+      AND ((SELECT COUNT(*) FROM driver_payments WHERE driver_user_id = u.id AND status = 'pending') > 0 OR u.subscription_status = 'pending')
+");
+
+foreach ($pendingLocals as $l) {
+    $pendingVerifications[] = $l;
 }
 
 // 4. Datos del gráfico semanal
@@ -644,19 +659,28 @@ $maxChartCount = max(5, max($chartCounts));
         }
 
         .verification-card {
-            background: #f8fafc;
+            background: #ffffff;
             border-radius: var(--radius-medium);
-            padding: 14px;
+            padding: 16px;
             border: 1px solid #e2e8f0;
             display: flex;
-            align-items: center;
-            justify-content: space-between;
+            flex-direction: column;
+            gap: 12px;
             cursor: pointer;
-            transition: all 0.2s;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
         }
         .verification-card:hover {
             border-color: #cbd5e1;
-            background: #f1f5f9;
+            box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+            transform: translateY(-2px);
+        }
+        .verification-card-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
         }
 
         .driver-mini-info {
@@ -834,8 +858,11 @@ $maxChartCount = max(5, max($chartCounts));
     <div class="sidebar">
         <div class="sidebar-top">
             <!-- Top: circular notifications signal icon -->
-            <div class="notif-circle" title="Notificaciones del Sistema">
-                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"></path></svg>
+            <div class="notif-circle" title="Verificaciones Pendientes" onclick="scrollToPendingVerifications()" style="position:relative;">
+                <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M14.857 17.082a23.848 23.848 0 005.454-1.31A8.967 8.967 0 0118 9.75v-.7V9A6 6 0 006 9v.75a8.967 8.967 0 01-2.312 6.022c1.733.64 3.56 1.085 5.455 1.31m5.714 0a24.255 24.255 0 01-5.714 0m5.714 0a3 3 0 11-5.714 0M3.124 7.5A8.969 8.969 0 015.292 3m13.416 0a8.969 8.969 0 012.168 4.5"></path></svg>
+                <?php if (!empty($pendingVerifications)): ?>
+                    <span style="position:absolute; top:-2px; right:-2px; background:#ef4444; color:#fff; font-size:10px; font-weight:800; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #2563eb;"><?= count($pendingVerifications) ?></span>
+                <?php endif; ?>
             </div>
             
             <div class="sidebar-menu">
@@ -1008,7 +1035,7 @@ $maxChartCount = max(5, max($chartCounts));
                         <h1>Locales y Comercios</h1>
                         <p>Gestiona los accesos y estado de suscripción de los comercios.</p>
                     </div>
-                    <button onclick="openCreateUserModal('local')" style="background:var(--accent-green); color:#fff; border:none; border-radius:14px; padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(16,185,129,0.3); white-space:nowrap; transition:all 0.2s;">
+                    <button onclick="openCreateUserModal('local')" style="background:#10b981; color:#fff; border:none; border-radius:14px; padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 14px rgba(16,185,129,0.3); white-space:nowrap; transition:all 0.2s;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
                         Nuevo Comercio
                     </button>
@@ -1144,46 +1171,58 @@ $maxChartCount = max(5, max($chartCounts));
     <div class="right-panel">
         <h3 class="panel-section-title">Verificaciones Pendientes</h3>
         
-        <div class="verification-feed">
+        <div class="verification-feed" id="pending-verifications-feed">
             <?php if (empty($pendingVerifications)): ?>
                 <div style="text-align:center; padding: 40px 10px; color: var(--text-muted); font-size:12px;">
                     <span style="font-size:24px; display:block; margin-bottom:8px;">🎉</span>
-                    Todos los conductores están verificados.
+                    Todos los usuarios están verificados.
                 </div>
             <?php else: ?>
                 <?php foreach ($pendingVerifications as $pv): ?>
-                    <div class="verification-card" onclick="window.location.href='admin_driver_detail.php?id=<?= (int)$pv['id']; ?>'" style="cursor:pointer; position:relative;">
-                        <div class="driver-mini-info">
-                            <div class="driver-mini-avatar">
-                                <?php if ($pv['avatar_path']): ?>
-                                    <img src="<?= esc(delivery_app_url($pv['avatar_path'])); ?>" alt="Avatar">
-                                <?php else: ?>
-                                    👤
-                                <?php endif; ?>
-                            </div>
-                            <div class="driver-text">
-                                <b><?= esc($pv['name']) ?></b>
-                                <span>
-                                    <?php if (($pv['subscription_status'] ?? '') === 'pending'): ?>
-                                        💳 Pago por verificar
+                    <?php 
+                    $isLocal = ($pv['user_type'] ?? 'repartidor') === 'local';
+                    $targetUrl = $isLocal ? "admin_local_detail.php?id=" . (int)$pv['id'] : "admin_driver_detail.php?id=" . (int)$pv['id'];
+                    $displayName = $isLocal ? ($pv['business_name'] ?: $pv['name']) : $pv['name'];
+                    ?>
+                    <div class="verification-card" onclick="window.location.href='<?= $targetUrl ?>'">
+                        <div class="verification-card-header">
+                            <div class="driver-mini-info">
+                                <div class="driver-mini-avatar">
+                                    <?php if ($pv['avatar_path']): ?>
+                                        <img src="<?= esc(delivery_app_url($pv['avatar_path'])); ?>" alt="Avatar">
                                     <?php else: ?>
-                                        📄 Documentación requerida
+                                        <?= $isLocal ? '🏢' : '👤' ?>
                                     <?php endif; ?>
-                                </span>
+                                </div>
+                                <div class="driver-text">
+                                    <b><?= esc($displayName) ?></b>
+                                    <span style="font-size:11px; margin-top:2px;">
+                                        <?php if ($isLocal): ?>
+                                            🏪 Local · 💳 Pago por verificar
+                                        <?php elseif (($pv['subscription_status'] ?? '') === 'pending'): ?>
+                                            🛵 Repartidor · 💳 Pago por verificar
+                                        <?php else: ?>
+                                            🛵 Repartidor · 📄 Documentación requerida
+                                        <?php endif; ?>
+                                    </span>
+                                </div>
                             </div>
+                            <div class="btn-view-chevron" style="position:static; font-size:20px;">&rsaquo;</div>
                         </div>
+
                         <!-- Imagen del comprobante de pago -->
                         <?php if (!empty($pv['payment_proof_path'])): ?>
-                            <div class="payment-proof" style="margin-top:8px; text-align:center;">
-                                <img src="<?= esc(delivery_app_url($pv['payment_proof_path'])); ?>" alt="Comprobante" style="max-width:100%; height:auto; border:1px solid #e5e7eb; border-radius:8px;">
-                                <p style="margin-top:4px; font-size:11px; color:#64748b; font-weight:500;">Comprobante de pago del conductor <?= esc($pv['name']); ?></p>
+                            <div class="payment-proof" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:10px; text-align:center;">
+                                <img src="<?= esc(delivery_app_url($pv['payment_proof_path'])); ?>" alt="Comprobante" style="max-width:100%; max-height:160px; object-fit:contain; border-radius:10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                <p style="margin:6px 0 0; font-size:11px; color:#64748b; font-weight:600;">
+                                    Comprobante de pago <?= $isLocal ? 'del local' : 'del repartidor' ?> <?= esc($displayName); ?>
+                                </p>
                             </div>
-                            <div style="display:flex; gap:8px; margin-top:10px;" onclick="event.stopPropagation();">
-                                <button type="button" style="flex:1; padding:8px; font-size:12px; font-weight:700; border:none; border-radius:8px; background:#10b981; color:#fff; cursor:pointer;" onclick="verifyDashboardSubscription('approved', <?= (int)$pv['id']; ?>, <?= (int)$pv['payment_id']; ?>)">Aprobar</button>
-                                <button type="button" style="flex:1; padding:8px; font-size:12px; font-weight:700; border:none; border-radius:8px; background:#ef4444; color:#fff; cursor:pointer;" onclick="verifyDashboardSubscription('rejected', <?= (int)$pv['id']; ?>, <?= (int)$pv['payment_id']; ?>)">Rechazar</button>
+                            <div style="display:flex; gap:10px; margin-top:2px;" onclick="event.stopPropagation();">
+                                <button type="button" style="flex:1; padding:10px; font-size:12px; font-weight:800; border:none; border-radius:12px; background:#10b981; color:#fff; cursor:pointer; box-shadow: 0 4px 12px rgba(16,185,129,0.25); transition:all 0.2s;" onclick="verifyDashboardSubscription('approved', <?= (int)$pv['id']; ?>, <?= (int)$pv['payment_id']; ?>)">Aprobar</button>
+                                <button type="button" style="flex:1; padding:10px; font-size:12px; font-weight:800; border:none; border-radius:12px; background:#ef4444; color:#fff; cursor:pointer; box-shadow: 0 4px 12px rgba(239,68,68,0.25); transition:all 0.2s;" onclick="verifyDashboardSubscription('rejected', <?= (int)$pv['id']; ?>, <?= (int)$pv['payment_id']; ?>)">Rechazar</button>
                             </div>
                         <?php endif; ?>
-                        <div class="btn-view-chevron" style="top:20px;">&rsaquo;</div>
                     </div>
                 <?php endforeach; ?>
             <?php endif; ?>
@@ -1453,6 +1492,119 @@ $maxChartCount = max(5, max($chartCounts));
         .catch(err => console.error("Error al actualizar marcadores del mapa:", err));
     }
 
+    let lastPendingCount = -1;
+
+    function refreshPendingVerifications() {
+        const formData = new FormData();
+        formData.append('action', 'get_pending_verifications');
+
+        fetch('api_admin_action.php', {
+            method: 'POST',
+            body: formData
+        })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) return;
+
+            // Reproducir sonido si hay un nuevo ítem pendiente
+            if (lastPendingCount >= 0 && data.count > lastPendingCount) {
+                const audio = new Audio('<?= delivery_app_url("assets/sounds/notification.mp3") ?>');
+                audio.play().catch(e => console.log("Audio play error:", e));
+            }
+            lastPendingCount = data.count;
+
+            // Actualizar badge en la campana
+            const notifCircle = document.querySelector('.notif-circle');
+            if (notifCircle) {
+                let badge = notifCircle.querySelector('span');
+                if (data.count > 0) {
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.style.cssText = 'position:absolute; top:-2px; right:-2px; background:#ef4444; color:#fff; font-size:10px; font-weight:800; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; border:2px solid #2563eb;';
+                        notifCircle.appendChild(badge);
+                    }
+                    badge.textContent = data.count;
+                } else if (badge) {
+                    badge.remove();
+                }
+            }
+
+            // Actualizar el HTML del feed
+            const feed = document.getElementById('pending-verifications-feed');
+            if (!feed) return;
+
+            if (data.count === 0) {
+                feed.innerHTML = `
+                    <div style="text-align:center; padding: 40px 10px; color: var(--text-muted); font-size:12px;">
+                        <span style="font-size:24px; display:block; margin-bottom:8px;">🎉</span>
+                        Todos los usuarios están verificados.
+                    </div>
+                `;
+                return;
+            }
+
+            let html = '';
+            data.items.forEach(pv => {
+                const isLocal = (pv.user_type || 'repartidor') === 'local';
+                const targetUrl = isLocal ? `admin_local_detail.php?id=${pv.id}` : `admin_driver_detail.php?id=${pv.id}`;
+                const displayName = isLocal ? (pv.business_name || pv.name) : pv.name;
+                const avatarIcon = isLocal ? '🏢' : '👤';
+                const baseUrl = '<?= delivery_app_url() ?>/';
+
+                let avatarHtml = avatarIcon;
+                if (pv.avatar_path) {
+                    avatarHtml = `<img src="${baseUrl}${pv.avatar_path}" alt="Avatar">`;
+                }
+
+                let subtitle = '';
+                if (isLocal) {
+                    subtitle = '🏪 Local · 💳 Pago por verificar';
+                } else if (pv.subscription_status === 'pending') {
+                    subtitle = '🛵 Repartidor · 💳 Pago por verificar';
+                } else {
+                    subtitle = '🛵 Repartidor · 📄 Documentación requerida';
+                }
+
+                let proofHtml = '';
+                if (pv.payment_proof_path) {
+                    proofHtml = `
+                        <div class="payment-proof" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:10px; text-align:center;">
+                            <img src="${baseUrl}${pv.payment_proof_path}" alt="Comprobante" style="max-width:100%; max-height:160px; object-fit:contain; border-radius:10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                            <p style="margin:6px 0 0; font-size:11px; color:#64748b; font-weight:600;">
+                                Comprobante de pago ${isLocal ? 'del local' : 'del repartidor'} ${displayName}
+                            </p>
+                        </div>
+                        <div style="display:flex; gap:10px; margin-top:2px;" onclick="event.stopPropagation();">
+                            <button type="button" style="flex:1; padding:10px; font-size:12px; font-weight:800; border:none; border-radius:12px; background:#10b981; color:#fff; cursor:pointer; box-shadow: 0 4px 12px rgba(16,185,129,0.25); transition:all 0.2s;" onclick="verifyDashboardSubscription('approved', ${pv.id}, ${pv.payment_id})">Aprobar</button>
+                            <button type="button" style="flex:1; padding:10px; font-size:12px; font-weight:800; border:none; border-radius:12px; background:#ef4444; color:#fff; cursor:pointer; box-shadow: 0 4px 12px rgba(239,68,68,0.25); transition:all 0.2s;" onclick="verifyDashboardSubscription('rejected', ${pv.id}, ${pv.payment_id})">Rechazar</button>
+                        </div>
+                    `;
+                }
+
+                html += `
+                    <div class="verification-card" onclick="window.location.href='${targetUrl}'">
+                        <div class="verification-card-header">
+                            <div class="driver-mini-info">
+                                <div class="driver-mini-avatar">
+                                    ${avatarHtml}
+                                </div>
+                                <div class="driver-text">
+                                    <b>${displayName}</b>
+                                    <span style="font-size:11px; margin-top:2px;">${subtitle}</span>
+                                </div>
+                            </div>
+                            <div class="btn-view-chevron" style="position:static; font-size:20px;">&rsaquo;</div>
+                        </div>
+                        ${proofHtml}
+                    </div>
+                `;
+            });
+
+            feed.innerHTML = html;
+        })
+        .catch(err => console.error("Error al actualizar verificaciones pendientes:", err));
+    }
+
     // Cambiar entre pestañas del panel lateral
     function switchAdminTab(tabId) {
         document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
@@ -1489,9 +1641,11 @@ $maxChartCount = max(5, max($chartCounts));
             }
         }
         
-        // Cargar marcadores iniciales y configurar auto-refresco en tiempo real (cada 8 segundos)
         refreshMapMarkers();
         setInterval(refreshMapMarkers, 8000);
+
+        refreshPendingVerifications();
+        setInterval(refreshPendingVerifications, 4000);
 
         // Inicializar ApexCharts Spline Chart: FLUJO DE ACTIVIDAD
         const chartOptions = {
@@ -2021,65 +2175,100 @@ $maxChartCount = max(5, max($chartCounts));
 </script>
 
 <!-- Modal: Crear Nuevo Usuario -->
-<div id="create-user-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); backdrop-filter:blur(6px); z-index:5000; justify-content:center; align-items:center;">
-    <div style="background:#fff; border-radius:24px; padding:32px; max-width:420px; width:90%; position:relative; animation:modalPop 0.3s cubic-bezier(0.16,1,0.3,1);">
-        <button onclick="closeCreateUserModal()" style="position:absolute; top:16px; right:16px; background:#f1f5f9; border:none; width:32px; height:32px; border-radius:50%; font-size:16px; cursor:pointer; color:#64748b; display:flex; align-items:center; justify-content:center;">✕</button>
-        <h2 id="create-user-title" style="font-size:20px; font-weight:800; color:#0f172a; margin:0 0 4px;">Nuevo Comercio</h2>
-        <p id="create-user-subtitle" style="font-size:13px; color:#64748b; font-weight:500; margin:0 0 24px;">Completá los datos para dar de alta al comercio.</p>
+<div id="create-user-modal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.6); backdrop-filter:blur(6px); -webkit-backdrop-filter:blur(6px); z-index:5000; justify-content:center; align-items:center; padding:20px;">
+    <div class="create-user-card" id="cu-card-container">
+        <button type="button" onclick="closeCreateUserModal()" class="create-user-close-btn">✕</button>
+        <div style="text-align:center; margin-bottom:20px;">
+            <h2 id="create-user-title" style="font-size:20px; font-weight:800; color:#0f172a; margin:0 0 6px; letter-spacing:-0.5px;">Nuevo Comercio</h2>
+            <p id="create-user-subtitle" style="font-size:13px; color:#64748b; font-weight:500; margin:0;">Completá los datos para dar de alta al comercio.</p>
+        </div>
         
         <form id="create-user-form" onsubmit="submitCreateUser(event)" style="display:flex; flex-direction:column; gap:14px;">
             <input type="hidden" id="cu-role" name="role" value="local">
             
             <div id="cu-business-wrap">
                 <label style="font-size:11px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; display:block;">Nombre del Comercio / Local</label>
-                <input type="text" id="cu-business" name="business_name" placeholder="Ej: Pizzería Don Carlos" style="border-radius:14px; border:1.5px solid #e2e8f0; padding:12px 16px; font-size:14px; font-weight:500; width:100%; transition:border 0.2s;">
+                <input type="text" id="cu-business" name="business_name" placeholder="Ej: Pizzería Don Carlos" style="border-radius:14px; border:1.5px solid #e2e8f0; padding:12px 16px; font-size:14px; font-weight:500; width:100%; transition:border 0.2s; background:#f8fafc;">
             </div>
             
             <div>
                 <label style="font-size:11px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; display:block;">Usuario / Nombre de Responsable</label>
-                <input type="text" id="cu-name" name="name" placeholder="Ej: Juan Pérez" required style="border-radius:14px; border:1.5px solid #e2e8f0; padding:12px 16px; font-size:14px; font-weight:500; width:100%; transition:border 0.2s;">
+                <input type="text" id="cu-name" name="name" placeholder="Ej: Juan Pérez" required style="border-radius:14px; border:1.5px solid #e2e8f0; padding:12px 16px; font-size:14px; font-weight:500; width:100%; transition:border 0.2s; background:#f8fafc;">
             </div>
             
             <div>
                 <label style="font-size:11px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; display:block;">Correo Electrónico (Login)</label>
-                <input type="email" id="cu-email" name="email" placeholder="correo@ejemplo.com" required style="border-radius:14px; border:1.5px solid #e2e8f0; padding:12px 16px; font-size:14px; font-weight:500; width:100%; transition:border 0.2s;">
+                <input type="email" id="cu-email" name="email" placeholder="correo@ejemplo.com" required style="border-radius:14px; border:1.5px solid #e2e8f0; padding:12px 16px; font-size:14px; font-weight:500; width:100%; transition:border 0.2s; background:#f8fafc;">
             </div>
             
             <div>
                 <label style="font-size:11px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; display:block;">Teléfono (WhatsApp)</label>
-                <input type="tel" id="cu-phone" name="phone" placeholder="Ej: 0981123456" style="border-radius:14px; border:1.5px solid #e2e8f0; padding:12px 16px; font-size:14px; font-weight:500; width:100%; transition:border 0.2s;">
+                <input type="tel" id="cu-phone" name="phone" placeholder="Ej: 0981123456" style="border-radius:14px; border:1.5px solid #e2e8f0; padding:12px 16px; font-size:14px; font-weight:500; width:100%; transition:border 0.2s; background:#f8fafc;">
             </div>
             
             <div>
                 <label style="font-size:11px; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.5px; margin-bottom:4px; display:block;">Contraseña de Acceso</label>
                 <div style="position:relative;">
-                    <input type="password" id="cu-password" name="password" placeholder="Mínimo 6 caracteres" required minlength="6" style="border-radius:14px; border:1.5px solid #e2e8f0; padding:12px 16px; font-size:14px; font-weight:500; width:100%; transition:border 0.2s; padding-right:44px;">
+                    <input type="password" id="cu-password" name="password" placeholder="Mínimo 6 caracteres" required minlength="6" style="border-radius:14px; border:1.5px solid #e2e8f0; padding:12px 16px; font-size:14px; font-weight:500; width:100%; transition:border 0.2s; padding-right:44px; background:#f8fafc;">
                     <button type="button" onclick="togglePasswordVisibility()" style="position:absolute; right:12px; top:50%; transform:translateY(-50%); background:none; border:none; cursor:pointer; color:#94a3b8; font-size:18px;" id="cu-eye">👁️</button>
                 </div>
             </div>
             
             <div id="cu-error" style="display:none; background:#fef2f2; border:1px solid #fca5a5; color:#991b1b; padding:10px 14px; border-radius:12px; font-size:12px; font-weight:600;"></div>
             
-            <button type="submit" id="cu-submit-btn" style="background:var(--primary); color:#fff; border:none; border-radius:16px; padding:14px; font-size:15px; font-weight:800; cursor:pointer; margin-top:4px; box-shadow:0 8px 20px rgba(37,99,235,0.25); transition:all 0.2s;">
-                Crear Usuario
+            <button type="submit" id="cu-submit-btn" style="background:#10b981; color:#fff; border:none; border-radius:16px; padding:14px; font-size:15px; font-weight:800; cursor:pointer; margin-top:6px; box-shadow:0 8px 20px rgba(16,185,129,0.3); transition:all 0.2s;">
+                Crear Comercio
             </button>
         </form>
     </div>
 </div>
 
 <style>
-    @keyframes modalPop {
-        from { transform: scale(0.9); opacity: 0; }
-        to   { transform: scale(1); opacity: 1; }
+    .create-user-card {
+        background: #ffffff;
+        width: 100%;
+        max-width: 400px;
+        border-radius: 28px;
+        padding: 32px 28px;
+        position: relative;
+        border-top: 6px solid #10b981;
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+        animation: modalPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    }
+    .create-user-close-btn {
+        position: absolute;
+        top: 16px; right: 16px;
+        background: #f1f5f9;
+        border: none;
+        width: 32px; height: 32px;
+        border-radius: 50%;
+        font-size: 14px;
+        font-weight: 800;
+        cursor: pointer;
+        color: #64748b;
+        display: flex; align-items: center; justify-content: center;
+        transition: all 0.2s;
+    }
+    .create-user-close-btn:hover {
+        background: #e2e8f0;
+        color: #0f172a;
     }
     #create-user-modal input:focus {
         outline: none;
-        border-color: var(--primary) !important;
-        box-shadow: 0 0 0 3px rgba(37,99,235,0.08);
+        border-color: #2563eb !important;
+        background: #ffffff !important;
+        box-shadow: 0 0 0 3px rgba(37,99,235,0.12);
     }
 </style>
 
 <script>
+    function scrollToPendingVerifications() {
+        const feed = document.getElementById('pending-verifications-feed');
+        if (feed) {
+            feed.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    }
+
     function openCreateUserModal(role) {
         const modal = document.getElementById('create-user-modal');
         const title = document.getElementById('create-user-title');
@@ -2087,6 +2276,8 @@ $maxChartCount = max(5, max($chartCounts));
         const businessWrap = document.getElementById('cu-business-wrap');
         const roleInput = document.getElementById('cu-role');
         const submitBtn = document.getElementById('cu-submit-btn');
+        
+        const cardContainer = document.getElementById('cu-card-container');
         
         roleInput.value = role;
         document.getElementById('create-user-form').reset();
@@ -2096,13 +2287,15 @@ $maxChartCount = max(5, max($chartCounts));
             title.textContent = 'Nuevo Comercio';
             subtitle.textContent = 'Completá los datos para dar de alta al comercio.';
             businessWrap.style.display = 'block';
-            submitBtn.style.background = 'var(--accent-green)';
-            submitBtn.style.boxShadow = '0 8px 20px rgba(16,185,129,0.25)';
+            cardContainer.style.borderTop = '6px solid #10b981';
+            submitBtn.style.background = '#10b981';
+            submitBtn.style.boxShadow = '0 8px 20px rgba(16,185,129,0.3)';
             submitBtn.textContent = 'Crear Comercio';
         } else {
             title.textContent = 'Nuevo Repartidor';
             subtitle.textContent = 'Completá los datos para dar de alta al repartidor.';
             businessWrap.style.display = 'none';
+            cardContainer.style.borderTop = '6px solid #2563eb';
             submitBtn.style.background = 'var(--primary)';
             submitBtn.style.boxShadow = '0 8px 20px rgba(37,99,235,0.25)';
             submitBtn.textContent = 'Crear Repartidor';
