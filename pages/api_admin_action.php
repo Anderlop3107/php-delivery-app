@@ -21,6 +21,52 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $action = $_POST['action'] ?? '';
 
+if ($action === 'create_user') {
+    $name         = trim($_POST['name'] ?? '');
+    $email        = trim($_POST['email'] ?? '');
+    $phone        = trim($_POST['phone'] ?? '');
+    $password     = $_POST['password'] ?? '';
+    $role         = trim($_POST['role'] ?? '');
+    $businessName = trim($_POST['business_name'] ?? '');
+
+    if ($name === '' || $email === '' || $phone === '' || $password === '' || $role === '') {
+        http_response_code(400);
+        echo json_encode(['error' => 'Todos los campos obligatorios deben estar completos.']);
+        exit;
+    }
+
+    if (!in_array($role, ['local', 'repartidor'], true)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'El rol debe ser local o repartidor.']);
+        exit;
+    }
+
+    $existing = app_one("SELECT id FROM users WHERE email = ?", 's', [$email]);
+    if ($existing) {
+        http_response_code(400);
+        echo json_encode(['error' => 'El correo electrónico ya está registrado.']);
+        exit;
+    }
+
+    $passwordHash = password_hash($password, PASSWORD_BCRYPT);
+    $businessNameValue = ($role === 'local' && $businessName !== '') ? $businessName : null;
+
+    app_exec(
+        "INSERT INTO users (role, name, email, phone, password_hash, business_name, subscription_status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())",
+        'ssssss',
+        [$role, $name, $email, $phone, $passwordHash, $businessNameValue]
+    );
+
+    $newUserId = app_db()->insert_id;
+
+    echo json_encode([
+        'success' => true,
+        'message' => 'Usuario creado exitosamente.',
+        'user_id' => $newUserId
+    ]);
+    exit;
+}
+
 if ($action === 'approve_document' || $action === 'reject_document') {
     $driverId = (int)($_POST['driver_id'] ?? 0);
     $docType = $_POST['doc_type'] ?? '';
@@ -77,47 +123,43 @@ if ($action === 'approve_document' || $action === 'reject_document') {
 }
 
 if ($action === 'update_subscription') {
-    $localId = (int)($_POST['local_id'] ?? 0);
+    $userId = (int)($_POST['local_id'] ?? $_POST['user_id'] ?? 0);
     $status = $_POST['status'] ?? '';
-    $days = (int)($_POST['days'] ?? 0); // Días de extensión (opcional)
+    $days   = (int)($_POST['days'] ?? 0);
+    $role   = $_POST['role'] ?? 'local'; // 'local' or 'repartidor'
 
     $validStatuses = ['active', 'expired', 'pending'];
-    if (!in_array($status, $validStatuses, true)) {
+    $validRoles    = ['local', 'repartidor'];
+    if (!in_array($status, $validStatuses, true) || !in_array($role, $validRoles, true)) {
         http_response_code(400);
-        echo json_encode(['error' => 'Estado de suscripción no válido.']);
+        echo json_encode(['error' => 'Parámetros no válidos.']);
         exit;
     }
-    
-    // Verificar que el comercio exista
-    $local = app_one("SELECT id, subscription_expires_at FROM users WHERE id = ? AND role = 'local'", 'i', [$localId]);
-    if (!$local) {
+
+    $user = app_one("SELECT id, subscription_expires_at FROM users WHERE id = ? AND role = ?", 'is', [$userId, $role]);
+    if (!$user) {
         http_response_code(404);
-        echo json_encode(['error' => 'Comercio no encontrado.']);
+        echo json_encode(['error' => 'Usuario no encontrado.']);
         exit;
     }
-    
+
     $expiresAt = null;
     if ($status === 'active') {
-        if ($days > 0) {
-            // Extender desde la fecha actual
-            $expiresAt = date('Y-m-d H:i:s', strtotime("+$days days"));
-        } else {
-            // Por defecto, 30 días de suscripción
-            $expiresAt = date('Y-m-d H:i:s', strtotime("+30 days"));
-        }
+        $expiresAt = date('Y-m-d H:i:s', strtotime('+' . ($days > 0 ? $days : 30) . ' days'));
     }
-    
+
     app_exec("
-        UPDATE users 
-        SET subscription_status = ?, subscription_expires_at = ? 
+        UPDATE users
+        SET subscription_status = ?, subscription_expires_at = ?
         WHERE id = ?
-    ", 'ssi', [$status, $expiresAt, $localId]);
-    
+    ", 'ssi', [$status, $expiresAt, $userId]);
+
+    $label = $role === 'repartidor' ? 'Repartidor' : 'Comercio';
     echo json_encode([
-        'success' => true,
-        'message' => 'Suscripción del comercio actualizada con éxito.',
+        'success'    => true,
+        'message'    => "$label actualizado con éxito.",
         'new_status' => $status,
-        'expires_at' => $expiresAt ? date('d/m/Y H:i', strtotime($expiresAt)) : 'N/A'
+        'expires_at' => $expiresAt ? date('d/m/Y', strtotime($expiresAt)) : 'N/A'
     ]);
     exit;
 }
@@ -132,6 +174,12 @@ if ($action === 'get_delivery_performance') {
         $whereClause = "created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
     } elseif ($range === 'month') {
         $whereClause = "created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+    } elseif ($range === 'custom') {
+        $startDate = preg_replace('/[^0-9\-]/', '', $_POST['start_date'] ?? '');
+        $endDate   = preg_replace('/[^0-9\-]/', '', $_POST['end_date']   ?? '');
+        if ($startDate !== '' && $endDate !== '') {
+            $whereClause = "DATE(created_at) BETWEEN '$startDate' AND '$endDate'";
+        }
     }
     
     $stats = app_one("
@@ -162,6 +210,12 @@ if ($action === 'get_top_locals') {
         $whereClause = "d.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
     } elseif ($range === 'month') {
         $whereClause = "d.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+    } elseif ($range === 'custom') {
+        $startDate = preg_replace('/[^0-9\-]/', '', $_POST['start_date'] ?? '');
+        $endDate   = preg_replace('/[^0-9\-]/', '', $_POST['end_date']   ?? '');
+        if ($startDate !== '' && $endDate !== '') {
+            $whereClause = "DATE(d.created_at) BETWEEN '$startDate' AND '$endDate'";
+        }
     }
     
     $topLocals = app_all("
@@ -173,39 +227,12 @@ if ($action === 'get_top_locals') {
         ORDER BY count DESC
         LIMIT 5
     ");
-    
-    if (empty($topLocals)) {
-        if ($range === 'day') {
-            $topLocals = [
-                ['name' => 'Pizza Hut', 'count' => 3],
-                ['name' => 'Burger King', 'count' => 2],
-                ['name' => 'Lomitos El Gordito', 'count' => 2],
-                ['name' => 'Farmacia Catedral', 'count' => 1],
-                ['name' => 'Supermercado Stock', 'count' => 1]
-            ];
-        } elseif ($range === 'month') {
-            $topLocals = [
-                ['name' => 'Pizza Hut', 'count' => 65],
-                ['name' => 'Burger King', 'count' => 52],
-                ['name' => 'Lomitos El Gordito', 'count' => 38],
-                ['name' => 'Farmacia Catedral', 'count' => 26],
-                ['name' => 'Supermercado Stock', 'count' => 18]
-            ];
-        } else { // week
-            $topLocals = [
-                ['name' => 'Pizza Hut', 'count' => 15],
-                ['name' => 'Burger King', 'count' => 12],
-                ['name' => 'Lomitos El Gordito', 'count' => 8],
-                ['name' => 'Farmacia Catedral', 'count' => 6],
-                ['name' => 'Supermercado Stock', 'count' => 4]
-            ];
-        }
-    }
-    
+
     echo json_encode([
-        'success' => true,
-        'categories' => array_column($topLocals, 'name'),
-        'series' => array_map('intval', array_column($topLocals, 'count'))
+        'success'    => true,
+        'empty'      => empty($topLocals),
+        'categories' => empty($topLocals) ? [] : array_column($topLocals, 'name'),
+        'series'     => empty($topLocals) ? [] : array_map('intval', array_column($topLocals, 'count'))
     ]);
     exit;
 }
@@ -220,6 +247,12 @@ if ($action === 'get_top_drivers') {
         $whereClause .= " AND d.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
     } elseif ($range === 'month') {
         $whereClause .= " AND d.created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+    } elseif ($range === 'custom') {
+        $startDate = preg_replace('/[^0-9\-]/', '', $_POST['start_date'] ?? '');
+        $endDate   = preg_replace('/[^0-9\-]/', '', $_POST['end_date']   ?? '');
+        if ($startDate !== '' && $endDate !== '') {
+            $whereClause .= " AND DATE(d.created_at) BETWEEN '$startDate' AND '$endDate'";
+        }
     }
     
     $topDrivers = app_all("
@@ -231,39 +264,12 @@ if ($action === 'get_top_drivers') {
         ORDER BY count DESC
         LIMIT 5
     ");
-    
-    if (empty($topDrivers)) {
-        if ($range === 'day') {
-            $topDrivers = [
-                ['name' => 'Juan Perez', 'count' => 3],
-                ['name' => 'Carlos Gomez', 'count' => 2],
-                ['name' => 'Maria Benitez', 'count' => 2],
-                ['name' => 'Lucas Silva', 'count' => 1],
-                ['name' => 'Jose Cardozo', 'count' => 1]
-            ];
-        } elseif ($range === 'month') {
-            $topDrivers = [
-                ['name' => 'Juan Perez', 'count' => 58],
-                ['name' => 'Carlos Gomez', 'count' => 45],
-                ['name' => 'Maria Benitez', 'count' => 39],
-                ['name' => 'Lucas Silva', 'count' => 28],
-                ['name' => 'Jose Cardozo', 'count' => 19]
-            ];
-        } else { // week
-            $topDrivers = [
-                ['name' => 'Juan Perez', 'count' => 14],
-                ['name' => 'Carlos Gomez', 'count' => 11],
-                ['name' => 'Maria Benitez', 'count' => 9],
-                ['name' => 'Lucas Silva', 'count' => 6],
-                ['name' => 'Jose Cardozo', 'count' => 4]
-            ];
-        }
-    }
-    
+
     echo json_encode([
-        'success' => true,
-        'categories' => array_column($topDrivers, 'name'),
-        'series' => array_map('intval', array_column($topDrivers, 'count'))
+        'success'    => true,
+        'empty'      => empty($topDrivers),
+        'categories' => empty($topDrivers) ? [] : array_column($topDrivers, 'name'),
+        'series'     => empty($topDrivers) ? [] : array_map('intval', array_column($topDrivers, 'count'))
     ]);
     exit;
 }
@@ -485,12 +491,26 @@ if ($action === 'get_driver_kpis') {
     }
 
     $whereClause = "repartidor_user_id = $driverId";
+    $sinceDate = '1970-01-01 00:00:00';
+    $untilDate = date('Y-m-d 23:59:59');
+
     if ($range === 'day') {
         $whereClause .= " AND created_at >= DATE(NOW())";
+        $sinceDate = date('Y-m-d 00:00:00');
     } elseif ($range === 'week') {
         $whereClause .= " AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
+        $sinceDate = date('Y-m-d H:i:s', strtotime('-7 days'));
     } elseif ($range === 'month') {
         $whereClause .= " AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+        $sinceDate = date('Y-m-d H:i:s', strtotime('-30 days'));
+    } elseif ($range === 'custom') {
+        $startDate = preg_replace('/[^0-9\-]/', '', $_POST['start_date'] ?? '');
+        $endDate = preg_replace('/[^0-9\-]/', '', $_POST['end_date'] ?? '');
+        if ($startDate !== '' && $endDate !== '') {
+            $whereClause .= " AND DATE(created_at) BETWEEN '$startDate' AND '$endDate'";
+            $sinceDate = $startDate . ' 00:00:00';
+            $untilDate = $endDate . ' 23:59:59';
+        }
     }
 
     // 1. Entregados
@@ -507,25 +527,16 @@ if ($action === 'get_driver_kpis') {
     $cancelados = (int)($stats['cancelados'] ?? 0);
     $earnings = (float)($stats['earnings'] ?? 0);
 
-    // Calcular horas conectadas reales basadas en la tabla driver_sessions
-    $sinceDate = '1970-01-01 00:00:00';
-    if ($range === 'day') {
-        $sinceDate = date('Y-m-d 00:00:00');
-    } elseif ($range === 'week') {
-        $sinceDate = date('Y-m-d H:i:s', strtotime('-7 days'));
-    } elseif ($range === 'month') {
-        $sinceDate = date('Y-m-d H:i:s', strtotime('-30 days'));
-    }
-
     $sessions = app_all("
         SELECT ds.connected_at, ds.disconnected_at, u.last_ping, u.is_online 
         FROM driver_sessions ds
         JOIN users u ON ds.driver_user_id = u.id
-        WHERE ds.driver_user_id = ? AND ds.connected_at >= ?
-    ", "is", [$driverId, $sinceDate]);
+        WHERE ds.driver_user_id = ? AND ds.connected_at BETWEEN ? AND ?
+    ", "iss", [$driverId, $sinceDate, $untilDate]);
 
     $totalSeconds = 0;
     $nowTime = time();
+    $limitTimestamp = strtotime($untilDate);
 
     foreach ($sessions as $session) {
         $start = strtotime($session['connected_at']);
@@ -543,6 +554,10 @@ if ($action === 'get_driver_kpis') {
             } else {
                 $end = $lastPing;
             }
+        }
+        
+        if ($end > $limitTimestamp) {
+            $end = $limitTimestamp;
         }
         
         if ($end > $start) {
@@ -644,6 +659,12 @@ if ($action === 'get_local_kpis') {
         $whereClause .= " AND created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)";
     } elseif ($range === 'month') {
         $whereClause .= " AND created_at >= DATE_SUB(NOW(), INTERVAL 30 DAY)";
+    } elseif ($range === 'custom') {
+        $startDate = preg_replace('/[^0-9\-]/', '', $_POST['start_date'] ?? '');
+        $endDate = preg_replace('/[^0-9\-]/', '', $_POST['end_date'] ?? '');
+        if ($startDate !== '' && $endDate !== '') {
+            $whereClause .= " AND DATE(created_at) BETWEEN '$startDate' AND '$endDate'";
+        }
     }
 
     // 1. Entregados y Cancelados

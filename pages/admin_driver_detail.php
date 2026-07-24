@@ -761,6 +761,87 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             align-items: center;
         }
 
+        /* Success Modal Styles */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        .success-modal-card {
+            background: #ffffff;
+            width: 90%;
+            max-width: 320px;
+            border-radius: 28px;
+            padding: 40px 24px 30px;
+            text-align: center;
+            position: relative;
+            border-top: 6px solid var(--primary);
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+            animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        @keyframes modalPop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .modal-close-top { 
+            position: absolute; 
+            top: 16px; right: 16px; 
+            width: 32px; height: 32px; 
+            background: #f1f5f9; 
+            border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; 
+            border: none; 
+            font-weight: 800; 
+            color: #94a3b8; 
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .modal-close-top:hover { background: #e2e8f0; color: #475569; }
+        .modal-close-top:active { transform: scale(0.9); }
+        
+        .status-icon-container { 
+            width: 80px; height: 80px; 
+            border-radius: 50%; 
+            background: var(--primary-soft); 
+            margin: 0 auto 20px; 
+            display: flex; align-items: center; justify-content: center; 
+            position: relative; 
+        }
+        .status-icon-waves { 
+            position: absolute; 
+            width: 100%; height: 100%; 
+            border-radius: 50%; 
+            border: 2px solid var(--primary-soft); 
+            animation: waveRipple 2s infinite; 
+        }
+        @keyframes waveRipple { from { transform: scale(1); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+        .check-mark { font-size: 36px; color: var(--primary); font-weight: 800; z-index: 2; }
+
+        .success-modal-card h2 { font-size: 20px; font-weight: 800; margin: 0 0 8px; color: var(--text-main); letter-spacing: -0.5px; }
+        .success-modal-card p { font-size: 13.5px; color: var(--text-muted); margin: 0 0 24px; font-weight: 600; line-height: 1.4; }
+        
+        .btn-listo { 
+            background: var(--primary); 
+            color: #ffffff; 
+            width: 100%; 
+            padding: 14px; 
+            border-radius: 16px; 
+            font-weight: 800; 
+            font-size: 14px;
+            border: none; 
+            cursor: pointer; 
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25); 
+            transition: all 0.2s; 
+        }
+        .btn-listo:active { transform: scale(0.97); opacity: 0.95; }
+
         /* Numerical Pagination Styling */
         .pagination-btn {
             display: inline-flex;
@@ -1199,7 +1280,22 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
 
     <!-- Lightbox Modal -->
     <div id="lightbox-modal" class="lightbox-overlay" onclick="closeLightbox()">
-        <img id="lightbox-img" class="lightbox-img" src="" alt="Ampliado">
+        <span class="lightbox-close">&times;</span>
+        <img id="lightbox-img" src="" alt="Vista Previa">
+    </div>
+
+    <!-- Modal de Éxito Al Guardar Cambios -->
+    <div id="success-modal" class="modal-overlay" style="display: none; z-index: 9999;">
+        <div class="success-modal-card">
+            <button type="button" class="modal-close-top" onclick="closeSuccessModal()">✕</button>
+            <div class="status-icon-container">
+                <div class="status-icon-waves"></div>
+                <span class="check-mark">✓</span>
+            </div>
+            <h2 id="success-modal-title">¡Perfil actualizado!</h2>
+            <p id="success-modal-message">Datos de acceso actualizados correctamente.</p>
+            <button type="button" class="btn-listo" onclick="closeSuccessModal()">Listo</button>
+        </div>
     </div>
 
     <script>
@@ -1660,6 +1756,17 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             }
         }
 
+        function showSuccessModal(title, message) {
+            if (title) document.getElementById('success-modal-title').textContent = title;
+            if (message) document.getElementById('success-modal-message').textContent = message;
+            document.getElementById('success-modal').style.display = 'flex';
+        }
+
+        function closeSuccessModal() {
+            document.getElementById('success-modal').style.display = 'none';
+            window.location.reload();
+        }
+
         async function saveAdminAccount(e) {
             e.preventDefault();
             const form = document.getElementById('admin-account-form');
@@ -1676,31 +1783,15 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                 });
                 const res = await resp.json();
                 if (res.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Guardado!',
-                        text: res.message || 'Datos actualizados con éxito.',
-                        timer: 1500,
-                        showConfirmButton: false
-                    }).then(() => {
-                        window.location.reload();
-                    });
+                    showSuccessModal('¡Perfil actualizado!', res.message || 'Tus cambios se han guardado con éxito.');
                 } else {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Error',
-                        text: res.error || 'No se pudo guardar la información.'
-                    });
+                    alert('Error: ' + (res.error || 'No se pudo guardar la información.'));
                     btn.disabled = false;
                     btn.innerText = '💾 Guardar Cambios';
                 }
             } catch (err) {
                 console.error(err);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Error de Red',
-                    text: 'Ocurrió un error al conectar con el servidor.'
-                });
+                alert('Ocurrió un error al conectar con el servidor.');
                 btn.disabled = false;
                 btn.innerText = '💾 Guardar Cambios';
             }
@@ -1728,8 +1819,11 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             })
             .then(res => res.json())
             .then(res => {
-                alert(res.message);
-                window.location.reload();
+                if (res.success) {
+                    showSuccessModal('¡Comprobante verificado!', res.message || 'El estado de la suscripción ha sido actualizado con éxito.');
+                } else {
+                    alert('Error: ' + (res.error || 'No se pudo procesar la verificación.'));
+                }
             })
             .catch(err => {
                 console.error(err);
