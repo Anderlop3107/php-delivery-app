@@ -535,12 +535,7 @@ require __DIR__ . '/_header.php';
                 </div>
             </div>
 
-            <div class="form-group">
-                <div class="input-wrapper">
-                    <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                    <input name="phone" value="<?= esc($userData['phone']) ?>" placeholder="Teléfono móvil">
-                </div>
-            </div>
+
 
             <?php if ($userData['role'] === 'local'): ?>
                 <!-- Pago de Suscripción Mensual (para Locales) -->
@@ -580,10 +575,10 @@ require __DIR__ . '/_header.php';
                 </div>
             <?php endif; ?>
 
-            <button type="submit" class="btn btn-save-tech">💾 Guardar Perfil</button>
+            <button type="submit" class="btn btn-save-tech">Guardar Perfil</button>
 
             <a href="<?= esc(delivery_app_url('logout.php')) ?>" class="btn btn-logout-tech">
-                🚪 Cerrar Sesión
+                Cerrar Sesión
             </a>
         </div>
     </div>
@@ -636,7 +631,7 @@ require __DIR__ . '/_header.php';
                     <input type="hidden" name="longitude" id="local_lng" value="<?= esc($userData['longitude']) ?>">
                 </div>
 
-                <button type="submit" class="btn btn-save-tech">💾 Guardar Cambios</button>
+                <button type="submit" class="btn btn-save-tech">Guardar Cambios</button>
             </div>
         </div>
     <?php else: ?>
