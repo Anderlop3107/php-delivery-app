@@ -42,20 +42,22 @@ function delivery_status_text(string $status): string
 }
 
 /**
- * Calcula la fecha de expiración semanal del repartidor (Próximo Lunes 12:00:00).
- * Si hoy es lunes antes de las 12:00 hs, retorna hoy 12:00:00.
- * Si ya pasaron las 12:00 hs de hoy o es cualquier otro día, retorna el próximo lunes a las 12:00:00.
+ * Regla Justa de Expiración Semanal para Repartidores:
+ * - Si se inscribe Lunes, Martes o Miércoles (días 1, 2, 3): Expira el Próximo Lunes a las 12:00 hs.
+ * - Si se inscribe Jueves, Viernes, Sábado o Domingo (días 4, 5, 6, 7): Expira el Lunes Subsecuente (+1 semana justa).
  */
-function get_next_driver_expiration_date(): string
+function get_next_driver_expiration_date(?DateTimeInterface $from = null): string
 {
-    $now = time();
-    $todayMondayNoon = strtotime('this Monday 12:00:00');
+    $now = $from ? DateTime::createFromInterface($from) : new DateTime();
+    $dow = (int)$now->format('N');
     
-    if (date('N', $now) === '1' && $now < $todayMondayNoon) {
-        return date('Y-m-d H:i:s', $todayMondayNoon);
+    if ($dow <= 3) {
+        $nextMonday = new DateTime('next Monday 12:00:00');
+        return $nextMonday->format('Y-m-d H:i:s');
+    } else {
+        $twoMondaysAhead = (new DateTime('next Monday 12:00:00'))->modify('+1 week');
+        return $twoMondaysAhead->format('Y-m-d H:i:s');
     }
-    
-    return date('Y-m-d H:i:s', strtotime('next Monday 12:00:00'));
 }
 
 /**
