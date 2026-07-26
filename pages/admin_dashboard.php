@@ -1112,9 +1112,9 @@ $maxChartCount = max(5, max($chartCounts));
                                     <?php endif; ?>
                                 </div>
                                 <div class="driver-text">
-                                    <b><?= esc($d['name']) ?></b>
-                                    <span style="color:var(--text-muted); font-size:11px; font-weight:600;"><?= esc($d['phone'] ?: $d['email']) ?> • Vence: <?= !empty($d['subscription_expires_at']) ? date('d/m/Y', strtotime($d['subscription_expires_at'])) : 'Sin fecha' ?></span>
-                                </div>
+                                     <b><?= esc($d['name']) ?></b>
+                                     <span style="color:var(--text-muted); font-size:11px; font-weight:600;">Vence: <?= !empty($d['subscription_expires_at']) ? date('d/m/Y', strtotime($d['subscription_expires_at'])) : 'Sin fecha' ?></span>
+                                 </div>
                             </div>
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <div>
