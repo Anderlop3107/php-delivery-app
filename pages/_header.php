@@ -642,6 +642,37 @@ $user = current_user();
             } catch (e) {
                 setInterval(checkUpdates, 5000);
             }
+
+            function checkSystemNotifications() {
+                fetch('<?= delivery_app_url("pages/api_check_approval.php") ?>?_t=' + Date.now())
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.notifications && data.notifications.length > 0) {
+                        data.notifications.forEach(n => {
+                            if (window.playNotificationSound) {
+                                window.playNotificationSound('<?= delivery_app_url("assets/sounds/notification.mp3") ?>');
+                            }
+                            if (typeof Swal !== 'undefined') {
+                                Swal.fire({
+                                    icon: n.type.includes('expired') ? 'error' : 'warning',
+                                    title: n.title,
+                                    text: n.message,
+                                    confirmButtonText: 'Entendido 💳',
+                                    confirmButtonColor: '#2563eb'
+                                }).then(() => {
+                                    if (n.type.includes('expired')) window.location.reload();
+                                });
+                            } else {
+                                alert(n.title + "\n\n" + n.message);
+                                if (n.type.includes('expired')) window.location.reload();
+                            }
+                        });
+                    }
+                })
+                .catch(err => console.error("Error checking notifications:", err));
+            }
+            setInterval(checkSystemNotifications, 8000);
+            setTimeout(checkSystemNotifications, 1500);
         })();
     </script>
     <?php endif; ?>
