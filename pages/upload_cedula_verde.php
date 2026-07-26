@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         app_exec("UPDATE users SET status_doc_cedula_verde = 'pending' WHERE id = ?", 'i', [(int)$user['id']]);
     }
     
-    header('Location: profile.php?toast=updated&tab=documentos');
+    header('Location: profile.php?toast=doc_cedula_verde&tab=documentos');
     exit;
 }
 
