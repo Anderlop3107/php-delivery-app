@@ -59,18 +59,20 @@ function get_next_driver_expiration_date(): string
 }
 
 /**
- * Calcula la fecha de expiración mensual del comercio (El 01 de cada mes a las 12:00:00).
- * Si hoy es el día 1 del mes antes de las 12:00 hs, retorna hoy 12:00:00.
- * Si ya pasaron las 12:00 hs del día 1 o es cualquier otro día, retorna el 01 del próximo mes a las 12:00:00.
+ * Regla Justa de Expiración Mensual para Comercios:
+ * - Si se inscribe del día 01 al 20 del mes: Expira el 01 del Siguiente Mes a las 12:00 hs.
+ * - Si se inscribe del día 21 al último día del mes: Expira el 01 del Mes Subsecuente (Mes + 2) a las 12:00 hs.
  */
-function get_next_store_expiration_date(): string
+function get_next_store_expiration_date(?DateTimeInterface $from = null): string
 {
-    $now = time();
-    $todayFirstNoon = strtotime('first day of this month 12:00:00');
+    $now = $from ? DateTime::createFromInterface($from) : new DateTime();
+    $day = (int)$now->format('j');
     
-    if (date('j', $now) === '1' && $now < $todayFirstNoon) {
-        return date('Y-m-d H:i:s', $todayFirstNoon);
+    if ($day <= 20) {
+        $nextMonth = new DateTime('first day of next month 12:00:00');
+        return $nextMonth->format('Y-m-d H:i:s');
+    } else {
+        $twoMonthsAhead = (new DateTime('first day of next month 12:00:00'))->modify('+1 month');
+        return $twoMonthsAhead->format('Y-m-d H:i:s');
     }
-    
-    return date('Y-m-d H:i:s', strtotime('first day of next month 12:00:00'));
 }
