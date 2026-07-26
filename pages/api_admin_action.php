@@ -299,14 +299,8 @@ if ($action === 'verify_driver_payment') {
             // El 1 del próximo mes 00:00:00
             $expiresAt = date('Y-m-d H:i:s', strtotime('first day of next month 00:00:00'));
         } else {
-            // Calcular próximo lunes 10:30 AM
-            $now = time();
-            $todayMonday1030 = strtotime('this Monday 10:30:00');
-            if ($now < $todayMonday1030) {
-                $expiresAt = date('Y-m-d H:i:s', $todayMonday1030);
-            } else {
-                $expiresAt = date('Y-m-d H:i:s', strtotime('next Monday 10:30:00'));
-            }
+            // Calcular próximo lunes 12:00:00 PM (Ciclo Semanal)
+            $expiresAt = get_next_driver_expiration_date();
         }
 
         // Actualizar tabla users
@@ -431,14 +425,8 @@ if ($action === 'enable_subscription') {
         echo json_encode(['error' => 'Repartidor no encontrado.']);
         exit;
     }
-    // Calculate next Monday 10:30 AM for expiration
-    $now = time();
-    $todayMonday1030 = strtotime('this Monday 10:30:00');
-    if ($now < $todayMonday1030) {
-        $expiresAt = date('Y-m-d H:i:s', $todayMonday1030);
-    } else {
-        $expiresAt = date('Y-m-d H:i:s', strtotime('next Monday 10:30:00'));
-    }
+    // Calculate next Monday 12:00 PM for expiration
+    $expiresAt = get_next_driver_expiration_date();
     app_exec('UPDATE users SET subscription_status = \'active\', subscription_expires_at = ?, updated_at = NOW() WHERE id = ?', 'si', [$expiresAt, $driverId]);
     echo json_encode(['success' => true, 'message' => 'Suscripción habilitada correctamente.']);
     exit;

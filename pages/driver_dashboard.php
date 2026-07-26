@@ -1430,26 +1430,56 @@ if (checkbox) {
         }
     }
 
-    <?php if (!$docsApproved || $subscriptionExpired): ?>
     let approvalCheckInterval = setInterval(async () => {
         try {
             const resp = await fetch('api_check_approval.php?_t=' + Date.now());
             const res = await resp.json();
-            if (res.success && res.approved) {
-                clearInterval(approvalCheckInterval);
-                
-                // Sonar notification.mp3
-                const audio = new Audio('<?= delivery_app_url("assets/sounds/notification.mp3") ?>');
-                audio.play().catch(e => console.log("Autoplay de audio prevenido:", e));
-                
-                showActivationSuccessModal();
-showToast('¡Cuenta activada! 🎉');
+            if (res.success) {
+                // Notificaciones push / internas del sistema (10:00 AM aviso o 12:00 PM expiración)
+                if (res.notifications && res.notifications.length > 0) {
+                    res.notifications.forEach(n => {
+                        const soundUrl = '<?= delivery_app_url("assets/sounds/notification.mp3") ?>';
+                        if (window.playNotificationSound) {
+                            window.playNotificationSound(soundUrl);
+                        } else {
+                            const audio = new Audio(soundUrl);
+                            audio.play().catch(e => console.log(e));
+                        }
+
+                        if (typeof Swal !== 'undefined') {
+                            Swal.fire({
+                                icon: n.type.includes('expired') ? 'error' : 'warning',
+                                title: n.title,
+                                text: n.message,
+                                confirmButtonText: 'Entendido 💳',
+                                confirmButtonColor: '#2563eb'
+                            }).then(() => {
+                                if (n.type.includes('expired')) {
+                                    window.location.reload();
+                                }
+                            });
+                        } else {
+                            alert(n.title + "\n\n" + n.message);
+                            if (n.type.includes('expired')) window.location.reload();
+                        }
+                    });
+                }
+
+                if (res.approved && (document.getElementById('docs-block-modal') || document.getElementById('subscription-block-modal'))) {
+                    clearInterval(approvalCheckInterval);
+                    const audio = new Audio('<?= delivery_app_url("assets/sounds/notification.mp3") ?>');
+                    audio.play().catch(e => console.log("Autoplay de audio prevenido:", e));
+                    
+                    showActivationSuccessModal();
+                    showToast('¡Cuenta activada! 🎉');
+                } else if (res.subscription_expired && !document.getElementById('subscription-block-modal')) {
+                    window.location.reload();
+                }
             }
         } catch (e) {
             console.error("Error al consultar aprobación:", e);
         }
     }, 5000);
-    <?php endif; ?>
 </script>
 
 <?php require __DIR__ . '/_footer.php'; ?>
