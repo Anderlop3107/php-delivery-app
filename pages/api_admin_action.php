@@ -145,7 +145,18 @@ if ($action === 'update_subscription') {
 
     $expiresAt = null;
     if ($status === 'active') {
-        $expiresAt = date('Y-m-d H:i:s', strtotime('+' . ($days > 0 ? $days : 30) . ' days'));
+        if ($days > 0) {
+            $expiresAt = date('Y-m-d H:i:s', strtotime('+' . $days . ' days'));
+        } elseif ($role === 'local') {
+            $expiresAt = get_next_store_expiration_date();
+        } else {
+            $expiresAt = get_next_driver_expiration_date();
+        }
+    } else {
+        $expiresAt = null;
+        if ($role === 'repartidor' && $status === 'expired') {
+            app_exec("UPDATE users SET is_online = 0 WHERE id = ?", 'i', [$userId]);
+        }
     }
 
     app_exec("
