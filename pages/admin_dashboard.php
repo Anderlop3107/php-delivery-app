@@ -774,6 +774,76 @@ $maxChartCount = max(5, max($chartCounts));
             border-color: #fde68a !important;
         }
 
+        /* Success & Confirmation Modal Card (Estilo del Proyecto) */
+        .success-modal-card {
+            background: #ffffff;
+            width: 90%;
+            max-width: 340px;
+            border-radius: 28px;
+            padding: 40px 24px 30px;
+            text-align: center;
+            position: relative;
+            border-top: 6px solid var(--primary);
+            box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15);
+            animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        @keyframes modalPop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        
+        .modal-close-top { 
+            position: absolute; 
+            top: 16px; right: 16px; 
+            width: 32px; height: 32px; 
+            background: #f1f5f9; 
+            border-radius: 50%; 
+            display: flex; align-items: center; justify-content: center; 
+            cursor: pointer; 
+            border: none; 
+            font-weight: 800; 
+            color: #94a3b8; 
+            font-size: 14px;
+            transition: all 0.2s;
+        }
+        .modal-close-top:hover { background: #e2e8f0; color: #475569; }
+        .modal-close-top:active { transform: scale(0.9); }
+        
+        .status-icon-container { 
+            width: 80px; height: 80px; 
+            border-radius: 50%; 
+            background: var(--primary-soft); 
+            margin: 0 auto 20px; 
+            display: flex; align-items: center; justify-content: center; 
+            position: relative; 
+        }
+        .status-icon-waves { 
+            position: absolute; 
+            width: 100%; height: 100%; 
+            border-radius: 50%; 
+            border: 2px solid var(--primary-soft); 
+            animation: waveRipple 2s infinite; 
+        }
+        @keyframes waveRipple { from { transform: scale(1); opacity: 1; } to { transform: scale(1.6); opacity: 0; } }
+        .check-mark { font-size: 36px; color: var(--primary); font-weight: 800; z-index: 2; }
+
+        .success-modal-card h2 { font-size: 20px; font-weight: 800; margin: 0 0 8px; color: var(--text-main); letter-spacing: -0.5px; }
+        .success-modal-card p { font-size: 13.5px; color: var(--text-muted); margin: 0 0 24px; font-weight: 600; line-height: 1.4; }
+        
+        .btn-listo { 
+            background: var(--primary); 
+            color: #ffffff; 
+            width: 100%; 
+            padding: 14px; 
+            border-radius: 16px; 
+            font-weight: 800; 
+            font-size: 14px;
+            border: none; 
+            cursor: pointer; 
+            box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25); 
+            transition: all 0.2s; 
+        }
+
         /* Row subscription status borders & backgrounds */
         .table-row-item.row-expired {
             border-left: 4px solid #ef4444 !important;
@@ -1271,25 +1341,23 @@ $maxChartCount = max(5, max($chartCounts));
     <img id="lightbox-img" class="lightbox-img" src="" alt="Ampliado">
 </div>
 
-<!-- Modal Confirmación de Eliminación Repartidor (Diseño Proyecto) -->
-<div class="modal-overlay" id="delete-driver-modal" style="display:none; position:fixed; inset:0; background:rgba(15, 23, 42, 0.65); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); z-index:9999; align-items:center; justify-content:center; padding:20px;">
-    <div class="modal-card" style="background:#ffffff; border-radius:24px; max-width:420px; width:100%; padding:28px; box-shadow:0 25px 50px -12px rgba(0, 0, 0, 0.25); border:1px solid rgba(226, 232, 240, 0.8); text-align:center; position:relative;">
-        <button type="button" onclick="closeDeleteDriverModal()" style="position:absolute; top:16px; right:16px; background:none; border:none; font-size:18px; color:#94a3b8; cursor:pointer; font-weight:700;">✕</button>
-        <div style="width:68px; height:68px; background:#fee2e2; border-radius:20px; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:32px; box-shadow:0 8px 16px rgba(239, 68, 68, 0.15);">
-            🗑️
+<!-- Modal Confirmación de Eliminación Repartidor (Estilo success-modal-card) -->
+<div id="delete-driver-modal" class="modal-overlay" style="display: none; z-index: 9999;">
+    <div class="modal-card success-modal-card" style="border-top: 6px solid #dc2626;">
+        <button type="button" class="modal-close-top" onclick="closeDeleteDriverModal()">✕</button>
+        <div class="status-icon-container" style="background:#fee2e2;">
+            <div class="status-icon-waves" style="border-color:#fca5a5;"></div>
+            <span class="check-mark" style="color:#dc2626; font-size:32px;">🗑️</span>
         </div>
-        <h3 style="font-size:20px; font-weight:800; color:#0f172a; margin-bottom:8px; font-family:'Plus Jakarta Sans', sans-serif;" id="delete-driver-modal-title">
-            ¿Eliminar Repartidor?
-        </h3>
-        <p style="font-size:13px; color:#64748b; line-height:1.5; margin-bottom:24px; font-weight:500;" id="delete-driver-modal-msg">
-            ¿Estás seguro de que deseas eliminar permanentemente la cuenta de este repartidor? Una vez eliminado, no podrá volver a acceder a la aplicación.
-        </p>
-        <div style="display:flex; gap:12px;">
-            <button type="button" onclick="closeDeleteDriverModal()" style="flex:1; padding:12px; border-radius:12px; border:1px solid #cbd5e1; background:#f8fafc; color:#475569; font-weight:700; font-size:13px; cursor:pointer; transition:all 0.2s;">
+        <h2 id="delete-driver-modal-title">¿Eliminar Repartidor?</h2>
+        <p id="delete-driver-modal-msg">¿Estás seguro de que deseas eliminar permanentemente la cuenta de este repartidor? Una vez eliminado, no podrá volver a acceder a la aplicación.</p>
+        
+        <div style="display:flex; gap:10px; width:100%;">
+            <button type="button" class="btn-listo" onclick="closeDeleteDriverModal()" style="background:#f1f5f9; color:#475569; box-shadow:none; flex:1;">
                 Cancelar
             </button>
-            <button type="button" id="btn-confirm-delete-driver-act" style="flex:1; padding:12px; border-radius:12px; border:none; background:#dc2626; color:#ffffff; font-weight:800; font-size:13px; cursor:pointer; box-shadow:0 4px 14px rgba(220, 38, 38, 0.3); transition:all 0.2s;">
-                Sí, Eliminar 🗑️
+            <button type="button" id="btn-confirm-delete-driver-act" class="btn-listo" style="background:#dc2626; color:#ffffff; box-shadow:0 8px 20px rgba(220, 38, 38, 0.3); flex:1.2;">
+                Sí, Eliminar
             </button>
         </div>
     </div>
