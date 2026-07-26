@@ -639,6 +639,55 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
         .map-control-btn:hover {
             background: #f8fafc;
         }
+        /* Custom circular profile photo driver markers */
+        .driver-avatar-marker {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            border: 3px solid #ffffff;
+            box-shadow: 0 4px 15px rgba(100, 116, 139, 0.3);
+            background-size: cover;
+            background-position: center;
+            background-repeat: no-repeat;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.25s ease-out;
+            z-index: 50;
+        }
+        .driver-avatar-marker:hover {
+            transform: scale(1.15);
+            z-index: 60;
+            border-color: var(--primary);
+        }
+        .driver-avatar-marker::after {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            right: -1px;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+        }
+        .driver-avatar-marker.online::after {
+            background: #10b981;
+            box-shadow: 0 0 8px #10b981;
+        }
+        .driver-avatar-marker.delivering::after {
+            background: #f59e0b;
+            box-shadow: 0 0 10px #f59e0b;
+            animation: markerPulse 1.5s infinite;
+        }
+        .driver-avatar-marker.delivering {
+            border-color: #f59e0b;
+            box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+        }
+        @keyframes markerPulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
         .map-bottom-meta {
             display: flex;
             justify-content: space-between;
@@ -2001,7 +2050,9 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             document.getElementById('subscription-card-box').scrollIntoView({ behavior: 'smooth' });
         }
 
-        // Chequear estado en vivo del conductor
+        let liveDriverMarker = null;
+        let driverHasCenteredMap = false;
+
         // Chequear estado en vivo del conductor en tiempo real
         function updateDriverLiveStatus() {
             const formData = new FormData();
@@ -2016,8 +2067,11 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             .then(res => {
                 if (res.success) {
                     const badge = document.getElementById('driver-live-status-badge');
-                    if (res.is_online === 1) {
-                        if (res.active_delivery_count > 0) {
+                    const isOnline = res.is_online === 1;
+                    const activeCount = parseInt(res.active_delivery_count || 0);
+
+                    if (isOnline) {
+                        if (activeCount > 0) {
                             badge.innerHTML = 'En curso 🟠';
                             badge.className = 'status-pill pending';
                         } else {
@@ -2027,6 +2081,54 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                     } else {
                         badge.innerHTML = 'Desconectado 🔴';
                         badge.className = 'status-pill rejected';
+                    }
+
+                    // Actualizar o crear marcador en el mapa en tiempo real
+                    const lat = parseFloat(res.latitude);
+                    const lng = parseFloat(res.longitude);
+
+                    if (map && isOnline && !isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+                        const isDelivering = activeCount > 0;
+                        const statusText = isDelivering ? '🟠 En entrega (Pedido en curso)' : '🟢 Conectado y Disponible';
+                        const avatarUrl = res.avatar_path ? '<?= delivery_app_url() ?>/' + res.avatar_path : 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80';
+
+                        if (!liveDriverMarker) {
+                            const el = document.createElement('div');
+                            el.className = 'driver-avatar-marker ' + (isDelivering ? 'delivering' : 'online');
+                            el.style.backgroundImage = `url('${avatarUrl}')`;
+
+                            const popup = new mapboxgl.Popup({ offset: 15 }).setHTML(`
+                                <div style="font-family:'Plus Jakarta Sans'; font-size:12px; padding:4px;">
+                                    <b style="font-size:13px; color:#0f172a;">${escapeHtml(res.name)}</b><br>
+                                    <span style="color:${isDelivering ? '#f59e0b' : '#10b981'}; font-weight:700;">${statusText}</span><br>
+                                    <a href="https://www.google.com/maps/search/?api=1&query=${lat},${lng}" target="_blank" style="color:var(--primary); text-decoration:none; display:inline-block; margin-top:6px; font-weight:700;">
+                                        Ver en Google Maps &rarr;
+                                    </a>
+                                </div>
+                            `);
+
+                            liveDriverMarker = new mapboxgl.Marker(el)
+                                .setLngLat([lng, lat])
+                                .setPopup(popup)
+                                .addTo(map);
+
+                            if (!driverHasCenteredMap) {
+                                map.easeTo({ center: [lng, lat], zoom: 14, duration: 1000 });
+                                driverHasCenteredMap = true;
+                            }
+                        } else {
+                            liveDriverMarker.setLngLat([lng, lat]);
+                            const markerEl = liveDriverMarker.getElement();
+                            if (markerEl) {
+                                markerEl.className = 'driver-avatar-marker ' + (isDelivering ? 'delivering' : 'online');
+                                markerEl.style.backgroundImage = `url('${avatarUrl}')`;
+                            }
+                        }
+                    } else {
+                        if (liveDriverMarker) {
+                            liveDriverMarker.remove();
+                            liveDriverMarker = null;
+                        }
                     }
                 }
             })

@@ -841,7 +841,7 @@ if ($action === 'get_driver_live_status') {
         exit;
     }
     $driver = app_one("
-        SELECT is_online,
+        SELECT id, name, logo_path, avatar_path, latitude, longitude, is_online, last_ping, ubicacion_actualizada_en,
                (SELECT COUNT(*) FROM deliveries WHERE repartidor_user_id = users.id AND status NOT IN ('entregado', 'cancelado', 'rechazado')) as active_delivery_count
         FROM users
         WHERE id = ? AND role = 'repartidor'
@@ -853,10 +853,18 @@ if ($action === 'get_driver_live_status') {
         exit;
     }
     
+    $avatar = !empty($driver['logo_path']) ? $driver['logo_path'] : (!empty($driver['avatar_path']) ? $driver['avatar_path'] : null);
+    
     echo json_encode([
         'success' => true,
+        'id' => (int)$driver['id'],
+        'name' => $driver['name'],
+        'avatar_path' => $avatar,
+        'latitude' => $driver['latitude'] !== null ? (float)$driver['latitude'] : null,
+        'longitude' => $driver['longitude'] !== null ? (float)$driver['longitude'] : null,
         'is_online' => (int)$driver['is_online'],
-        'active_delivery_count' => (int)$driver['active_delivery_count']
+        'active_delivery_count' => (int)$driver['active_delivery_count'],
+        'last_ping' => $driver['last_ping'] ?? $driver['ubicacion_actualizada_en']
     ]);
     exit;
 }
