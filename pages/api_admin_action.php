@@ -634,6 +634,45 @@ if ($action === 'apply_fair_rule_driver') {
     exit;
 }
 
+if ($action === 'delete_driver') {
+    $driverId = (int)($_POST['driver_id'] ?? 0);
+    if ($driverId <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'ID de repartidor no válido.']);
+        exit;
+    }
+
+    $driver = app_one("SELECT id, name FROM users WHERE id = ? AND role = 'repartidor'", 'i', [$driverId]);
+    if (!$driver) {
+        http_response_code(404);
+        echo json_encode(['error' => 'El repartidor no existe o ya fue eliminado.']);
+        exit;
+    }
+
+    // 1. Desvincular entregas para mantener reportes de comercios
+    app_exec("UPDATE deliveries SET driver_user_id = NULL WHERE driver_user_id = ?", 'i', [$driverId]);
+
+    // 2. Eliminar comprobantes de pago de la base de datos
+    app_exec("DELETE FROM driver_payments WHERE driver_user_id = ?", 'i', [$driverId]);
+
+    // 3. Eliminar notificaciones push del repartidor
+    app_exec("DELETE FROM app_notifications WHERE user_id = ?", 'i', [$driverId]);
+
+    // 4. Eliminar ubicaciones en vivo
+    try {
+        app_exec("DELETE FROM driver_locations WHERE driver_user_id = ?", 'i', [$driverId]);
+    } catch (Throwable $e) {}
+
+    // 5. Eliminar la cuenta del usuario repartidor definitivamente
+    app_exec("DELETE FROM users WHERE id = ? AND role = 'repartidor'", 'i', [$driverId]);
+
+    echo json_encode([
+        'success' => true,
+        'message' => "La cuenta del repartidor '{$driver['name']}' ha sido eliminada permanentemente del sistema."
+    ]);
+    exit;
+}
+
 if ($action === 'get_driver_kpis') {
     $driverId = (int)($_POST['driver_id'] ?? 0);
     $range = $_POST['range'] ?? 'week';
