@@ -972,8 +972,21 @@ require __DIR__ . '/_header.php';
         const modal = document.getElementById('success-modal');
         const titleEl = document.getElementById('success-modal-title');
         const msgEl = document.getElementById('success-modal-message');
+        const toastVal = urlParams.get('toast');
         
-        if (urlParams.get('toast') === 'logo') {
+        if (toastVal === 'doc_ci') {
+            titleEl.innerText = '¡Cédula de Identidad enviada! 📄';
+            msgEl.innerText = 'Tu Cédula de Identidad fue cargada con éxito y está en revisión por el administrador.';
+        } else if (toastVal === 'doc_licencia') {
+            titleEl.innerText = '¡Registro de Conducir enviado! 🪪';
+            msgEl.innerText = 'Tu Registro de Conducir / Licencia fue cargado con éxito y está en revisión por el administrador.';
+        } else if (toastVal === 'doc_habilitacion') {
+            titleEl.innerText = '¡Habilitación Municipal enviada! 📑';
+            msgEl.innerText = 'Tu Habilitación Municipal fue cargada con éxito y está en revisión por el administrador.';
+        } else if (toastVal === 'doc_cedula_verde') {
+            titleEl.innerText = '¡Cédula Verde enviada! 🚙';
+            msgEl.innerText = 'Tu Cédula Verde fue cargada con éxito y está en revisión por el administrador.';
+        } else if (toastVal === 'logo') {
             titleEl.innerText = '¡Logotipo actualizado!';
             msgEl.innerText = 'El logotipo de tu negocio ha sido actualizado con éxito.';
         } else {
@@ -983,11 +996,14 @@ require __DIR__ . '/_header.php';
         
         modal.style.display = 'flex';
         
-        // Reproducir sonido de éxito
-        const successAudio = new Audio('<?= esc(delivery_app_url("uploads/sounds/success.mp3")) ?>');
-        successAudio.play().catch(err => {
-            console.log("Audio playback prevented:", err);
-        });
+        // Reproducir sonido de éxito optimizado
+        const soundUrl = '<?= esc(delivery_app_url("uploads/sounds/success.mp3")) ?>';
+        if (window.playNotificationSound) {
+            window.playNotificationSound(soundUrl);
+        } else {
+            const successAudio = new Audio(soundUrl);
+            successAudio.play().catch(err => console.log("Audio playback prevented:", err));
+        }
         
         // El modal dura exactamente 5 segundos
         setTimeout(() => {
@@ -1002,6 +1018,15 @@ require __DIR__ . '/_header.php';
         if (message) document.getElementById('success-modal-message').innerText = message;
         isSubscriptionApprovedModal = isSubApproved;
         document.getElementById('success-modal').style.display = 'flex';
+
+        // Reproducir sonido al abrir modal de éxito
+        const soundUrl = '<?= esc(delivery_app_url("uploads/sounds/success.mp3")) ?>';
+        if (window.playNotificationSound) {
+            window.playNotificationSound(soundUrl);
+        } else {
+            const successAudio = new Audio(soundUrl);
+            successAudio.play().catch(err => console.log("Audio playback prevented:", err));
+        }
     }
 
     function closeSuccessModal() {

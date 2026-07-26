@@ -511,6 +511,17 @@ require __DIR__ . '/_header.php';
         </a>
     </div>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const soundUrl = '<?= esc(delivery_app_url("assets/sounds/notification.mp3")) ?>';
+    if (window.playNotificationSound) {
+        window.playNotificationSound(soundUrl);
+    } else {
+        const audio = new Audio(soundUrl);
+        audio.play().catch(e => console.log(e));
+    }
+});
+</script>
 <?php elseif ($subscriptionExpired): ?>
 <div class="subscription-block-overlay" id="subscription-block-modal" style="
     position: fixed; inset: 0; z-index: 100000;
@@ -1372,6 +1383,13 @@ function showToast(message) {
     // --- LÓGICA DE MONITOREO DE APROBACIÓN EN VIVO (POLLING) ---
     function showActivationSuccessModal() {
         document.getElementById('activation-success-modal').style.display = 'flex';
+        const soundUrl = '<?= esc(delivery_app_url("uploads/sounds/success.mp3")) ?>';
+        if (window.playNotificationSound) {
+            window.playNotificationSound(soundUrl);
+        } else {
+            const audio = new Audio(soundUrl);
+            audio.play().catch(e => console.log(e));
+        }
     }
 
     async function acceptActivation() {

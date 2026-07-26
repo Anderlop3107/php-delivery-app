@@ -6,8 +6,8 @@ echo "=========================================================\n";
 echo "    INICIANDO SIMULACIÓN DE PRUEBAS E2E (END-TO-END)     \n";
 echo "=========================================================\n\n";
 
-$localId = 1;      // ID del Local de pruebas
-$driverId = 3;     // ID del Conductor Carlos Lopez
+$localId = 10;      // ID del Local Churrasquito Power (ID 10)
+$driverId = 12;     // ID del Conductor Carlos Lopez (ID 12)
 
 // ============================================================================
 // PRUEBA 1: Flujo Normal de Pedido (Creación -> Aceptación -> Retiro -> Entrega)
