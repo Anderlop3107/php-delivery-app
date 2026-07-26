@@ -1179,13 +1179,6 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                             <?php endif; ?>
                         </div>
 
-                        <!-- Banner Informativo Regla Justa -->
-                        <div style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 10px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; line-height: 1.4;">
-                            💡 <b>Regla Justa de Suscripción:</b><br>
-                            • Inscripción del 01 al 20: Vence el 01 del mes siguiente.<br>
-                            • Inscripción del 21 al 31: Vence el 01 del mes subsecuente (+1 mes gratis).
-                        </div>
-
                         <!-- Acciones Rápidas de Control Manual -->
                         <div style="display:flex; flex-direction:column; gap:8px; margin-top:2px;">
                             <button class="btn-sub-verify btn-approve" type="button" onclick="applyFairRuleStore()" style="width:100%; font-size:12px; padding:10px; background:var(--primary); box-shadow:0 4px 10px rgba(37,99,235,0.25);">

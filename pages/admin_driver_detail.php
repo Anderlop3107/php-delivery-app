@@ -1180,13 +1180,6 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                             <?php endif; ?>
                         </div>
 
-                        <!-- Banner Informativo Regla Justa Semanal -->
-                        <div style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 10px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; line-height: 1.4;">
-                            💡 <b>Regla Justa Semanal:</b><br>
-                            • Inscripción Lunes a Miércoles: Vence el Próximo Lunes (12:00 hs).<br>
-                            • Inscripción Jueves a Domingo: Vence el Lunes Subsecuente (+1 semana gratis por fin de semana).
-                        </div>
-
                         <!-- Acciones Rápidas de Control Manual -->
                         <div style="display:flex; flex-direction:column; gap:8px; margin-top:2px;">
                             <button class="btn-sub-verify btn-approve" type="button" onclick="applyFairRuleDriver()" style="width:100%; font-size:12px; padding:10px; background:var(--primary); box-shadow:0 4px 10px rgba(37,99,235,0.25);">
