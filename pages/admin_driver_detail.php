@@ -1082,6 +1082,10 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                             <button type="submit" id="btn-save-account" style="width: 100%; padding: 12px; margin-top: 10px; font-size: 13px; font-weight: 800; border: none; border-radius: 12px; background: var(--primary); color: #ffffff; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);">
                                 💾 Guardar Cambios
                             </button>
+
+                            <button type="button" onclick="deleteDriverAccount()" style="width: 100%; padding: 12px; margin-top: 8px; font-size: 13px; font-weight: 800; border: none; border-radius: 12px; background: #dc2626; color: #ffffff; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.25);">
+                                🗑️ Eliminar Repartidor
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -2139,6 +2143,31 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                 }
             })
             .catch(err => console.error(err));
+        }
+
+        function deleteDriverAccount() {
+            if (!confirm('⚠️ ATENCIÓN: ¿Estás seguro de que deseas eliminar permanentemente la cuenta de este repartidor?\n\nUna vez eliminado, no podrá volver a ingresar a la aplicación a menos que registres un nuevo repartidor.')) {
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('action', 'delete_driver');
+            formData.append('driver_id', driverId);
+
+            fetch('api_admin_action.php', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    alert(res.message);
+                    window.location.href = 'admin_dashboard.php';
+                } else {
+                    alert('Error: ' + (res.error || 'No se pudo eliminar el repartidor.'));
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Error al conectar con el servidor.');
+            });
         }
 
         let liveDriverMarker = null;

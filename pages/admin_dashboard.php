@@ -1118,12 +1118,15 @@ $maxChartCount = max(5, max($chartCounts));
                             </div>
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <div>
-                                    <select class="status-pill-select status-select-<?= esc($dStatus) ?>" onchange="updateDriverSubscription(<?= (int)$d['id']; ?>, this.value)">
+                                    <select class="status-pill-select status-select-<?= esc($dStatus) ?>" onchange="updateDriverSubscription(<?= (int)$d['id']; ?>, this.value); event.stopPropagation();">
                                         <option value="active"  <?= $dStatus === 'active'  ? 'selected' : '' ?>>Activo (Semanal)</option>
                                         <option value="expired" <?= $dStatus === 'expired' ? 'selected' : '' ?>>Expirado</option>
                                         <option value="pending" <?= $dStatus === 'pending' ? 'selected' : '' ?>>Pendiente</option>
                                     </select>
                                 </div>
+                                <button type="button" onclick="quickDeleteDriver(<?= (int)$d['id']; ?>, '<?= esc($d['name']); ?>', event)" title="Eliminar Repartidor" style="background:#fee2e2; color:#ef4444; border:none; border-radius:8px; padding:6px 9px; font-size:12px; font-weight:700; cursor:pointer;">
+                                    🗑️
+                                </button>
                                 <div class="btn-view-chevron">&rsaquo;</div>
                             </div>
                         </div>
@@ -1939,6 +1942,31 @@ $maxChartCount = max(5, max($chartCounts));
             else { alert('Error: ' + data.error); }
         })
         .catch(err => { console.error(err); alert('Error de conexión.'); });
+    }
+
+    function quickDeleteDriver(driverId, driverName, event) {
+        if (event) event.stopPropagation();
+        if (!confirm('⚠️ ATENCIÓN: ¿Deseas eliminar permanentemente la cuenta del repartidor "' + driverName + '"?\n\nUna vez eliminado, no podrá volver a ingresar a la app.')) {
+            return;
+        }
+        const formData = new FormData();
+        formData.append('action', 'delete_driver');
+        formData.append('driver_id', driverId);
+
+        fetch('api_admin_action.php', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success) {
+                alert(res.message);
+                location.reload();
+            } else {
+                alert('Error: ' + (res.error || 'No se pudo eliminar el repartidor.'));
+            }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Error al conectar con el servidor.');
+        });
     }
 </script>
 <script>
