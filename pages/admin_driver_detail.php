@@ -1760,6 +1760,15 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             if (title) document.getElementById('success-modal-title').textContent = title;
             if (message) document.getElementById('success-modal-message').textContent = message;
             document.getElementById('success-modal').style.display = 'flex';
+            
+            // Reproducir sonido de confirmación con Web Audio API gain
+            const soundUrl = '<?= esc(delivery_app_url("uploads/sounds/success.mp3")) ?>';
+            if (window.playNotificationSound) {
+                window.playNotificationSound(soundUrl);
+            } else {
+                const audio = new Audio(soundUrl);
+                audio.play().catch(e => console.log("Audio playback prevented:", e));
+            }
         }
 
         function closeSuccessModal() {
@@ -1820,7 +1829,9 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             .then(res => res.json())
             .then(res => {
                 if (res.success) {
-                    showSuccessModal('¡Comprobante verificado!', res.message || 'El estado de la suscripción ha sido actualizado con éxito.');
+                    const isApproved = status === 'approved';
+                    const title = isApproved ? '¡Comprobante Aprobado! 💳' : '¡Comprobante Rechazado! ❌';
+                    showSuccessModal(title, res.message || 'El estado de la suscripción ha sido actualizado con éxito.');
                 } else {
                     alert('Error: ' + (res.error || 'No se pudo procesar la verificación.'));
                 }
@@ -1850,8 +1861,7 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             .then(res => res.json())
             .then(res => {
                 if (res.success) {
-                    alert(`${res.message} Vencimiento postergado hasta: ${res.expires_at}`);
-                    window.location.reload();
+                    showSuccessModal('¡Prórroga Otorgada! ⏰', `${res.message} Vencimiento postergado hasta: ${res.expires_at}`);
                 } else {
                     alert(res.error || 'Error al extender la prórroga.');
                 }
@@ -1902,8 +1912,18 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             .then(res => res.json())
             .then(data => {
                 if (data.success) {
-                    alert(data.message);
-                    window.location.reload();
+                    closeDocModal();
+                    let docName = 'Documento';
+                    if (currentDocType === 'ci') docName = 'Cédula de Identidad';
+                    else if (currentDocType === 'licencia') docName = 'Registro de Conducir';
+                    else if (currentDocType === 'habilitacion') docName = 'Habilitación Vehicular';
+                    else if (currentDocType === 'cedula_verde') docName = 'Cédula Verde';
+
+                    const isApproved = action === 'approve_document';
+                    const title = isApproved ? `¡${docName} Aprobado! ✓` : `¡${docName} Rechazado! ❌`;
+                    const defaultMsg = isApproved ? `El documento ${docName} fue verificado y aprobado con éxito.` : `El documento ${docName} ha sido rechazado.`;
+                    
+                    showSuccessModal(title, data.message || defaultMsg);
                 } else {
                     alert(data.error || 'Error al actualizar documento.');
                 }
