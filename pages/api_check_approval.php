@@ -18,27 +18,6 @@ if (($userData['subscription_status'] ?? '') === 'active' && !empty($userData['s
     }
 }
 
-// Para locales, la aprobación depende únicamente de que la suscripción no esté vencida
-if ($user['role'] === 'local') {
-    $approved = !$subscriptionExpired;
-    echo json_encode([
-        'success' => true,
-        'approved' => $approved,
-        'subscription_expired' => $subscriptionExpired
-    ]);
-    exit;
-}
-
-// Para repartidores, requiere documentos aprobados y suscripción activa
-$docsApproved = (
-    ($userData['status_doc_ci'] ?? 'none') === 'approved' &&
-    ($userData['status_doc_licencia'] ?? 'none') === 'approved' &&
-    ($userData['status_doc_habilitacion'] ?? 'none') === 'approved' &&
-    ($userData['status_doc_cedula_verde'] ?? 'none') === 'approved'
-);
-
-$approved = ($docsApproved && !$subscriptionExpired);
-
 $notifications = app_all("
     SELECT id, type, title, message FROM app_notifications 
     WHERE user_id = ? AND is_read = 0 
@@ -48,6 +27,18 @@ $notifications = app_all("
 if (!empty($notifications)) {
     app_exec("UPDATE app_notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0", 'i', [(int)$user['id']]);
 }
+
+$docsApproved = true;
+if ($user['role'] === 'repartidor') {
+    $docsApproved = (
+        ($userData['status_doc_ci'] ?? 'none') === 'approved' &&
+        ($userData['status_doc_licencia'] ?? 'none') === 'approved' &&
+        ($userData['status_doc_habilitacion'] ?? 'none') === 'approved' &&
+        ($userData['status_doc_cedula_verde'] ?? 'none') === 'approved'
+    );
+}
+
+$approved = ($docsApproved && !$subscriptionExpired);
 
 echo json_encode([
     'success' => true,

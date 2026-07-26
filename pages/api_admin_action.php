@@ -296,8 +296,8 @@ if ($action === 'verify_driver_payment') {
 
     if ($status === 'approved') {
         if ($driver['role'] === 'local') {
-            // El 1 del próximo mes 00:00:00
-            $expiresAt = date('Y-m-d H:i:s', strtotime('first day of next month 00:00:00'));
+            // El 01 del próximo mes 12:00:00 (Ciclo Mensual)
+            $expiresAt = get_next_store_expiration_date();
         } else {
             // Calcular próximo lunes 12:00:00 PM (Ciclo Semanal)
             $expiresAt = get_next_driver_expiration_date();

@@ -57,3 +57,20 @@ function get_next_driver_expiration_date(): string
     
     return date('Y-m-d H:i:s', strtotime('next Monday 12:00:00'));
 }
+
+/**
+ * Calcula la fecha de expiración mensual del comercio (El 01 de cada mes a las 12:00:00).
+ * Si hoy es el día 1 del mes antes de las 12:00 hs, retorna hoy 12:00:00.
+ * Si ya pasaron las 12:00 hs del día 1 o es cualquier otro día, retorna el 01 del próximo mes a las 12:00:00.
+ */
+function get_next_store_expiration_date(): string
+{
+    $now = time();
+    $todayFirstNoon = strtotime('first day of this month 12:00:00');
+    
+    if (date('j', $now) === '1' && $now < $todayFirstNoon) {
+        return date('Y-m-d H:i:s', $todayFirstNoon);
+    }
+    
+    return date('Y-m-d H:i:s', strtotime('first day of next month 12:00:00'));
+}
