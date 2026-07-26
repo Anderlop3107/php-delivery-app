@@ -1271,6 +1271,30 @@ $maxChartCount = max(5, max($chartCounts));
     <img id="lightbox-img" class="lightbox-img" src="" alt="Ampliado">
 </div>
 
+<!-- Modal Confirmación de Eliminación Repartidor (Diseño Proyecto) -->
+<div class="modal-overlay" id="delete-driver-modal" style="display:none; position:fixed; inset:0; background:rgba(15, 23, 42, 0.65); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); z-index:9999; align-items:center; justify-content:center; padding:20px;">
+    <div class="modal-card" style="background:#ffffff; border-radius:24px; max-width:420px; width:100%; padding:28px; box-shadow:0 25px 50px -12px rgba(0, 0, 0, 0.25); border:1px solid rgba(226, 232, 240, 0.8); text-align:center; position:relative;">
+        <button type="button" onclick="closeDeleteDriverModal()" style="position:absolute; top:16px; right:16px; background:none; border:none; font-size:18px; color:#94a3b8; cursor:pointer; font-weight:700;">✕</button>
+        <div style="width:68px; height:68px; background:#fee2e2; border-radius:20px; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; font-size:32px; box-shadow:0 8px 16px rgba(239, 68, 68, 0.15);">
+            🗑️
+        </div>
+        <h3 style="font-size:20px; font-weight:800; color:#0f172a; margin-bottom:8px; font-family:'Plus Jakarta Sans', sans-serif;" id="delete-driver-modal-title">
+            ¿Eliminar Repartidor?
+        </h3>
+        <p style="font-size:13px; color:#64748b; line-height:1.5; margin-bottom:24px; font-weight:500;" id="delete-driver-modal-msg">
+            ¿Estás seguro de que deseas eliminar permanentemente la cuenta de este repartidor? Una vez eliminado, no podrá volver a acceder a la aplicación.
+        </p>
+        <div style="display:flex; gap:12px;">
+            <button type="button" onclick="closeDeleteDriverModal()" style="flex:1; padding:12px; border-radius:12px; border:1px solid #cbd5e1; background:#f8fafc; color:#475569; font-weight:700; font-size:13px; cursor:pointer; transition:all 0.2s;">
+                Cancelar
+            </button>
+            <button type="button" id="btn-confirm-delete-driver-act" style="flex:1; padding:12px; border-radius:12px; border:none; background:#dc2626; color:#ffffff; font-weight:800; font-size:13px; cursor:pointer; box-shadow:0 4px 14px rgba(220, 38, 38, 0.3); transition:all 0.2s;">
+                Sí, Eliminar 🗑️
+            </button>
+        </div>
+    </div>
+</div>
+
 <script>
     // Configuración de Mapbox
     const tokenPart1 = 'pk.eyJ1IjoiYW5kZXJsb3AiLCJhIjoiY21uMGJ1ZXhzMGkxMDJycHRuYzEwcmp4NCJ9.';
@@ -1944,29 +1968,56 @@ $maxChartCount = max(5, max($chartCounts));
         .catch(err => { console.error(err); alert('Error de conexión.'); });
     }
 
+    let targetDriverToDeleteId = null;
+
     function quickDeleteDriver(driverId, driverName, event) {
         if (event) event.stopPropagation();
-        if (!confirm('⚠️ ATENCIÓN: ¿Deseas eliminar permanentemente la cuenta del repartidor "' + driverName + '"?\n\nUna vez eliminado, no podrá volver a ingresar a la app.')) {
-            return;
-        }
-        const formData = new FormData();
-        formData.append('action', 'delete_driver');
-        formData.append('driver_id', driverId);
+        targetDriverToDeleteId = driverId;
+        document.getElementById('delete-driver-modal-title').textContent = '¿Eliminar a ' + driverName + '?';
+        document.getElementById('delete-driver-modal-msg').textContent = '¿Estás seguro de que deseas eliminar permanentemente la cuenta de "' + driverName + '"? Una vez eliminado, no podrá volver a acceder a la aplicación.';
+        document.getElementById('delete-driver-modal').style.display = 'flex';
 
-        fetch('api_admin_action.php', { method: 'POST', body: formData })
-        .then(res => res.json())
-        .then(res => {
-            if (res.success) {
-                alert(res.message);
-                location.reload();
-            } else {
-                alert('Error: ' + (res.error || 'No se pudo eliminar el repartidor.'));
-            }
-        })
-        .catch(err => {
-            console.error(err);
-            alert('Error al conectar con el servidor.');
-        });
+        if (window.playNotificationSound) {
+            window.playNotificationSound('<?= delivery_app_url("assets/sounds/notification.mp3") ?>');
+        }
+    }
+
+    function closeDeleteDriverModal() {
+        document.getElementById('delete-driver-modal').style.display = 'none';
+    }
+
+    const confirmDeleteActBtn = document.getElementById('btn-confirm-delete-driver-act');
+    if (confirmDeleteActBtn) {
+        confirmDeleteActBtn.onclick = function() {
+            if (!targetDriverToDeleteId) return;
+            const btn = this;
+            btn.disabled = true;
+            btn.textContent = 'Eliminando...';
+
+            const formData = new FormData();
+            formData.append('action', 'delete_driver');
+            formData.append('driver_id', targetDriverToDeleteId);
+
+            fetch('api_admin_action.php', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    closeDeleteDriverModal();
+                    alert(res.message);
+                    location.reload();
+                } else {
+                    alert('Error: ' + (res.error || 'No se pudo eliminar el repartidor.'));
+                    btn.disabled = false;
+                    btn.textContent = 'Sí, Eliminar 🗑️';
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert('Error al conectar con el servidor.');
+                btn.disabled = false;
+                btn.textContent = 'Sí, Eliminar 🗑️';
+            });
+        };
     }
 </script>
 <script>
