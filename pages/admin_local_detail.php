@@ -1166,7 +1166,7 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
 
                     <!-- Sub-Card: Control de Suscripción -->
                     <div id="subscription-card-box" style="display:flex; flex-direction:column; gap:14px; border-top:1px solid #f1f5f9; padding-top:20px;">
-                        <h3>💳 Control de Suscripción</h3>
+                        <h3>💳 Control Manual de Suscripción</h3>
                         
                         <div style="font-size:12px; color:var(--text-muted); font-weight:700;">
                             Estado: 
@@ -1174,8 +1174,45 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                             <?php if ($localData['subscription_expires_at']): ?>
                                 <span style="display:block; margin-top:4px; font-weight:500;">📅 Vence: <?= date('d/m/Y H:i', strtotime($localData['subscription_expires_at'])) ?> (UTC-3)</span>
                             <?php else: ?>
-                                <span style="display:block; margin-top:4px; font-weight:500;">📅 Vence: Sin registro (Se vence el 01 de cada mes)</span>
+                                <span style="display:block; margin-top:4px; font-weight:500;">📅 Vence: Sin registro (Regla justa el 01 de cada mes)</span>
                             <?php endif; ?>
+                        </div>
+
+                        <!-- Banner Informativo Regla Justa -->
+                        <div style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 10px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; line-height: 1.4;">
+                            💡 <b>Regla Justa de Suscripción:</b><br>
+                            • Inscripción del 01 al 20: Vence el 01 del mes siguiente.<br>
+                            • Inscripción del 21 al 31: Vence el 01 del mes subsecuente (+1 mes gratis).
+                        </div>
+
+                        <!-- Acciones Rápidas de Control Manual -->
+                        <div style="display:flex; flex-direction:column; gap:8px; margin-top:2px;">
+                            <button class="btn-sub-verify btn-approve" type="button" onclick="applyFairRuleStore()" style="width:100%; font-size:12px; padding:10px;">
+                                📅 Aplicar Regla Justa (01 de Mes)
+                            </button>
+                            <button type="button" onclick="addStoreMonth(1)" style="width:100%; background:#059669; color:#ffffff; border:none; border-radius:10px; padding:10px; font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 4px 10px rgba(5,150,105,0.2);">
+                                ➕ Otorgar +1 Mes Adicional
+                            </button>
+                            <?php if (($localData['subscription_status'] ?? '') === 'active'): ?>
+                                <button type="button" onclick="toggleStoreStatus('expired')" style="width:100%; background:#dc2626; color:#ffffff; border:none; border-radius:10px; padding:10px; font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 4px 10px rgba(220,38,38,0.2);">
+                                    🔴 Suspender / Expirar Suscripción
+                                </button>
+                            <?php else: ?>
+                                <button type="button" onclick="toggleStoreStatus('active')" style="width:100%; background:#2563eb; color:#ffffff; border:none; border-radius:10px; padding:10px; font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 4px 10px rgba(37,99,235,0.2);">
+                                    🟢 Activar Suscripción
+                                </button>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Ajuste Personalizado de Fecha -->
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 14px; margin-top: 4px;">
+                            <span class="prorroga-title" style="margin-bottom:6px; display:block; font-size:11px; font-weight:800; color:#475569;">📆 Vencimiento Personalizado</span>
+                            <div style="display:flex; gap:6px;">
+                                <input type="datetime-local" id="custom-store-exp-date" style="flex:1; border:1px solid #cbd5e1; border-radius:8px; padding:6px 10px; font-size:11px; font-weight:600; background:#ffffff;" value="<?= $localData['subscription_expires_at'] ? date('Y-m-d\TH:i', strtotime($localData['subscription_expires_at'])) : '' ?>">
+                                <button type="button" onclick="setCustomStoreExpiration()" style="background:#475569; color:#ffffff; border:none; border-radius:8px; padding:6px 12px; font-size:11px; font-weight:700; cursor:pointer;">
+                                    Guardar
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Comprobante subido -->
@@ -1185,35 +1222,18 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                                 <div style="position:absolute; bottom:6px; right:6px; background:rgba(0,0,0,0.6); color:#fff; font-size:9px; padding:3px 6px; border-radius:4px; font-weight:700;">AMPLIAR</div>
                                 <button class="btn-delete-proof" style="position:absolute; top:6px; right:6px; background:#e11d48; color:#fff; border:none; border-radius:4px; padding:2px 6px; font-size:10px;" onclick="deleteReceipt(<?= $latestPayment['id'] ?>); event.stopPropagation();">Eliminar</button>
                             <?php else: ?>
-                                <div class="sub-proof-placeholder" style="background:#f1f5f9; display:flex; align-items:center; justify-content:center; height:120px; border-radius:8px;">
-                                    <span style="color:#64748b; font-size:13px;">Pendiente de carga</span>
+                                <div class="sub-proof-placeholder" style="background:#f1f5f9; display:flex; align-items:center; justify-content:center; height:100px; border-radius:8px;">
+                                    <span style="color:#64748b; font-size:13px;">Sin comprobante reciente</span>
                                 </div>
                             <?php endif; ?>
                         </div>
 
                         <?php if ($latestPayment && $latestPayment['status'] === 'pending'): ?>
                             <div class="sub-controls">
-                                <button class="btn-sub-verify btn-approve" onclick="verifySubscription('approved', <?= $latestPayment['id'] ?>)">✅ Aprobar y Habilitar</button>
-                                <button class="btn-sub-verify btn-reject" onclick="promptRejectSubscription(<?= $latestPayment['id'] ?>)">❌ Rechazar Pago</button>
+                                <button class="btn-sub-verify btn-approve" onclick="verifySubscription('approved', <?= $latestPayment['id'] ?>)">✅ Aprobar Comprobante</button>
+                                <button class="btn-sub-verify btn-reject" onclick="promptRejectSubscription(<?= $latestPayment['id'] ?>)">❌ Rechazar Comprobante</button>
                             </div>
                         <?php endif; ?>
-
-                        <!-- Caja de Prórroga -->
-                        <div class="prorroga-box">
-                            <span class="prorroga-title">Prórroga / Grace Period</span>
-                            <div class="prorroga-row">
-                                <select class="prorroga-select" id="grace-hours">
-                                    <option value="8">8 Horas de Gracia</option>
-                                    <option value="9">9 Horas de Gracia</option>
-                                    <option value="10">10 Horas de Gracia</option>
-                                    <option value="11">11 Horas de Gracia</option>
-                                    <option value="12" selected>12 Horas de Gracia</option>
-                                    <option value="24">24 Horas de Gracia</option>
-                                    <option value="48">48 Horas de Gracia</option>
-                                </select>
-                                <button class="btn-prorroga" onclick="grantGracePeriod()">Sumar</button>
-                            </div>
-                        </div>
 
                         <!-- Historial de comprobantes anteriores -->
                         <div>
@@ -1972,6 +1992,84 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
 
         function promptRejectSubscription(paymentId) {
             verifySubscription('rejected', paymentId);
+        }
+
+        function applyFairRuleStore() {
+            const formData = new FormData();
+            formData.append('action', 'apply_fair_rule_store');
+            formData.append('store_id', localId);
+
+            fetch('api_admin_action.php', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    showSuccessModal('¡Regla Justa Aplicada! 📅', res.message);
+                } else {
+                    alert('Error: ' + (res.error || 'No se pudo aplicar la regla.'));
+                }
+            })
+            .catch(err => console.error(err));
+        }
+
+        function addStoreMonth(months) {
+            const formData = new FormData();
+            formData.append('action', 'add_store_month');
+            formData.append('store_id', localId);
+            formData.append('months', months || 1);
+
+            fetch('api_admin_action.php', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    showSuccessModal('¡Mes Adicional Otorgado! ➕', res.message);
+                } else {
+                    alert('Error: ' + (res.error || 'No se pudo otorgar el mes.'));
+                }
+            })
+            .catch(err => console.error(err));
+        }
+
+        function setCustomStoreExpiration() {
+            const customDate = document.getElementById('custom-store-exp-date').value;
+            if (!customDate) {
+                alert('Por favor selecciona una fecha y hora.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('action', 'set_custom_store_expiration');
+            formData.append('store_id', localId);
+            formData.append('custom_date', customDate);
+
+            fetch('api_admin_action.php', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    showSuccessModal('¡Vencimiento Personalizado Guardado! 📆', res.message);
+                } else {
+                    alert('Error: ' + (res.error || 'No se pudo guardar la fecha.'));
+                }
+            })
+            .catch(err => console.error(err));
+        }
+
+        function toggleStoreStatus(status) {
+            const formData = new FormData();
+            formData.append('action', 'update_subscription');
+            formData.append('local_id', localId);
+            formData.append('status', status);
+            formData.append('role', 'local');
+
+            fetch('api_admin_action.php', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    showSuccessModal(status === 'active' ? '¡Suscripción Activada! 🟢' : '¡Suscripción Suspendida! 🔴', res.message);
+                } else {
+                    alert('Error: ' + (res.error || 'No se pudo cambiar el estado.'));
+                }
+            })
+            .catch(err => console.error(err));
         }
 
         function grantGracePeriod() {

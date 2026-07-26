@@ -468,6 +468,83 @@ if ($action === 'extend_driver_grace_period') {
     exit;
 }
 
+if ($action === 'add_store_month') {
+    $storeId = (int)($_POST['store_id'] ?? 0);
+    $months = (int)($_POST['months'] ?? 1);
+    if ($storeId <= 0 || $months <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'ID o cantidad de meses inválida.']);
+        exit;
+    }
+    $store = app_one("SELECT id, subscription_expires_at FROM users WHERE id = ? AND role = 'local'", 'i', [$storeId]);
+    if (!$store) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Comercio no encontrado.']);
+        exit;
+    }
+
+    $baseTimestamp = (!empty($store['subscription_expires_at']) && strtotime($store['subscription_expires_at']) > time()) 
+        ? strtotime($store['subscription_expires_at']) 
+        : strtotime(get_next_store_expiration_date());
+
+    $newExpiresAt = date('Y-m-d H:i:s', strtotime("+$months month", $baseTimestamp));
+
+    app_exec("UPDATE users SET subscription_status = 'active', subscription_expires_at = ?, updated_at = NOW() WHERE id = ?", 'si', [$newExpiresAt, $storeId]);
+
+    echo json_encode([
+        'success' => true,
+        'message' => "Se otorgaron +{$months} mes(es) adicional(es) con éxito. Nuevo vencimiento: " . date('d/m/Y H:i', strtotime($newExpiresAt)),
+        'expires_at' => date('d/m/Y H:i', strtotime($newExpiresAt))
+    ]);
+    exit;
+}
+
+if ($action === 'set_custom_store_expiration') {
+    $storeId = (int)($_POST['store_id'] ?? 0);
+    $customDate = trim($_POST['custom_date'] ?? '');
+    if ($storeId <= 0 || empty($customDate)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Por favor selecciona una fecha válida.']);
+        exit;
+    }
+    $store = app_one("SELECT id FROM users WHERE id = ? AND role = 'local'", 'i', [$storeId]);
+    if (!$store) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Comercio no encontrado.']);
+        exit;
+    }
+
+    $formattedDate = date('Y-m-d H:i:s', strtotime($customDate));
+    $status = strtotime($formattedDate) > time() ? 'active' : 'expired';
+
+    app_exec("UPDATE users SET subscription_status = ?, subscription_expires_at = ?, updated_at = NOW() WHERE id = ?", 'ssi', [$status, $formattedDate, $storeId]);
+
+    echo json_encode([
+        'success' => true,
+        'message' => "Fecha de vencimiento actualizada a " . date('d/m/Y H:i', strtotime($formattedDate)),
+        'expires_at' => date('d/m/Y H:i', strtotime($formattedDate))
+    ]);
+    exit;
+}
+
+if ($action === 'apply_fair_rule_store') {
+    $storeId = (int)($_POST['store_id'] ?? 0);
+    if ($storeId <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'ID inválido.']);
+        exit;
+    }
+    $expiresAt = get_next_store_expiration_date();
+    app_exec("UPDATE users SET subscription_status = 'active', subscription_expires_at = ?, updated_at = NOW() WHERE id = ?", 'si', [$expiresAt, $storeId]);
+
+    echo json_encode([
+        'success' => true,
+        'message' => "Regla justa aplicada. Vence el " . date('d/m/Y H:i', strtotime($expiresAt)),
+        'expires_at' => date('d/m/Y H:i', strtotime($expiresAt))
+    ]);
+    exit;
+}
+
 if ($action === 'get_driver_kpis') {
     $driverId = (int)($_POST['driver_id'] ?? 0);
     $range = $_POST['range'] ?? 'week';
