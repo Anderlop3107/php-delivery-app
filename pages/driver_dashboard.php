@@ -771,30 +771,6 @@ document.addEventListener('DOMContentLoaded', function() {
         </div>
         <h2 class="welcome-title-tech">¡Hola!, <?= explode(' ', esc($userData['name']))[0] ?></h2>
         <p class="subtitle-tech">Conéctate para recibir pedidos</p>
-        <div id="simulated-location-warning" style="display: none; background: #fffbeb; border: 1px solid #fef3c7; color: #b45309; padding: 10px 14px; border-radius: 14px; font-size: 12px; font-weight: 700; margin-top: 10px; text-align: center;">
-            <div>⚠️ GPS de dispositivo no detectado (HTTP / Navegador).</div>
-            <button type="button" onclick="openLocationPickerModal()" style="margin-top: 6px; background: #2563eb; color: #ffffff; border: none; padding: 6px 14px; border-radius: 10px; font-weight: 800; font-size: 11px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 4px 10px rgba(37,99,235,0.25);">
-                📍 Ajustar mi posición exacta en el mapa
-            </button>
-        </div>
-    </div>
-
-    <!-- Modal Selector de Ubicación en vivo -->
-    <div id="driver-location-picker-modal" class="modal-overlay" style="display: none; z-index: 100002; background: rgba(15, 23, 42, 0.85); backdrop-filter: blur(10px); position: fixed; inset: 0; align-items: center; justify-content: center; padding: 16px;">
-        <div style="background: #ffffff; border-radius: 28px; padding: 24px; width: 100%; max-width: 480px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.3); border: 1px solid rgba(255, 255, 255, 0.2); position: relative;">
-            <button type="button" onclick="closeLocationPickerModal()" style="position: absolute; top: 16px; right: 16px; background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; font-size: 16px; cursor: pointer; color: #64748b; display: flex; align-items: center; justify-content: center; z-index: 10;">✕</button>
-            
-            <h3 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0 0 6px;">📍 Ajustar mi Ubicación Real</h3>
-            <p style="font-size: 13px; color: #64748b; margin: 0 0 16px; font-weight: 600;">Haz clic o arrastra el marcador en el mapa hacia tu posición exacta en vivo.</p>
-            
-            <div id="picker-map-container" style="width: 100%; height: 260px; border-radius: 20px; overflow: hidden; margin-bottom: 16px; border: 1px solid #e2e8f0;"></div>
-            
-            <div style="display: flex; gap: 10px;">
-                <button type="button" onclick="confirmPickerLocation()" style="flex: 1; padding: 14px; border-radius: 16px; background: #10b981; color: #ffffff; font-size: 14px; font-weight: 800; border: none; cursor: pointer; box-shadow: 0 8px 20px rgba(16, 185, 129, 0.3);">
-                    ✅ Guardar Ubicación Real
-                </button>
-            </div>
-        </div>
     </div>
 
     <!-- ÁREA DEL RADAR -->
@@ -937,70 +913,11 @@ function showToast(message) {
 }
 
     let watchId = null;
-    let pickerMap = null;
-    let pickerMarker = null;
-    let selectedPickerLat = mockLat;
-    let selectedPickerLng = mockLng;
-
-    function openLocationPickerModal() {
-        selectedPickerLat = mockLat;
-        selectedPickerLng = mockLng;
-
-        const modal = document.getElementById('driver-location-picker-modal');
-        if (modal) modal.style.display = 'flex';
-
-        setTimeout(() => {
-            if (!pickerMap) {
-                pickerMap = new mapboxgl.Map({
-                    container: 'picker-map-container',
-                    style: 'mapbox://styles/mapbox/streets-v12',
-                    center: [selectedPickerLng, selectedPickerLat],
-                    zoom: 14
-                });
-
-                pickerMarker = new mapboxgl.Marker({ draggable: true, color: '#2563eb' })
-                    .setLngLat([selectedPickerLng, selectedPickerLat])
-                    .addTo(pickerMap);
-
-                pickerMarker.on('dragend', () => {
-                    const lngLat = pickerMarker.getLngLat();
-                    selectedPickerLat = lngLat.lat;
-                    selectedPickerLng = lngLat.lng;
-                });
-
-                pickerMap.on('click', (e) => {
-                    selectedPickerLat = e.lngLat.lat;
-                    selectedPickerLng = e.lngLat.lng;
-                    pickerMarker.setLngLat([selectedPickerLng, selectedPickerLat]);
-                });
-            } else {
-                pickerMap.setCenter([selectedPickerLng, selectedPickerLat]);
-                pickerMarker.setLngLat([selectedPickerLng, selectedPickerLat]);
-                pickerMap.resize();
-            }
-        }, 200);
-    }
-
-    function closeLocationPickerModal() {
-        const modal = document.getElementById('driver-location-picker-modal');
-        if (modal) modal.style.display = 'none';
-    }
-
-    function confirmPickerLocation() {
-        mockLat = selectedPickerLat;
-        mockLng = selectedPickerLng;
-        currentLat = selectedPickerLat;
-        currentLng = selectedPickerLng;
-
-        updateLocationOnServer(selectedPickerLat, selectedPickerLng);
-        closeLocationPickerModal();
-        showToast('¡Ubicación fijada en tiempo real! 📍');
-    }
 
     function startLocationUpdates() {
         sendCurrentLocation();
         if (locationInterval) clearInterval(locationInterval);
-        locationInterval = setInterval(sendCurrentLocation, 3000);
+        locationInterval = setInterval(sendCurrentLocation, 2000);
 
         if (navigator.geolocation && watchId === null) {
             try {
@@ -1008,16 +925,12 @@ function showToast(message) {
                     (pos) => {
                         currentLat = pos.coords.latitude;
                         currentLng = pos.coords.longitude;
-                        mockLat = currentLat;
-                        mockLng = currentLng;
-                        const warningEl = document.getElementById('simulated-location-warning');
-                        if (warningEl) warningEl.style.display = 'none';
                         updateLocationOnServer(currentLat, currentLng);
                     },
                     (err) => {
                         console.warn("watchPosition warning:", err);
                     },
-                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
                 );
             } catch (e) {
                 console.warn("Error initiating watchPosition:", e);
@@ -1040,28 +953,21 @@ function showToast(message) {
 
     function sendCurrentLocation() {
         if (!navigator.geolocation) {
-            const warningEl = document.getElementById('simulated-location-warning');
-            if (warningEl) warningEl.style.display = 'block';
-            updateLocationOnServer(mockLat, mockLng);
             return;
         }
 
-        navigator.geolocation.getCurrentPosition(async (pos) => {
+        navigator.geolocation.getCurrentPosition((pos) => {
             currentLat = pos.coords.latitude;
             currentLng = pos.coords.longitude;
-            mockLat = currentLat;
-            mockLng = currentLng;
-            const warningEl = document.getElementById('simulated-location-warning');
-            if (warningEl) warningEl.style.display = 'none';
             updateLocationOnServer(currentLat, currentLng);
         }, (err) => {
             console.warn("No se pudo obtener la geolocalización de GPS:", err);
-            const warningEl = document.getElementById('simulated-location-warning');
-            if (warningEl) warningEl.style.display = 'block';
-            updateLocationOnServer(mockLat, mockLng);
+            if (currentLat !== null && currentLng !== null) {
+                updateLocationOnServer(currentLat, currentLng);
+            }
         }, {
             enableHighAccuracy: true,
-            timeout: 10000,
+            timeout: 15000,
             maximumAge: 0
         });
     }
