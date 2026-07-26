@@ -1113,12 +1113,7 @@ $maxChartCount = max(5, max($chartCounts));
                                 </div>
                                 <div class="driver-text">
                                     <b><?= esc($d['name']) ?></b>
-                                    <div class="doc-badges">
-                                        <span class="doc-dot doc-<?= $d['status_doc_ci'] ?>">CI: <?= $d['status_doc_ci'] ?></span>
-                                        <span class="doc-dot doc-<?= $d['status_doc_licencia'] ?>">Lic: <?= $d['status_doc_licencia'] ?></span>
-                                        <span class="doc-dot doc-<?= $d['status_doc_habilitacion'] ?>">Hab: <?= $d['status_doc_habilitacion'] ?></span>
-                                        <span class="doc-dot doc-<?= $d['status_doc_cedula_verde'] ?>">Verde: <?= $d['status_doc_cedula_verde'] ?></span>
-                                    </div>
+                                    <span style="color:var(--text-muted); font-size:11px; font-weight:600;"><?= esc($d['phone'] ?: $d['email']) ?> • Vence: <?= $d['subscription_expires_at'] ? date('d/m/Y', strtotime($d['subscription_expires_at'])) : 'Sin fecha' ?></span>
                                 </div>
                             </div>
                             <div style="display:flex; align-items:center; gap:8px;">
