@@ -1890,6 +1890,15 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             if (title) document.getElementById('success-modal-title').textContent = title;
             if (message) document.getElementById('success-modal-message').textContent = message;
             document.getElementById('success-modal').style.display = 'flex';
+            
+            // Reproducir sonido de confirmación con Web Audio API gain
+            const soundUrl = '<?= esc(delivery_app_url("uploads/sounds/success.mp3")) ?>';
+            if (window.playNotificationSound) {
+                window.playNotificationSound(soundUrl);
+            } else {
+                const audio = new Audio(soundUrl);
+                audio.play().catch(e => console.log("Audio playback prevented:", e));
+            }
         }
 
         function closeSuccessModal() {
@@ -1913,7 +1922,7 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                 });
                 const res = await resp.json();
                 if (res.success) {
-                    showSuccessModal('¡Perfil actualizado!', res.message || 'Tus cambios se han guardado con éxito.');
+                    showSuccessModal('¡Cuenta de Acceso actualizada! 👤', res.message || 'Datos de acceso actualizados correctamente.');
                 } else {
                     alert('Error: ' + (res.error || 'No se pudo guardar la información.'));
                     btn.disabled = false;

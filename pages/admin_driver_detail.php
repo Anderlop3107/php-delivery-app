@@ -1792,7 +1792,7 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                 });
                 const res = await resp.json();
                 if (res.success) {
-                    showSuccessModal('¡Perfil actualizado!', res.message || 'Tus cambios se han guardado con éxito.');
+                    showSuccessModal('¡Cuenta de Acceso actualizada! 👤', res.message || 'Datos de acceso actualizados correctamente.');
                 } else {
                     alert('Error: ' + (res.error || 'No se pudo guardar la información.'));
                     btn.disabled = false;
