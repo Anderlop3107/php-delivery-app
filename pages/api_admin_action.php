@@ -545,6 +545,84 @@ if ($action === 'apply_fair_rule_store') {
     exit;
 }
 
+if ($action === 'add_driver_week') {
+    $driverId = (int)($_POST['driver_id'] ?? 0);
+    $weeks = (int)($_POST['weeks'] ?? 1);
+    if ($driverId <= 0 || $weeks <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'ID o cantidad de semanas inválida.']);
+        exit;
+    }
+    $driver = app_one("SELECT id, subscription_expires_at FROM users WHERE id = ? AND role = 'repartidor'", 'i', [$driverId]);
+    if (!$driver) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Repartidor no encontrado.']);
+        exit;
+    }
+
+    $baseTimestamp = (!empty($driver['subscription_expires_at']) && strtotime($driver['subscription_expires_at']) > time()) 
+        ? strtotime($driver['subscription_expires_at']) 
+        : strtotime(get_next_driver_expiration_date());
+
+    $newExpiresAt = date('Y-m-d H:i:s', strtotime("+{$weeks} week", $baseTimestamp));
+
+    app_exec("UPDATE users SET subscription_status = 'active', subscription_expires_at = ?, updated_at = NOW() WHERE id = ?", 'si', [$newExpiresAt, $driverId]);
+
+    echo json_encode([
+        'success' => true,
+        'message' => "Se otorgó +{$weeks} semana(s) adicional(es) con éxito. Nuevo vencimiento: " . date('d/m/Y H:i', strtotime($newExpiresAt)),
+        'expires_at' => date('d/m/Y H:i', strtotime($newExpiresAt))
+    ]);
+    exit;
+}
+
+if ($action === 'set_custom_driver_expiration') {
+    $driverId = (int)($_POST['driver_id'] ?? 0);
+    $customDate = trim($_POST['custom_date'] ?? '');
+    if ($driverId <= 0 || empty($customDate)) {
+        http_response_code(400);
+        echo json_encode(['error' => 'Por favor selecciona una fecha válida.']);
+        exit;
+    }
+    $driver = app_one("SELECT id FROM users WHERE id = ? AND role = 'repartidor'", 'i', [$driverId]);
+    if (!$driver) {
+        http_response_code(404);
+        echo json_encode(['error' => 'Repartidor no encontrado.']);
+        exit;
+    }
+
+    $formattedDate = date('Y-m-d H:i:s', strtotime($customDate));
+    $status = strtotime($formattedDate) > time() ? 'active' : 'expired';
+    $isOnlineVal = $status === 'active' ? 1 : 0;
+
+    app_exec("UPDATE users SET subscription_status = ?, subscription_expires_at = ?, is_online = ?, updated_at = NOW() WHERE id = ?", 'ssii', [$status, $formattedDate, $isOnlineVal, $driverId]);
+
+    echo json_encode([
+        'success' => true,
+        'message' => "Fecha de vencimiento actualizada a " . date('d/m/Y H:i', strtotime($formattedDate)),
+        'expires_at' => date('d/m/Y H:i', strtotime($formattedDate))
+    ]);
+    exit;
+}
+
+if ($action === 'apply_fair_rule_driver') {
+    $driverId = (int)($_POST['driver_id'] ?? 0);
+    if ($driverId <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'ID inválido.']);
+        exit;
+    }
+    $expiresAt = get_next_driver_expiration_date();
+    app_exec("UPDATE users SET subscription_status = 'active', subscription_expires_at = ?, updated_at = NOW() WHERE id = ?", 'si', [$expiresAt, $driverId]);
+
+    echo json_encode([
+        'success' => true,
+        'message' => "Regla justa semanal aplicada. Vence el " . date('d/m/Y H:i', strtotime($expiresAt)),
+        'expires_at' => date('d/m/Y H:i', strtotime($expiresAt))
+    ]);
+    exit;
+}
+
 if ($action === 'get_driver_kpis') {
     $driverId = (int)($_POST['driver_id'] ?? 0);
     $range = $_POST['range'] ?? 'week';

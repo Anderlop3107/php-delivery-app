@@ -1168,7 +1168,7 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
 
                     <!-- Sub-Card: Suscripción -->
                     <div id="subscription-card-box" style="display:flex; flex-direction:column; gap:14px; border-top:1px solid #f1f5f9; padding-top:20px;">
-                        <h3>💳 Control de Suscripción</h3>
+                        <h3>💳 Control Manual de Suscripción</h3>
                         
                         <div style="font-size:12px; color:var(--text-muted); font-weight:700;">
                             Estado: 
@@ -1176,8 +1176,45 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                             <?php if ($driverData['subscription_expires_at']): ?>
                                 <span style="display:block; margin-top:4px; font-weight:500;">📅 Vence: <?= date('d/m/Y H:i', strtotime($driverData['subscription_expires_at'])) ?> (UTC-3)</span>
                             <?php else: ?>
-                                <span style="display:block; margin-top:4px; font-weight:500;">📅 Vence: Sin registro</span>
+                                <span style="display:block; margin-top:4px; font-weight:500;">📅 Vence: Sin registro (Regla justa los Lunes a las 12:00 hs)</span>
                             <?php endif; ?>
+                        </div>
+
+                        <!-- Banner Informativo Regla Justa Semanal -->
+                        <div style="background: #eff6ff; border: 1px solid #bfdbfe; color: #1e40af; padding: 10px 12px; border-radius: 12px; font-size: 11px; font-weight: 600; line-height: 1.4;">
+                            💡 <b>Regla Justa Semanal:</b><br>
+                            • Inscripción Lunes a Miércoles: Vence el Próximo Lunes (12:00 hs).<br>
+                            • Inscripción Jueves a Domingo: Vence el Lunes Subsecuente (+1 semana gratis por fin de semana).
+                        </div>
+
+                        <!-- Acciones Rápidas de Control Manual -->
+                        <div style="display:flex; flex-direction:column; gap:8px; margin-top:2px;">
+                            <button class="btn-sub-verify btn-approve" type="button" onclick="applyFairRuleDriver()" style="width:100%; font-size:12px; padding:10px; background:var(--primary); box-shadow:0 4px 10px rgba(37,99,235,0.25);">
+                                📅 Aplicar Regla Justa (Lunes 12:00 hs)
+                            </button>
+                            <button type="button" onclick="addDriverWeek(1)" style="width:100%; background:var(--primary); color:#ffffff; border:none; border-radius:10px; padding:10px; font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 4px 10px rgba(37,99,235,0.25);">
+                                ➕ Otorgar +1 Semana Adicional (+7 días)
+                            </button>
+                            <?php if (($driverData['subscription_status'] ?? '') === 'active'): ?>
+                                <button type="button" onclick="toggleDriverStatus('expired')" style="width:100%; background:#dc2626; color:#ffffff; border:none; border-radius:10px; padding:10px; font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 4px 10px rgba(220,38,38,0.2);">
+                                    🔴 Suspender / Expirar Suscripción
+                                </button>
+                            <?php else: ?>
+                                <button type="button" onclick="toggleDriverStatus('active')" style="width:100%; background:var(--primary); color:#ffffff; border:none; border-radius:10px; padding:10px; font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 4px 10px rgba(37,99,235,0.25);">
+                                    🟢 Activar Suscripción
+                                </button>
+                            <?php endif; ?>
+                        </div>
+
+                        <!-- Ajuste Personalizado de Fecha -->
+                        <div style="background: #f8fafc; border: 1px solid #e2e8f0; padding: 12px; border-radius: 14px; margin-top: 4px;">
+                            <span class="prorroga-title" style="margin-bottom:6px; display:block; font-size:11px; font-weight:800; color:#475569;">📆 Vencimiento Personalizado</span>
+                            <div style="display:flex; gap:6px;">
+                                <input type="datetime-local" id="custom-driver-exp-date" style="flex:1; border:1px solid #cbd5e1; border-radius:8px; padding:6px 10px; font-size:11px; font-weight:600; background:#ffffff;" value="<?= $driverData['subscription_expires_at'] ? date('Y-m-d\TH:i', strtotime($driverData['subscription_expires_at'])) : '' ?>">
+                                <button type="button" onclick="setCustomDriverExpiration()" style="background:#475569; color:#ffffff; border:none; border-radius:8px; padding:6px 12px; font-size:11px; font-weight:700; cursor:pointer;">
+                                    Guardar
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Comprobante subido -->
@@ -1187,35 +1224,18 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                                 <div style="position:absolute; bottom:6px; right:6px; background:rgba(0,0,0,0.6); color:#fff; font-size:9px; padding:3px 6px; border-radius:4px; font-weight:700;">AMPLIAR</div>
                                 <button class="btn-delete-proof" style="position:absolute; top:6px; right:6px; background:#e11d48; color:#fff; border:none; border-radius:4px; padding:2px 6px; font-size:10px;" onclick="deleteReceipt(<?= $latestPayment['id'] ?>); event.stopPropagation();">Eliminar</button>
                             <?php else: ?>
-                                <div class="sub-proof-placeholder" style="background:#f1f5f9; display:flex; align-items:center; justify-content:center; height:200px; border-radius:8px;">
-                                    <span style="color:#64748b; font-size:14px;">Pendiente de carga</span>
+                                <div class="sub-proof-placeholder" style="background:#f1f5f9; display:flex; align-items:center; justify-content:center; height:100px; border-radius:8px;">
+                                    <span style="color:#64748b; font-size:13px;">Sin comprobante reciente</span>
                                 </div>
                             <?php endif; ?>
                         </div>
 
                         <?php if ($latestPayment && $latestPayment['status'] === 'pending'): ?>
                             <div class="sub-controls">
-                                <button class="btn-sub-verify btn-approve" onclick="verifySubscription('approved', <?= $latestPayment['id'] ?>)">✅ Aprobar y Habilitar</button>
-                                <button class="btn-sub-verify btn-reject" onclick="promptRejectSubscription(<?= $latestPayment['id'] ?>)">❌ Rechazar Pago</button>
+                                <button class="btn-sub-verify btn-approve" onclick="verifySubscription('approved', <?= $latestPayment['id'] ?>)">✅ Aprobar Comprobante</button>
+                                <button class="btn-sub-verify btn-reject" onclick="promptRejectSubscription(<?= $latestPayment['id'] ?>)">❌ Rechazar Comprobante</button>
                             </div>
                         <?php endif; ?>
-
-                        <!-- Caja de Prórroga -->
-                        <div class="prorroga-box">
-                            <span class="prorroga-title">Prórroga / Grace Period</span>
-                            <div class="prorroga-row">
-                                <select class="prorroga-select" id="grace-hours">
-                                    <option value="8">8 Horas de Gracia</option>
-                                    <option value="9">9 Horas de Gracia</option>
-                                    <option value="10">10 Horas de Gracia</option>
-                                    <option value="11">11 Horas de Gracia</option>
-                                    <option value="12" selected>12 Horas de Gracia</option>
-                                    <option value="24">24 Horas de Gracia</option>
-                                    <option value="48">48 Horas de Gracia</option>
-                                </select>
-                                <button class="btn-prorroga" onclick="grantGracePeriod()">Sumar</button>
-                            </div>
-                        </div>
 
                         <!-- Historial de comprobantes anteriores -->
                         <div>
@@ -2048,6 +2068,84 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
 
         function scrollToSubscriptionCard() {
             document.getElementById('subscription-card-box').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function applyFairRuleDriver() {
+            const formData = new FormData();
+            formData.append('action', 'apply_fair_rule_driver');
+            formData.append('driver_id', driverId);
+
+            fetch('api_admin_action.php', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    showSuccessModal('¡Regla Justa Semanal Aplicada! 📅', res.message);
+                } else {
+                    alert('Error: ' + (res.error || 'No se pudo aplicar la regla.'));
+                }
+            })
+            .catch(err => console.error(err));
+        }
+
+        function addDriverWeek(weeks) {
+            const formData = new FormData();
+            formData.append('action', 'add_driver_week');
+            formData.append('driver_id', driverId);
+            formData.append('weeks', weeks || 1);
+
+            fetch('api_admin_action.php', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    showSuccessModal('¡Semana Adicional Otorgada! ➕', res.message);
+                } else {
+                    alert('Error: ' + (res.error || 'No se pudo otorgar la semana.'));
+                }
+            })
+            .catch(err => console.error(err));
+        }
+
+        function setCustomDriverExpiration() {
+            const customDate = document.getElementById('custom-driver-exp-date').value;
+            if (!customDate) {
+                alert('Por favor selecciona una fecha y hora.');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('action', 'set_custom_driver_expiration');
+            formData.append('driver_id', driverId);
+            formData.append('custom_date', customDate);
+
+            fetch('api_admin_action.php', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    showSuccessModal('¡Vencimiento Personalizado Guardado! 📆', res.message);
+                } else {
+                    alert('Error: ' + (res.error || 'No se pudo guardar la fecha.'));
+                }
+            })
+            .catch(err => console.error(err));
+        }
+
+        function toggleDriverStatus(status) {
+            const formData = new FormData();
+            formData.append('action', 'update_subscription');
+            formData.append('user_id', driverId);
+            formData.append('status', status);
+            formData.append('role', 'repartidor');
+
+            fetch('api_admin_action.php', { method: 'POST', body: formData })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    showSuccessModal(status === 'active' ? '¡Suscripción Activada! 🟢' : '¡Suscripción Suspendida! 🔴', res.message);
+                } else {
+                    alert('Error: ' + (res.error || 'No se pudo cambiar el estado.'));
+                }
+            })
+            .catch(err => console.error(err));
         }
 
         let liveDriverMarker = null;
