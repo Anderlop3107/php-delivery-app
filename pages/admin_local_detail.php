@@ -570,10 +570,11 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             text-align: center;
         }
         .btn-approve {
-            background: #10b981;
+            background: var(--primary);
             color: #fff;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
         }
-        .btn-approve:hover { background: #059669; }
+        .btn-approve:hover { background: #1d4ed8; }
         .btn-reject {
             background: #ef4444;
             color: #fff;
@@ -1187,10 +1188,10 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
 
                         <!-- Acciones Rápidas de Control Manual -->
                         <div style="display:flex; flex-direction:column; gap:8px; margin-top:2px;">
-                            <button class="btn-sub-verify btn-approve" type="button" onclick="applyFairRuleStore()" style="width:100%; font-size:12px; padding:10px;">
+                            <button class="btn-sub-verify btn-approve" type="button" onclick="applyFairRuleStore()" style="width:100%; font-size:12px; padding:10px; background:var(--primary); box-shadow:0 4px 10px rgba(37,99,235,0.25);">
                                 📅 Aplicar Regla Justa (01 de Mes)
                             </button>
-                            <button type="button" onclick="addStoreMonth(1)" style="width:100%; background:#059669; color:#ffffff; border:none; border-radius:10px; padding:10px; font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 4px 10px rgba(5,150,105,0.2);">
+                            <button type="button" onclick="addStoreMonth(1)" style="width:100%; background:var(--primary); color:#ffffff; border:none; border-radius:10px; padding:10px; font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 4px 10px rgba(37,99,235,0.25);">
                                 ➕ Otorgar +1 Mes Adicional
                             </button>
                             <?php if (($localData['subscription_status'] ?? '') === 'active'): ?>
@@ -1198,7 +1199,7 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                                     🔴 Suspender / Expirar Suscripción
                                 </button>
                             <?php else: ?>
-                                <button type="button" onclick="toggleStoreStatus('active')" style="width:100%; background:#2563eb; color:#ffffff; border:none; border-radius:10px; padding:10px; font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 4px 10px rgba(37,99,235,0.2);">
+                                <button type="button" onclick="toggleStoreStatus('active')" style="width:100%; background:var(--primary); color:#ffffff; border:none; border-radius:10px; padding:10px; font-size:12px; font-weight:800; cursor:pointer; box-shadow:0 4px 10px rgba(37,99,235,0.25);">
                                     🟢 Activar Suscripción
                                 </button>
                             <?php endif; ?>
