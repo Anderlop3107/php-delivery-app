@@ -39,10 +39,21 @@ $docsApproved = (
 
 $approved = ($docsApproved && !$subscriptionExpired);
 
+$notifications = app_all("
+    SELECT id, type, title, message FROM app_notifications 
+    WHERE user_id = ? AND is_read = 0 
+    ORDER BY id ASC
+", 'i', [(int)$user['id']]);
+
+if (!empty($notifications)) {
+    app_exec("UPDATE app_notifications SET is_read = 1 WHERE user_id = ? AND is_read = 0", 'i', [(int)$user['id']]);
+}
+
 echo json_encode([
     'success' => true,
     'approved' => $approved,
     'docs_approved' => $docsApproved,
-    'subscription_expired' => $subscriptionExpired
+    'subscription_expired' => $subscriptionExpired,
+    'notifications' => $notifications
 ]);
 exit;

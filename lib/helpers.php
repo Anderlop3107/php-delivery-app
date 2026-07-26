@@ -40,3 +40,20 @@ function delivery_status_text(string $status): string
 
     return $map[$status] ?? ucfirst(str_replace('_', ' ', $status));
 }
+
+/**
+ * Calcula la fecha de expiración semanal del repartidor (Próximo Lunes 12:00:00).
+ * Si hoy es lunes antes de las 12:00 hs, retorna hoy 12:00:00.
+ * Si ya pasaron las 12:00 hs de hoy o es cualquier otro día, retorna el próximo lunes a las 12:00:00.
+ */
+function get_next_driver_expiration_date(): string
+{
+    $now = time();
+    $todayMondayNoon = strtotime('this Monday 12:00:00');
+    
+    if (date('N', $now) === '1' && $now < $todayMondayNoon) {
+        return date('Y-m-d H:i:s', $todayMondayNoon);
+    }
+    
+    return date('Y-m-d H:i:s', strtotime('next Monday 12:00:00'));
+}
