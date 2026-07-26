@@ -20,7 +20,7 @@ $activeDrivers = app_all("
            status_doc_ci, status_doc_licencia, status_doc_habilitacion, status_doc_cedula_verde,
            doc_ci_path, doc_ci_back_path, doc_licencia_path, doc_licencia_back_path,
            doc_habilitacion_path, doc_habilitacion_back_path, doc_cedula_verde_path, doc_cedula_verde_back_path,
-           phone, email, subscription_status,
+           phone, email, subscription_status, subscription_expires_at,
            (SELECT COUNT(*) FROM deliveries WHERE repartidor_user_id = users.id AND status NOT IN ('entregado', 'cancelado')) as active_delivery_count,
            (SELECT payment_proof_path FROM driver_payments WHERE driver_user_id = users.id AND status = 'pending' ORDER BY id DESC LIMIT 1) as payment_proof_path,
            (SELECT id FROM driver_payments WHERE driver_user_id = users.id AND status = 'pending' ORDER BY id DESC LIMIT 1) as payment_id
@@ -1113,7 +1113,7 @@ $maxChartCount = max(5, max($chartCounts));
                                 </div>
                                 <div class="driver-text">
                                     <b><?= esc($d['name']) ?></b>
-                                    <span style="color:var(--text-muted); font-size:11px; font-weight:600;"><?= esc($d['phone'] ?: $d['email']) ?> • Vence: <?= $d['subscription_expires_at'] ? date('d/m/Y', strtotime($d['subscription_expires_at'])) : 'Sin fecha' ?></span>
+                                    <span style="color:var(--text-muted); font-size:11px; font-weight:600;"><?= esc($d['phone'] ?: $d['email']) ?> • Vence: <?= !empty($d['subscription_expires_at']) ? date('d/m/Y', strtotime($d['subscription_expires_at'])) : 'Sin fecha' ?></span>
                                 </div>
                             </div>
                             <div style="display:flex; align-items:center; gap:8px;">
