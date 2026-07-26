@@ -1068,7 +1068,7 @@ $maxChartCount = max(5, max($chartCounts));
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <div>
                                     <select class="status-pill-select status-select-<?= esc($status) ?>" onchange="updateSubscription(<?= $l['id']; ?>, this.value)">
-                                        <option value="active" <?php echo $status === 'active' ? 'selected' : '' ?>>Activo (+30d)</option>
+                                        <option value="active" <?php echo $status === 'active' ? 'selected' : '' ?>>Activo (Mensual)</option>
                                         <option value="expired" <?php echo $status === 'expired' ? 'selected' : '' ?>>Expirado</option>
                                         <option value="pending" <?php echo $status === 'pending' ? 'selected' : '' ?>>Pendiente</option>
                                     </select>
@@ -1119,7 +1119,7 @@ $maxChartCount = max(5, max($chartCounts));
                             <div style="display:flex; align-items:center; gap:8px;">
                                 <div>
                                     <select class="status-pill-select status-select-<?= esc($dStatus) ?>" onchange="updateDriverSubscription(<?= (int)$d['id']; ?>, this.value)">
-                                        <option value="active"  <?= $dStatus === 'active'  ? 'selected' : '' ?>>Activo (+30d)</option>
+                                        <option value="active"  <?= $dStatus === 'active'  ? 'selected' : '' ?>>Activo (Semanal)</option>
                                         <option value="expired" <?= $dStatus === 'expired' ? 'selected' : '' ?>>Expirado</option>
                                         <option value="pending" <?= $dStatus === 'pending' ? 'selected' : '' ?>>Pendiente</option>
                                     </select>
@@ -1915,7 +1915,6 @@ $maxChartCount = max(5, max($chartCounts));
         formData.append('local_id', localId);
         formData.append('role', 'local');
         formData.append('status', status);
-        formData.append('days', 30);
         
         fetch('api_admin_action.php', { method: 'POST', body: formData })
         .then(res => res.json())
@@ -1929,10 +1928,9 @@ $maxChartCount = max(5, max($chartCounts));
     function updateDriverSubscription(driverId, status) {
         const formData = new FormData();
         formData.append('action', 'update_subscription');
-        formData.append('local_id', driverId);
+        formData.append('user_id', driverId);
         formData.append('role', 'repartidor');
         formData.append('status', status);
-        formData.append('days', 30);
 
         fetch('api_admin_action.php', { method: 'POST', body: formData })
         .then(res => res.json())
