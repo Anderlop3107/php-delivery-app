@@ -960,7 +960,7 @@ if ($action === 'update_user_account') {
     // Si se especificó una nueva contraseña, encriptarla y guardarla
     if (!empty($password)) {
         $hashed = password_hash($password, PASSWORD_DEFAULT);
-        app_exec("UPDATE users SET password = ? WHERE id = ?", 'si', [$hashed, $targetUserId]);
+        app_exec("UPDATE users SET password_hash = ? WHERE id = ?", 'si', [$hashed, $targetUserId]);
     }
 
     echo json_encode([
