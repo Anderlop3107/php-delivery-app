@@ -774,6 +774,22 @@ $maxChartCount = max(5, max($chartCounts));
             border-color: #fde68a !important;
         }
 
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            z-index: 99999;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
         /* Success & Confirmation Modal Card (Estilo del Proyecto) */
         .success-modal-card {
             background: #ffffff;
