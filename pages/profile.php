@@ -102,6 +102,10 @@ require __DIR__ . '/_header.php';
 <?php endif; ?>
 
 <style>
+    body, .page-container, .profile-hero, .bento-card, .tab-content {
+        background-color: #ffffff !important;
+    }
+
     /* Profile Hero Header */
     .profile-hero {
         position: relative;
@@ -127,7 +131,7 @@ require __DIR__ . '/_header.php';
         content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, var(--bg) 100%);
+        background: linear-gradient(to bottom, rgba(255, 255, 255, 0) 0%, #ffffff 100%);
     }
 
     .hero-content { position: relative; z-index: 2; }
@@ -862,7 +866,7 @@ require __DIR__ . '/_header.php';
                 El administrador te habilitará pronto.
             </p>
             <div style="
-                background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px;
+                background: #ffffff; border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px;
                 font-size: 13px; color: #475569; font-weight: 700;
                 display: flex; align-items: center; justify-content: center; gap: 8px;
             ">
@@ -881,7 +885,7 @@ require __DIR__ . '/_header.php';
             <?php endif; ?>
 
             <form id="payment-upload-form-profile" style="display: flex; flex-direction: column; gap: 16px;">
-                <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px dashed var(--border); border-radius: 16px; padding: 24px; cursor: pointer; background: #f8fafc; text-align:center;" id="upload-label-profile">
+                <label style="display: flex; flex-direction: column; align-items: center; justify-content: center; border: 2px dashed var(--border); border-radius: 16px; padding: 24px; cursor: pointer; background: #ffffff; text-align:center;" id="upload-label-profile">
                     <span style="font-size: 32px; margin-bottom: 8px;">📷</span>
                     <span style="font-size: 14px; font-weight: 700; color: #475569;" id="file-label-text-profile">Seleccionar foto de comprobante</span>
                     <input type="file" name="payment_proof" id="payment_proof_profile" accept="image/*" style="display: none;" onchange="handleFileSelectProfile(this)">
@@ -1160,7 +1164,7 @@ require __DIR__ . '/_header.php';
                                 El administrador te habilitará pronto.
                             </p>
                             <div style="
-                                background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px;
+                                background: #ffffff; border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px;
                                 font-size: 13px; color: #475569; font-weight: 700;
                                 display: flex; align-items: center; justify-content: center; gap: 8px;
                             ">
