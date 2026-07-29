@@ -21,6 +21,23 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $action = $_POST['action'] ?? '';
 
+if ($action === 'get_live_active_deliveries') {
+    $activeDeliveries = app_all("
+        SELECT d.*, l.business_name as local_name, r.name as driver_name
+        FROM deliveries d
+        LEFT JOIN users l ON l.id = d.local_user_id
+        LEFT JOIN users r ON r.id = d.repartidor_user_id
+        WHERE d.status NOT IN ('entregado', 'cancelado', 'rechazado')
+        ORDER BY d.created_at DESC
+    ");
+    
+    echo json_encode([
+        'success' => true,
+        'deliveries' => $activeDeliveries
+    ]);
+    exit;
+}
+
 if ($action === 'create_user') {
     $name         = trim($_POST['name'] ?? '');
     $email        = trim($_POST['email'] ?? '');
