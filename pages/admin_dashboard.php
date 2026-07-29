@@ -2023,6 +2023,16 @@ $maxChartCount = max(5, max($chartCounts));
         .catch(err => console.error("Error al actualizar estados de repartidores:", err));
     }
 
+    function esc(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     function refreshActiveDeliveriesFeed() {
         const container = document.getElementById('active-deliveries-list');
         if (!container) return;
