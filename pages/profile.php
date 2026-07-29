@@ -91,6 +91,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
 }
 
 $title = 'Perfil';
+$logoVersion = (!empty($userData['logo_path']) && file_exists(__DIR__ . '/../' . $userData['logo_path']))
+    ? filemtime(__DIR__ . '/../' . $userData['logo_path'])
+    : 1;
+
 require __DIR__ . '/_header.php';
 ?>
 <!-- SweetAlert2 local copy -->
@@ -119,11 +123,16 @@ require __DIR__ . '/_header.php';
     .hero-cover {
         position: absolute;
         top: 0; left: 0; right: 0; height: 160px;
-        background: url('<?= !empty($userData['logo_path']) ? esc(delivery_app_url($userData['logo_path'])) : 'https://images.unsplash.com/photo-1513104890138-7c749659a591?q=80&w=1000&auto=format&fit=crop' ?>');
+        <?php if (!empty($userData['logo_path'])): ?>
+        background: url('<?= esc(delivery_app_url($userData['logo_path'])) ?>?v=<?= $logoVersion ?>');
         background-size: cover;
         background-position: center;
         filter: blur(25px) brightness(0.85);
         transform: scale(1.2);
+        <?php else: ?>
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        opacity: 0.15;
+        <?php endif; ?>
         z-index: 1;
     }
     
@@ -496,9 +505,11 @@ require __DIR__ . '/_header.php';
         <div class="profile-avatar-wrapper">
             <div class="profile-avatar-center">
                 <?php if (!empty($userData['logo_path'])): ?>
-                    <img src="<?= esc(delivery_app_url($userData['logo_path'])) ?>?v=<?= time() ?>" id="avatar-preview">
+                    <img src="<?= esc(delivery_app_url($userData['logo_path'])) ?>?v=<?= $logoVersion ?>" id="avatar-preview" loading="eager" decoding="async">
                 <?php else: ?>
-                    <div class="placeholder">🏢</div>
+                    <div class="avatar-initials-tech" style="width:100%; height:100%; background:linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); color:#fff; font-size:32px; font-weight:800; display:flex; align-items:center; justify-content:center;">
+                        <?= esc(mb_strtoupper(mb_substr($userData['name'], 0, 1, 'UTF-8'))) ?>
+                    </div>
                 <?php endif; ?>
             </div>
             <label for="logo-input" class="edit-badge-overlay">
