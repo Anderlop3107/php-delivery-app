@@ -158,6 +158,117 @@ require __DIR__ . '/_header.php';
     @keyframes rotate-arc { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
     @keyframes pulse-wave { 0% { transform: scale(1); opacity: 1; } 100% { transform: scale(2.8); opacity: 0; } }
 
+    /* HUD TELEMETRY BAR */
+    .tech-hud-bar {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 30px;
+        padding: 8px 18px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
+        font-size: 11px;
+        font-weight: 800;
+        color: #475569;
+        letter-spacing: 0.3px;
+    }
+    .hud-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+    .hud-dot.live-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #10b981;
+        box-shadow: 0 0 8px #10b981;
+        animation: pulse-hud-dot 1.5s infinite;
+    }
+    @keyframes pulse-hud-dot {
+        0% { transform: scale(1); opacity: 1; }
+        50% { transform: scale(1.3); opacity: 0.5; }
+        100% { transform: scale(1); opacity: 1; }
+    }
+    .hud-divider {
+        color: #cbd5e1;
+        font-weight: 400;
+    }
+
+    /* RADAR LASER SWEEP BEAM */
+    .radar-sweep-beam {
+        position: absolute;
+        width: 240px;
+        height: 240px;
+        border-radius: 50%;
+        background: conic-gradient(from 0deg, rgba(37, 99, 235, 0.35) 0deg, rgba(37, 99, 235, 0) 60deg, transparent 360deg);
+        animation: rotate-sweep 3s linear infinite;
+        z-index: 4;
+        pointer-events: none;
+    }
+    .paused .radar-sweep-beam {
+        display: none;
+    }
+    @keyframes rotate-sweep {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+
+    /* TECH STATS GRID */
+    .tech-stats-grid {
+        display: flex;
+        gap: 12px;
+        margin-top: 28px;
+        width: 100%;
+        max-width: 360px;
+    }
+    .tech-stat-card {
+        flex: 1;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 14px 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+        transition: all 0.2s ease;
+    }
+    .tech-stat-card:hover {
+        transform: translateY(-2px);
+        border-color: #cbd5e1;
+        box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+    }
+    .stat-icon-wrap {
+        width: 38px;
+        height: 38px;
+        border-radius: 12px;
+        background: var(--primary-soft);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 18px;
+        color: var(--primary);
+    }
+    .stat-content {
+        display: flex;
+        flex-direction: column;
+    }
+    .stat-val {
+        font-size: 14px;
+        font-weight: 800;
+        color: #0f172a;
+        line-height: 1.2;
+    }
+    .stat-lbl {
+        font-size: 10.5px;
+        font-weight: 700;
+        color: #64748b;
+        margin-top: 2px;
+    }
+
     /* TOGGLE */
     .availability-toggle-box { text-align: center; }
     .status-label-text { margin-top: 15px; font-size: 14px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
@@ -788,6 +899,24 @@ document.addEventListener('DOMContentLoaded', function() {
     </div>
 </div>
 
+    <!-- BARRA HUD DE TELEMETRÍA TECNOLÓGICA -->
+    <div class="tech-hud-bar">
+        <div class="hud-item">
+            <span class="hud-dot live-dot"></span>
+            <span>GPS ACTIVO</span>
+        </div>
+        <div class="hud-divider">|</div>
+        <div class="hud-item">
+            <span class="hud-icon">⚡</span>
+            <span>PING 18ms</span>
+        </div>
+        <div class="hud-divider">|</div>
+        <div class="hud-item">
+            <span class="hud-icon">🛡️</span>
+            <span>SISTEMA EN VIVO</span>
+        </div>
+    </div>
+
     <!-- SECCIÓN DE PERFIL PERSONALIZADA -->
     <div class="profile-header-tech">
         <div class="avatar-wrapper-tech">
@@ -804,9 +933,10 @@ document.addEventListener('DOMContentLoaded', function() {
         <p class="subtitle-tech">Conéctate para recibir pedidos</p>
     </div>
 
-    <!-- ÁREA DEL RADAR -->
+    <!-- ÁREA DEL RADAR CON LÁSER 360° -->
     <div class="radar-wrapper paused" id="radar-ui">
         <div class="radar-pulse-wave"></div>
+        <div class="radar-sweep-beam"></div>
         <div class="radar-ring-arc arc-1"></div>
         <div class="radar-ring-arc arc-2"></div>
         <div class="radar-ring-arc arc-3"></div>
@@ -820,6 +950,24 @@ document.addEventListener('DOMContentLoaded', function() {
             <span class="ios-slider"></span>
         </label>
         <div class="status-label-text" id="main-status-text">Desconectado</div>
+    </div>
+
+    <!-- TARJETAS DE ESTADÍSTICAS TECH -->
+    <div class="tech-stats-grid">
+        <div class="tech-stat-card">
+            <div class="stat-icon-wrap">📦</div>
+            <div class="stat-content">
+                <span class="stat-val"><?= (int)$activeCount ?></span>
+                <span class="stat-lbl">Pedidos Activos</span>
+            </div>
+        </div>
+        <div class="tech-stat-card">
+            <div class="stat-icon-wrap">⚡</div>
+            <div class="stat-content">
+                <span class="stat-val" id="hud-stat-status"><?= ($userData['is_online'] == 1) ? 'Conectado' : 'Standby' ?></span>
+                <span class="stat-lbl">Estado de Red</span>
+            </div>
+        </div>
     </div>
 </div>
 
@@ -1032,14 +1180,18 @@ function showToast(message) {
 
         if (isOnline) {
             radar.classList.remove('paused');
-            text.innerText = 'Buscando pedidos...';
+            text.innerText = '🟢 Buscando pedidos en vivo...';
             text.classList.add('active');
+            const hudStat = document.getElementById('hud-stat-status');
+            if (hudStat) hudStat.textContent = 'Conectado';
             startLocationUpdates();
             startPolling();
         } else {
             radar.classList.add('paused');
             text.innerText = 'Desconectado';
             text.classList.remove('active');
+            const hudStat = document.getElementById('hud-stat-status');
+            if (hudStat) hudStat.textContent = 'Standby';
             stopLocationUpdates();
             stopPolling();
             closeBroadcast();
