@@ -59,6 +59,9 @@ require __DIR__ . '/_header.php';
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
 
 <style>
+    body, .driver-scanner-view {
+        background-color: #ffffff !important;
+    }
     .driver-scanner-view {
         min-height: calc(100vh - 120px);
         display: flex;
@@ -221,10 +224,10 @@ require __DIR__ . '/_header.php';
 
     .money-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 28px; }
     .money-box { 
-        background: #f8fafc; 
+        background: #ffffff; 
         padding: 16px; 
         border-radius: 20px; 
-        border: 1.5px solid rgba(0,0,0,0.03); 
+        border: 1.5px solid rgba(0,0,0,0.05); 
         display: flex;
         flex-direction: column;
         justify-content: space-between;
@@ -543,7 +546,7 @@ require __DIR__ . '/_header.php';
                 $status = $info[1];
                 $badgeText = $statusLabels[$status] ?? $status;
             ?>
-                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #f8fafc; border-radius: 12px; font-size: 13px; font-weight: 700; border: 1px solid #f1f5f9;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 10px 14px; background: #ffffff; border-radius: 12px; font-size: 13px; font-weight: 700; border: 1px solid #f1f5f9;">
                     <span style="color:#475569; font-weight: 700;"><?= $label ?></span>
                     <span class="status-pill <?= $status ?>" style="font-size: 10px; padding: 4px 10px; border-radius: 20px; font-weight: 800; text-transform: uppercase;"><?= $badgeText ?></span>
                 </div>
@@ -601,7 +604,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 Tu comprobante de pago fue subido con éxito y está en revisión. El administrador te habilitará pronto.
             </p>
             <div style="
-                background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px;
+                background: #ffffff; border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px;
                 font-size: 13.5px; color: #475569; font-weight: 700;
                 display: flex; align-items: center; justify-content: center; gap: 8px;
             ">
@@ -637,7 +640,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <label style="
                     display: flex; flex-direction: column; align-items: center; justify-content: center;
                     border: 2px dashed #cbd5e1; border-radius: 16px; padding: 24px; cursor: pointer;
-                    background: #f8fafc; transition: all 0.2s;
+                    background: #ffffff; transition: all 0.2s;
                 " id="upload-label" ondragover="event.preventDefault()" ondrop="handleDrop(event)">
                     <span style="font-size: 32px; margin-bottom: 8px;">📷</span>
                     <span style="font-size: 14px; font-weight: 700; color: #475569;" id="file-label-text">Seleccionar foto de comprobante</span>
@@ -740,7 +743,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         Tu comprobante de pago fue subido con éxito y está en revisión. El administrador te habilitará pronto.
                     </p>
                     <div style="
-                        background: #f8fafc; border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px;
+                        background: #ffffff; border: 1px solid #e2e8f0; padding: 14px; border-radius: 16px;
                         font-size: 13.5px; color: #475569; font-weight: 700;
                         display: flex; align-items: center; justify-content: center; gap: 8px;
                     ">
