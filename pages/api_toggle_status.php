@@ -75,7 +75,7 @@ if ($isOnline === 1) {
 
 $updated = app_exec("
     UPDATE users 
-    SET is_online = ?, last_ping = NOW(), updated_at = NOW() 
+    SET is_online = ?, last_ping = NOW(), ubicacion_actualizada_en = NOW(), updated_at = NOW() 
     WHERE id = ?
 ", 'ii', [$isOnline, $driverId]);
 
