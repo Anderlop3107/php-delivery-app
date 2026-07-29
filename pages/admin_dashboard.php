@@ -1448,19 +1448,38 @@ $maxChartCount = max(5, max($chartCounts));
                 <p>Supervisa todos los pedidos activos en tránsito.</p>
             </div>
             
-            <div class="table-card-list">
+            <div class="table-card-list" id="active-deliveries-list">
                 <?php if (empty($activeDeliveries)): ?>
                     <div style="text-align:center; padding:40px; color:var(--text-muted);">No hay entregas activas en tránsito.</div>
                 <?php else: ?>
-                    <?php foreach ($activeDeliveries as $ad): ?>
+                    <?php foreach ($activeDeliveries as $ad): 
+                        $statusStr = strtolower($ad['status'] ?? 'pendiente');
+                        $statusLabel = 'PENDIENTE';
+                        $statusClass = 'doc-pending';
+                        $statusStyle = 'background:rgba(245, 158, 11, 0.1); color:#d97706; border:1px solid rgba(245, 158, 11, 0.3);';
+
+                        if ($statusStr === 'aceptado') {
+                            $statusLabel = 'ACEPTADO / EN CAMINO AL LOCAL';
+                            $statusClass = 'doc-approved';
+                            $statusStyle = 'background:rgba(37, 99, 235, 0.1); color:#2563eb; border:1px solid rgba(37, 99, 235, 0.3);';
+                        } else if ($statusStr === 'repartidor_en_local') {
+                            $statusLabel = 'EN LOCAL';
+                            $statusClass = 'doc-approved';
+                            $statusStyle = 'background:rgba(59, 130, 246, 0.1); color:#1d4ed8; border:1px solid rgba(59, 130, 246, 0.3);';
+                        } else if ($statusStr === 'en_camino_al_cliente') {
+                            $statusLabel = 'EN CAMINO AL CLIENTE';
+                            $statusClass = 'doc-approved';
+                            $statusStyle = 'background:rgba(16, 185, 129, 0.1); color:#059669; border:1px solid rgba(16, 185, 129, 0.3);';
+                        }
+                    ?>
                         <div class="table-row-item" style="flex-direction:column; align-items:flex-start;">
                             <div style="display:flex; justify-content:space-between; width:100%; border-bottom:1px solid #f1f5f9; padding-bottom:8px; margin-bottom:8px;">
                                 <span style="font-weight:800;">Pedido #<?php echo $ad['id'] ?></span>
-                                <span class="doc-dot doc-pending"><?php echo strtoupper($ad['status']) ?></span>
+                                <span class="doc-dot <?php echo $statusClass ?>" style="<?php echo $statusStyle ?>"><?php echo $statusLabel ?></span>
                             </div>
                             <div style="font-size:12px; color:var(--text-muted); display:flex; flex-direction:column; gap:4px; width:100%;">
                                 <div><b>Local:</b> <?php echo esc($ad['local_name'] ?: 'N/A') ?></div>
-                                <div><b>Repartidor:</b> <?php echo esc($ad['driver_name'] ?: 'No asignado') ?></div>
+                                <div><b>Repartidor:</b> <span style="font-weight:800; <?php echo !empty($ad['driver_name']) ? 'color:var(--primary);' : '' ?>"><?php echo esc($ad['driver_name'] ?: 'No asignado') ?></span></div>
                                 <div><b>Dirección:</b> <?php echo esc($ad['delivery_address']) ?></div>
                             </div>
                         </div>
@@ -1996,6 +2015,65 @@ $maxChartCount = max(5, max($chartCounts));
         .catch(err => console.error("Error al actualizar estados de repartidores:", err));
     }
 
+    function refreshActiveDeliveriesFeed() {
+        const container = document.getElementById('active-deliveries-list');
+        if (!container) return;
+
+        const formData = new FormData();
+        formData.append('action', 'get_live_active_deliveries');
+
+        fetch('api_admin_action.php', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+            if (!data.success) return;
+            if (!data.deliveries || data.deliveries.length === 0) {
+                container.innerHTML = `<div style="text-align:center; padding:40px; color:var(--text-muted);">No hay entregas activas en tránsito.</div>`;
+                return;
+            }
+
+            let html = '';
+            data.deliveries.forEach(ad => {
+                const statusStr = (ad.status || 'pendiente').toLowerCase();
+                let statusLabel = 'PENDIENTE';
+                let statusClass = 'doc-pending';
+                let statusStyle = 'background:rgba(245, 158, 11, 0.1); color:#d97706; border:1px solid rgba(245, 158, 11, 0.3);';
+
+                if (statusStr === 'aceptado') {
+                    statusLabel = 'ACEPTADO / EN CAMINO AL LOCAL';
+                    statusClass = 'doc-approved';
+                    statusStyle = 'background:rgba(37, 99, 235, 0.1); color:#2563eb; border:1px solid rgba(37, 99, 235, 0.3);';
+                } else if (statusStr === 'repartidor_en_local') {
+                    statusLabel = 'EN LOCAL';
+                    statusClass = 'doc-approved';
+                    statusStyle = 'background:rgba(59, 130, 246, 0.1); color:#1d4ed8; border:1px solid rgba(59, 130, 246, 0.3);';
+                } else if (statusStr === 'en_camino_al_cliente') {
+                    statusLabel = 'EN CAMINO AL CLIENTE';
+                    statusClass = 'doc-approved';
+                    statusStyle = 'background:rgba(16, 185, 129, 0.1); color:#059669; border:1px solid rgba(16, 185, 129, 0.3);';
+                }
+
+                const driverName = ad.driver_name || 'No asignado';
+
+                html += `
+                    <div class="table-row-item" style="flex-direction:column; align-items:flex-start;">
+                        <div style="display:flex; justify-content:space-between; width:100%; border-bottom:1px solid #f1f5f9; padding-bottom:8px; margin-bottom:8px;">
+                            <span style="font-weight:800;">Pedido #${ad.id}</span>
+                            <span class="doc-dot ${statusClass}" style="${statusStyle}">${statusLabel}</span>
+                        </div>
+                        <div style="font-size:12px; color:var(--text-muted); display:flex; flex-direction:column; gap:4px; width:100%;">
+                            <div><b>Local:</b> ${esc(ad.local_name || 'N/A')}</div>
+                            <div><b>Repartidor:</b> <span style="font-weight:800; ${ad.driver_name ? 'color:var(--primary);' : ''}">${esc(driverName)}</span></div>
+                            <div><b>Dirección:</b> ${esc(ad.delivery_address || '')}</div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+        })
+        .catch(err => console.error("Error al actualizar pedidos activos:", err));
+    }
+
     // Cambiar entre pestañas del panel lateral
     function switchAdminTab(tabId) {
         document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
@@ -2040,6 +2118,9 @@ $maxChartCount = max(5, max($chartCounts));
 
         refreshDriversListLiveStatus();
         setInterval(refreshDriversListLiveStatus, 2500);
+
+        refreshActiveDeliveriesFeed();
+        setInterval(refreshActiveDeliveriesFeed, 2500);
 
         // Inicializar ApexCharts Spline Chart: FLUJO DE ACTIVIDAD
         const chartOptions = {
