@@ -934,7 +934,7 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             <div class="sidebar-logo">🛵</div>
             
             <div class="sidebar-menu">
-                <a href="admin_dashboard.php" class="menu-item active" title="Volver al Panel Principal">
+                <a href="admin_dashboard.php?tab=repartidores" class="menu-item active" title="Volver a la Lista de Repartidores">
                     <svg viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"></path></svg>
                 </a>
             </div>
@@ -965,8 +965,8 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                     <a href="https://wa.me/<?= esc($driverData['whatsapp'] ?: $driverData['phone']) ?>" target="_blank" class="action-circle-btn" title="Enviar WhatsApp / Soporte">
                         <svg fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 18l-.153-.055A8.96 8.96 0 013 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z"></path></svg>
                     </a>
-                    <a href="admin_dashboard.php" class="btn-back-admin">
-                        &larr; Volver al Panel
+                    <a href="admin_dashboard.php?tab=repartidores" class="btn-back-admin">
+                        &larr; Volver a Repartidores
                     </a>
                 </div>
             </div>
