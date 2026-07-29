@@ -1078,6 +1078,33 @@ if ($action === 'get_active_drivers') {
     exit;
 }
 
+if ($action === 'get_all_drivers_live_statuses') {
+    $drivers = app_all("
+        SELECT id, is_online,
+               (SELECT COUNT(*) FROM deliveries WHERE repartidor_user_id = users.id AND status NOT IN ('entregado', 'cancelado', 'rechazado')) as active_delivery_count
+        FROM users 
+        WHERE role = 'repartidor'
+    ");
+    
+    $onlineCount = 0;
+    $offlineCount = 0;
+    foreach ($drivers as $d) {
+        if ((int)$d['is_online'] === 1) {
+            $onlineCount++;
+        } else {
+            $offlineCount++;
+        }
+    }
+
+    echo json_encode([
+        'success' => true,
+        'online_count' => $onlineCount,
+        'offline_count' => $offlineCount,
+        'drivers' => $drivers
+    ]);
+    exit;
+}
+
 if ($action === 'upload_local_doc') {
     $driverId = (int)($_POST['driver_id'] ?? 0);
     
