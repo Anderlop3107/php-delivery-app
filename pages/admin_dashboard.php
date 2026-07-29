@@ -29,7 +29,14 @@ $activeDrivers = app_all("
 ");
 
 $onlineDriversCount = 0;
+$onlineDriversTotal = 0;
+$offlineDriversTotal = 0;
 foreach ($activeDrivers as $d) {
+    if (($d['is_online'] ?? 0) == 1) {
+        $onlineDriversTotal++;
+    } else {
+        $offlineDriversTotal++;
+    }
     // Activo = is_online=1 Y hizo ping en los últimos 2 minutos
     $recentPing = !empty($d['last_ping']) && (time() - strtotime($d['last_ping'])) < 120;
     if ($d['is_online'] == 1 && $recentPing && $d['latitude'] && $d['longitude']) {
@@ -790,6 +797,58 @@ $maxChartCount = max(5, max($chartCounts));
             padding: 20px;
         }
 
+        /* Indicador Online/Offline de Repartidores */
+        .online-indicator-dot {
+            position: absolute;
+            bottom: -1px;
+            right: -1px;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            z-index: 3;
+        }
+        .online-indicator-dot.is-online {
+            background: #10b981;
+            box-shadow: 0 0 0 2px #ffffff, 0 0 8px rgba(16, 185, 129, 0.7);
+            animation: pulse-online-dot 2s infinite;
+        }
+        .online-indicator-dot.is-offline {
+            background: #94a3b8;
+            box-shadow: 0 0 0 2px #ffffff;
+        }
+        @keyframes pulse-online-dot {
+            0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7), 0 0 0 2px #ffffff; }
+            70% { box-shadow: 0 0 0 6px rgba(16, 185, 129, 0), 0 0 0 2px #ffffff; }
+            100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0), 0 0 0 2px #ffffff; }
+        }
+
+        .live-status-tag {
+            font-size: 10px;
+            font-weight: 800;
+            padding: 2px 7px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            line-height: 1.2;
+        }
+        .live-status-tag.tag-online {
+            background: rgba(16, 185, 129, 0.12);
+            color: #047857;
+            border: 1px solid rgba(16, 185, 129, 0.25);
+        }
+        .live-status-tag.tag-offline {
+            background: rgba(148, 163, 184, 0.12);
+            color: #475569;
+            border: 1px solid rgba(148, 163, 184, 0.25);
+        }
+        .live-status-tag.tag-delivering {
+            background: rgba(245, 158, 11, 0.12);
+            color: #b45309;
+            border: 1px solid rgba(245, 158, 11, 0.25);
+        }
+
         /* Success & Confirmation Modal Card (Estilo del Proyecto) */
         .success-modal-card {
             background: #ffffff;
@@ -1173,7 +1232,11 @@ $maxChartCount = max(5, max($chartCounts));
                 <div style="display:flex;align-items:center;justify-content:space-between;width:100%;">
                     <div>
                         <h1>Repartidores Registrados</h1>
-                        <p>Verifica y edita estados de conductores y sus documentos.</p>
+                        <p style="margin-bottom:4px;">Verifica y edita estados de conductores y sus documentos.</p>
+                        <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
+                            <span class="live-status-tag tag-online" style="font-size:11px; padding:4px 10px;">🟢 Conectados: <?= $onlineDriversTotal ?></span>
+                            <span class="live-status-tag tag-offline" style="font-size:11px; padding:4px 10px;">⚪ Desconectados: <?= $offlineDriversTotal ?></span>
+                        </div>
                     </div>
                     <button onclick="openCreateUserModal('repartidor')" style="background:var(--primary); color:#fff; border:none; border-radius:14px; padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(37,99,235,0.3); white-space:nowrap; transition:all 0.2s;">
                         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4"/></svg>
@@ -1190,15 +1253,26 @@ $maxChartCount = max(5, max($chartCounts));
                         <?php $dStatus = $d['subscription_status'] ?? 'pending'; ?>
                         <div class="table-row-item row-<?= esc($dStatus) ?>" onclick="if (event.target.tagName !== 'SELECT' && event.target.tagName !== 'OPTION') window.location.href='admin_driver_detail.php?id=<?= (int)$d['id']; ?>'" style="cursor:pointer; position:relative; padding-right:50px;">
                             <div class="driver-mini-info">
-                                <div class="driver-mini-avatar">
+                                <div class="driver-mini-avatar" style="position:relative;">
                                     <?php if ($d['avatar_path']): ?>
                                         <img src="<?= esc(delivery_app_url($d['avatar_path'])); ?>" alt="Avatar">
                                     <?php else: ?>
                                         👤
                                     <?php endif; ?>
+                                    <span class="online-indicator-dot <?= ($d['is_online'] ?? 0) == 1 ? 'is-online' : 'is-offline' ?>" title="<?= ($d['is_online'] ?? 0) == 1 ? 'Conectado / En línea' : 'Desconectado / Apagado' ?>"></span>
                                 </div>
                                 <div class="driver-text">
-                                     <b><?= esc($d['name']) ?></b>
+                                     <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                         <b><?= esc($d['name']) ?></b>
+                                         <?php if (($d['is_online'] ?? 0) == 1): ?>
+                                             <span class="live-status-tag tag-online">🟢 Conectado</span>
+                                         <?php else: ?>
+                                             <span class="live-status-tag tag-offline">⚪ Desconectado</span>
+                                         <?php endif; ?>
+                                         <?php if ((int)($d['active_delivery_count'] ?? 0) > 0): ?>
+                                             <span class="live-status-tag tag-delivering">🛵 En Entrega (<?= (int)$d['active_delivery_count'] ?>)</span>
+                                         <?php endif; ?>
+                                     </div>
                                      <span style="color:var(--text-muted); font-size:11px; font-weight:600;">Vence: <?= !empty($d['subscription_expires_at']) ? date('d/m/Y', strtotime($d['subscription_expires_at'])) : 'Sin fecha' ?></span>
                                  </div>
                             </div>
