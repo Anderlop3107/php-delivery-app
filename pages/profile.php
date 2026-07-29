@@ -366,7 +366,23 @@ require __DIR__ . '/_header.php';
         white-space: nowrap;
     }
     .upload-card-interactive:active { transform: scale(0.98); }
-    .user-icon { font-size: 24px; margin-right: 15px; flex-shrink: 0; }
+    .user-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 12px;
+        background: rgba(37, 99, 235, 0.08);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-right: 15px;
+        flex-shrink: 0;
+        border: 1px solid rgba(37, 99, 235, 0.12);
+    }
+    .user-icon-svg {
+        width: 22px;
+        height: 22px;
+        color: var(--primary);
+    }
     .arrow-icon { font-size: 18px; font-weight: bold; flex-shrink: 0; margin-left: 10px; color: var(--muted); }
     
     /* Translucent blue style with subtle sweep shimmer */
@@ -702,7 +718,9 @@ require __DIR__ . '/_header.php';
                 <div class="upload-card-interactive <?= $ci_class ?>" id="card-doc_ci" onclick="window.location.href='upload_id.php'">
                     <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                         <div style="display: flex; align-items: center;">
-                            <span class="user-icon">👤</span>
+                            <span class="user-icon">
+                                <svg class="user-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 3h2"></path></svg>
+                            </span>
                             <div style="display: flex; flex-direction: column;">
                                 <span style="font-weight: 800; font-size: 15px; color: var(--text);">Cédula de Identidad</span>
                                 <span id="status-doc_ci" style="font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
@@ -726,7 +744,9 @@ require __DIR__ . '/_header.php';
                 <div class="upload-card-interactive <?= $licencia_class ?>" id="card-doc_licencia" onclick="window.location.href='upload_license.php'">
                     <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                         <div style="display: flex; align-items: center;">
-                            <span class="user-icon">🚗</span>
+                            <span class="user-icon">
+                                <svg class="user-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M8 7h8m-8 4h8m-8 4h4M4 5h16a1 1 0 011 1v12a1 1 0 01-1 1H4a1 1 0 01-1-1V6a1 1 0 011-1z"></path></svg>
+                            </span>
                             <div style="display: flex; flex-direction: column;">
                                 <span style="font-weight: 800; font-size: 15px; color: var(--text);">Registro de conducir</span>
                                 <span id="status-doc_licencia" style="font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
@@ -750,7 +770,9 @@ require __DIR__ . '/_header.php';
                 <div class="upload-card-interactive <?= $habilitacion_class ?>" id="card-doc_habilitacion" onclick="window.location.href='upload_habilitacion.php'">
                     <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                         <div style="display: flex; align-items: center;">
-                            <span class="user-icon">📄</span>
+                            <span class="user-icon">
+                                <svg class="user-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                            </span>
                             <div style="display: flex; flex-direction: column;">
                                 <span style="font-weight: 800; font-size: 15px; color: var(--text);">Habilitación</span>
                                 <span id="status-doc_habilitacion" style="font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
@@ -774,7 +796,9 @@ require __DIR__ . '/_header.php';
                 <div class="upload-card-interactive <?= $cedula_verde_class ?>" id="card-doc_cedula_verde" onclick="window.location.href='upload_cedula_verde.php'">
                     <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                         <div style="display: flex; align-items: center;">
-                            <span class="user-icon">🚙</span>
+                            <span class="user-icon">
+                                <svg class="user-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1v-4a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1"></path></svg>
+                            </span>
                             <div style="display: flex; flex-direction: column;">
                                 <span style="font-weight: 800; font-size: 15px; color: var(--text);">Cédula verde</span>
                                 <span id="status-doc_cedula_verde" style="font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
@@ -805,7 +829,9 @@ require __DIR__ . '/_header.php';
                 <div class="upload-card-interactive <?= $receipt_class ?>" id="card-weekly_subscription" onclick="openSubscriptionUploadModal()" style="margin-top: 15px;">
                     <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
                         <div style="display: flex; align-items: center;">
-                            <span class="user-icon">💳</span>
+                            <span class="user-icon">
+                                <svg class="user-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                            </span>
                             <div style="display: flex; flex-direction: column;">
                                 <span style="font-weight: 800; font-size: 15px; color: var(--text);">Suscripción Semanal</span>
                                 <span id="status-weekly_subscription" style="font-size: 12px; font-weight: 700; display: flex; align-items: center; gap: 4px; margin-top: 2px;">
