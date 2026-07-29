@@ -6,6 +6,12 @@ require_role(['repartidor']);
 $sessionUser = current_user();
 $userData = app_one("SELECT * FROM users WHERE id = ?", "i", [(int)$sessionUser['id']]);
 
+// Generar iniciales para avatar (ej: Anderson López -> AL)
+$driverNameParts = explode(' ', trim($userData['name'] ?? ''));
+$firstInitial = !empty($driverNameParts[0]) ? mb_substr($driverNameParts[0], 0, 1, 'UTF-8') : 'D';
+$lastInitial = count($driverNameParts) > 1 ? mb_substr(end($driverNameParts), 0, 1, 'UTF-8') : '';
+$driverInitials = mb_strtoupper($firstInitial . $lastInitial, 'UTF-8');
+
 // Verificar pedidos activos actuales
 $activeCountRow = app_one("
     SELECT COUNT(*) as count
@@ -85,7 +91,32 @@ require __DIR__ . '/_header.php';
         display: flex; align-items: center; justify-content: center;
     }
     .avatar-img-tech img { width: 100%; height: 100%; object-fit: cover; }
-    .avatar-img-tech span { font-size: 36px; }
+    .avatar-initials-tech {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        color: #ffffff;
+        font-size: 28px;
+        font-weight: 800;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        letter-spacing: -0.5px;
+    }
+    .radar-center-initials {
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+        color: #ffffff;
+        font-size: 30px;
+        font-weight: 800;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        letter-spacing: -0.5px;
+    }
 
     .verified-badge-tech {
         position: absolute;
@@ -764,7 +795,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 <?php if (!empty($userData['logo_path'])): ?>
                     <img src="<?= esc(delivery_app_url($userData['logo_path'])) ?>?v=<?= time() ?>" alt="Avatar">
                 <?php else: ?>
-                    <span>🛵</span>
+                    <div class="avatar-initials-tech"><?= esc($driverInitials) ?></div>
                 <?php endif; ?>
             </div>
             <div class="verified-badge-tech" title="Cuenta Verificada">✓</div>
@@ -779,7 +810,13 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="radar-ring-arc arc-1"></div>
         <div class="radar-ring-arc arc-2"></div>
         <div class="radar-ring-arc arc-3"></div>
-        <div class="radar-center-circle"><span>🛵</span></div>
+        <div class="radar-center-circle">
+            <?php if (!empty($userData['logo_path'])): ?>
+                <img src="<?= esc(delivery_app_url($userData['logo_path'])) ?>?v=<?= time() ?>" alt="Avatar">
+            <?php else: ?>
+                <div class="radar-center-initials"><?= esc($driverInitials) ?></div>
+            <?php endif; ?>
+        </div>
     </div>
 
     <!-- ÁREA DEL TOGGLE -->
