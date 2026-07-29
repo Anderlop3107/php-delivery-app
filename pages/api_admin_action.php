@@ -673,6 +673,44 @@ if ($action === 'delete_driver') {
     exit;
 }
 
+if ($action === 'delete_local') {
+    $localId = (int)($_POST['local_id'] ?? 0);
+    if ($localId <= 0) {
+        http_response_code(400);
+        echo json_encode(['error' => 'ID de comercio no válido.']);
+        exit;
+    }
+
+    $local = app_one("SELECT id, name, business_name FROM users WHERE id = ? AND role = 'local'", 'i', [$localId]);
+    if (!$local) {
+        http_response_code(404);
+        echo json_encode(['error' => 'El comercio no existe o ya fue eliminado.']);
+        exit;
+    }
+
+    $localDisplayName = !empty($local['business_name']) ? $local['business_name'] : $local['name'];
+
+    // 1. Eliminar entregas/pedidos asociados al local
+    app_exec("DELETE FROM deliveries WHERE local_user_id = ?", 'i', [$localId]);
+
+    // 2. Eliminar notificaciones push del local
+    app_exec("DELETE FROM app_notifications WHERE user_id = ?", 'i', [$localId]);
+
+    // 3. Eliminar comprobantes/pagos si existen
+    try {
+        app_exec("DELETE FROM driver_payments WHERE driver_user_id = ?", 'i', [$localId]);
+    } catch (Throwable $e) {}
+
+    // 4. Eliminar la cuenta del comercio definitivamente
+    app_exec("DELETE FROM users WHERE id = ? AND role = 'local'", 'i', [$localId]);
+
+    echo json_encode([
+        'success' => true,
+        'message' => "El comercio '{$localDisplayName}' ha sido eliminado permanentemente del sistema."
+    ]);
+    exit;
+}
+
 if ($action === 'get_driver_kpis') {
     $driverId = (int)($_POST['driver_id'] ?? 0);
     $range = $_POST['range'] ?? 'week';
