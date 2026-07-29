@@ -1143,11 +1143,15 @@ if ($action === 'get_all_drivers_live_statuses') {
     
     $onlineCount = 0;
     $offlineCount = 0;
+    $deliveringCount = 0;
     foreach ($drivers as $d) {
         if ((int)$d['is_online'] === 1) {
             $onlineCount++;
         } else {
             $offlineCount++;
+        }
+        if ((int)($d['active_delivery_count'] ?? 0) > 0) {
+            $deliveringCount++;
         }
     }
 
@@ -1155,6 +1159,7 @@ if ($action === 'get_all_drivers_live_statuses') {
         'success' => true,
         'online_count' => $onlineCount,
         'offline_count' => $offlineCount,
+        'delivering_count' => $deliveringCount,
         'drivers' => $drivers
     ]);
     exit;

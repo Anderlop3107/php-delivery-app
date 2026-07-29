@@ -31,11 +31,15 @@ $activeDrivers = app_all("
 $onlineDriversCount = 0;
 $onlineDriversTotal = 0;
 $offlineDriversTotal = 0;
+$deliveringDriversTotal = 0;
 foreach ($activeDrivers as $d) {
     if (($d['is_online'] ?? 0) == 1) {
         $onlineDriversTotal++;
     } else {
         $offlineDriversTotal++;
+    }
+    if ((int)($d['active_delivery_count'] ?? 0) > 0) {
+        $deliveringDriversTotal++;
     }
     // Activo = is_online=1 Y hizo ping en los últimos 2 minutos
     $recentPing = !empty($d['last_ping']) && (time() - strtotime($d['last_ping'])) < 120;
@@ -1376,6 +1380,7 @@ $maxChartCount = max(5, max($chartCounts));
                         <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
                             <span class="live-status-tag tag-online" id="header-count-online" style="font-size:11px; padding:4px 10px;">🟢 Conectados: <?= $onlineDriversTotal ?></span>
                             <span class="live-status-tag tag-offline" id="header-count-offline" style="font-size:11px; padding:4px 10px;">⚪ Desconectados: <?= $offlineDriversTotal ?></span>
+                            <span class="live-status-tag tag-delivering" id="header-count-delivering" style="font-size:11px; padding:4px 10px;">🛵 En Entrega: <?= $deliveringDriversTotal ?></span>
                         </div>
                     </div>
                     <button onclick="openCreateUserModal('repartidor')" style="background:var(--primary); color:#fff; border:none; border-radius:14px; padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(37,99,235,0.3); white-space:nowrap; transition:all 0.2s;">
@@ -1966,8 +1971,11 @@ $maxChartCount = max(5, max($chartCounts));
                 // 1. Actualizar contadores generales en la cabecera de la pestaña Repartidores
                 const headerOnline = document.getElementById('header-count-online');
                 const headerOffline = document.getElementById('header-count-offline');
+                const headerDelivering = document.getElementById('header-count-delivering');
+                
                 if (headerOnline) headerOnline.textContent = '🟢 Conectados: ' + data.online_count;
                 if (headerOffline) headerOffline.textContent = '⚪ Desconectados: ' + data.offline_count;
+                if (headerDelivering) headerDelivering.textContent = '🛵 En Entrega: ' + (data.delivering_count || 0);
 
                 // 2. Actualizar cada repartidor en el DOM
                 data.drivers.forEach(d => {
