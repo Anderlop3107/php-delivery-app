@@ -180,12 +180,12 @@ require __DIR__ . '/_header.php';
     /* TOGGLE */
     .availability-toggle-box { text-align: center; }
     .status-label-text { margin-top: 15px; font-size: 14px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: 1px; }
-    .status-label-text.active { color: #10b981; }
+    .status-label-text.active { color: var(--primary); }
     .ios-switch { position: relative; display: inline-block; width: 64px; height: 34px; }
     .ios-switch input { opacity: 0; width: 0; height: 0; }
     .ios-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #e2e8f0; transition: .4s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 34px; }
     .ios-slider:before { position: absolute; content: ""; height: 26px; width: 26px; left: 4px; bottom: 4px; background-color: white; transition: .4s cubic-bezier(0.4, 0, 0.2, 1); border-radius: 50%; box-shadow: 0 3px 8px rgba(0,0,0,0.15); }
-    input:checked + .ios-slider { background-color: #10b981; }
+    input:checked + .ios-slider { background-color: var(--primary); }
     input:checked + .ios-slider:before { transform: translateX(30px); }
 
     /* BROADCAST MODAL PREMIUM REDESIGN */
@@ -839,7 +839,7 @@ document.addEventListener('DOMContentLoaded', function() {
             <input type="checkbox" id="main-status-toggle" onchange="handleScannerToggle(this.checked)" <?= ($userData['is_online'] == 1 && $activeCount < 2) ? 'checked' : '' ?> >
             <span class="ios-slider"></span>
         </label>
-        <div class="status-label-text" id="main-status-text">Desconectado</div>
+        <div class="status-label-text" id="main-status-text">DESCONECTADO</div>
     </div>
 </div>
 
@@ -1052,13 +1052,13 @@ function showToast(message) {
 
         if (isOnline) {
             radar.classList.remove('paused');
-            text.innerText = '🟢 Buscando pedidos en vivo...';
+            text.innerText = 'BUSCANDO PEDIDOS';
             text.classList.add('active');
             startLocationUpdates();
             startPolling();
         } else {
             radar.classList.add('paused');
-            text.innerText = 'Desconectado';
+            text.innerText = 'DESCONECTADO';
             text.classList.remove('active');
             stopLocationUpdates();
             stopPolling();
