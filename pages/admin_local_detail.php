@@ -1135,6 +1135,9 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                             <button type="submit" id="btn-save-account" style="width: 100%; padding: 12px; margin-top: 10px; font-size: 13px; font-weight: 800; border: none; border-radius: 12px; background: var(--primary); color: #ffffff; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);">
                                 💾 Guardar Cambios
                             </button>
+                            <button type="button" onclick="deleteLocalAccount()" style="width: 100%; padding: 12px; margin-top: 10px; font-size: 13px; font-weight: 800; border: none; border-radius: 12px; background: #dc2626; color: #ffffff; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);">
+                                🗑️ Eliminar Comercio
+                            </button>
                         </div>
                     </form>
                 </div>
@@ -1373,12 +1376,78 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
         </div>
     </div>
 
+    <!-- Modal Confirmación de Eliminación Comercio (Estilo success-modal-card) -->
+    <div id="delete-local-modal" class="modal-overlay" style="display: none; z-index: 9999;">
+        <div class="modal-card success-modal-card" style="border-top: 6px solid #dc2626;">
+            <button type="button" class="modal-close-top" onclick="closeDeleteLocalModal()">✕</button>
+            <div class="status-icon-container" style="background:#fee2e2;">
+                <div class="status-icon-waves" style="border-color:#fca5a5;"></div>
+                <span class="check-mark" style="color:#dc2626; font-size:32px;">🗑️</span>
+            </div>
+            <h2 id="delete-local-modal-title">¿Eliminar Comercio?</h2>
+            <p id="delete-local-modal-msg">¿Estás seguro de que deseas eliminar permanentemente la cuenta de este comercio? Esta acción eliminará sus pedidos y datos del sistema.</p>
+            
+            <div style="display:flex; gap:10px; width:100%;">
+                <button type="button" class="btn-listo" onclick="closeDeleteLocalModal()" style="background:#f1f5f9; color:#475569; box-shadow:none; flex:1;">
+                    Cancelar
+                </button>
+                <button type="button" id="btn-confirm-delete-local-act" class="btn-listo" style="background:#dc2626; color:#ffffff; box-shadow:0 8px 20px rgba(220, 38, 38, 0.3); flex:1.2;">
+                    Sí, Eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Audio para sonido de notificaciones -->
     <audio id="realtime-notification-sound" src="<?= esc(delivery_app_url('assets/sounds/notification.mp3')) ?>" preload="auto"></audio>
 
     <script>
         // Variables globales
-        const localId = <?= $localId ?>;
+        const localId = <?= (int)$localId ?>;
+
+        function deleteLocalAccount() {
+            document.getElementById('delete-local-modal').style.display = 'flex';
+            if (window.playNotificationSound) {
+                window.playNotificationSound('<?= delivery_app_url("assets/sounds/notification.mp3") ?>');
+            }
+        }
+
+        function closeDeleteLocalModal() {
+            document.getElementById('delete-local-modal').style.display = 'none';
+        }
+
+        const confirmDeleteLocalActBtn = document.getElementById('btn-confirm-delete-local-act');
+        if (confirmDeleteLocalActBtn) {
+            confirmDeleteLocalActBtn.onclick = function() {
+                const btn = this;
+                btn.disabled = true;
+                btn.textContent = 'Eliminando...';
+
+                const formData = new FormData();
+                formData.append('action', 'delete_local');
+                formData.append('local_id', localId);
+
+                fetch('api_admin_action.php', { method: 'POST', body: formData })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.success) {
+                        closeDeleteLocalModal();
+                        showSuccessModal('¡Comercio Eliminado! 🗑️', res.message);
+                        setTimeout(() => { window.location.href = 'admin_dashboard.php?tab=locales'; }, 1200);
+                    } else {
+                        alert('Error: ' + (res.error || 'No se pudo eliminar el comercio.'));
+                        btn.disabled = false;
+                        btn.textContent = 'Sí, Eliminar';
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    alert('Error al conectar con el servidor.');
+                    btn.disabled = false;
+                    btn.textContent = 'Sí, Eliminar';
+                });
+            };
+        }
         const localName = "<?= esc($localData['business_name'] ?: $localData['name']) ?>";
         const savedLocalLat = <?= (float)($localData['latitude'] ?? 0) ?>;
         const savedLocalLng = <?= (float)($localData['longitude'] ?? 0) ?>;

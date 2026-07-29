@@ -1224,6 +1224,15 @@ $maxChartCount = max(5, max($chartCounts));
                                         <option value="pending" <?php echo $status === 'pending' ? 'selected' : '' ?>>Pendiente</option>
                                     </select>
                                 </div>
+                                <button type="button" onclick="quickDeleteLocal(<?= (int)$l['id']; ?>, '<?= esc($l['business_name'] ?: $l['name']); ?>', event)" title="Eliminar Comercio" style="background:transparent; color:#ef4444; border:none; padding:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; border-radius:8px; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.1)'" onmouseout="this.style.background='transparent'">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M3 6h18"></path>
+                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                                    </svg>
+                                </button>
                                 <div class="btn-view-chevron">&rsaquo;</div>
                             </div>
                         </div>
@@ -2202,12 +2211,27 @@ $maxChartCount = max(5, max($chartCounts));
     }
 
     let targetDriverToDeleteId = null;
+    let targetLocalToDeleteId = null;
 
     function quickDeleteDriver(driverId, driverName, event) {
         if (event) event.stopPropagation();
+        targetLocalToDeleteId = null;
         targetDriverToDeleteId = driverId;
         document.getElementById('delete-driver-modal-title').textContent = '¿Eliminar a ' + driverName + '?';
         document.getElementById('delete-driver-modal-msg').textContent = '¿Estás seguro de que deseas eliminar permanentemente la cuenta de "' + driverName + '"? Una vez eliminado, no podrá volver a acceder a la aplicación.';
+        document.getElementById('delete-driver-modal').style.display = 'flex';
+
+        if (window.playNotificationSound) {
+            window.playNotificationSound('<?= delivery_app_url("assets/sounds/notification.mp3") ?>');
+        }
+    }
+
+    function quickDeleteLocal(localId, localName, event) {
+        if (event) event.stopPropagation();
+        targetDriverToDeleteId = null;
+        targetLocalToDeleteId = localId;
+        document.getElementById('delete-driver-modal-title').textContent = '¿Eliminar a ' + localName + '?';
+        document.getElementById('delete-driver-modal-msg').textContent = '¿Estás seguro de que deseas eliminar permanentemente la cuenta del comercio "' + localName + '"? Esta acción eliminará sus pedidos y datos del sistema.';
         document.getElementById('delete-driver-modal').style.display = 'flex';
 
         if (window.playNotificationSound) {
@@ -2222,14 +2246,19 @@ $maxChartCount = max(5, max($chartCounts));
     const confirmDeleteActBtn = document.getElementById('btn-confirm-delete-driver-act');
     if (confirmDeleteActBtn) {
         confirmDeleteActBtn.onclick = function() {
-            if (!targetDriverToDeleteId) return;
+            if (!targetDriverToDeleteId && !targetLocalToDeleteId) return;
             const btn = this;
             btn.disabled = true;
             btn.textContent = 'Eliminando...';
 
             const formData = new FormData();
-            formData.append('action', 'delete_driver');
-            formData.append('driver_id', targetDriverToDeleteId);
+            if (targetLocalToDeleteId) {
+                formData.append('action', 'delete_local');
+                formData.append('local_id', targetLocalToDeleteId);
+            } else {
+                formData.append('action', 'delete_driver');
+                formData.append('driver_id', targetDriverToDeleteId);
+            }
 
             fetch('api_admin_action.php', { method: 'POST', body: formData })
             .then(res => res.json())
@@ -2239,16 +2268,16 @@ $maxChartCount = max(5, max($chartCounts));
                     alert(res.message);
                     location.reload();
                 } else {
-                    alert('Error: ' + (res.error || 'No se pudo eliminar el repartidor.'));
+                    alert('Error: ' + (res.error || 'No se pudo completar la eliminación.'));
                     btn.disabled = false;
-                    btn.textContent = 'Sí, Eliminar 🗑️';
+                    btn.textContent = 'Sí, Eliminar';
                 }
             })
             .catch(err => {
                 console.error(err);
                 alert('Error al conectar con el servidor.');
                 btn.disabled = false;
-                btn.textContent = 'Sí, Eliminar 🗑️';
+                btn.textContent = 'Sí, Eliminar';
             });
         };
     }
