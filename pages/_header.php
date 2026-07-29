@@ -177,7 +177,70 @@ $user = current_user();
         }
         @keyframes navBadgePulse {
             0%, 100% { transform: scale(1);   box-shadow: 0 0 0 0 rgba(239,68,68,0.5); }
-            50%       { transform: scale(1.15); box-shadow: 0 0 0 5px rgba(239,68,68,0); }
+        /* ---------------------------------------------------- */
+        /* SKELETON UI & SHIMMER LOADING ANIMATIONS SYSTEM      */
+        /* ---------------------------------------------------- */
+        .skeleton-loader {
+            position: relative;
+            overflow: hidden !important;
+            background-color: #e2e8f0 !important;
+            color: transparent !important;
+            border-color: transparent !important;
+            pointer-events: none !important;
+            user-select: none !important;
+            border-radius: 12px;
+        }
+
+        .skeleton-loader::after {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            transform: translateX(-100%);
+            background-image: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0) 0,
+                rgba(255, 255, 255, 0.45) 20%,
+                rgba(255, 255, 255, 0.75) 60%,
+                rgba(255, 255, 255, 0)
+            );
+            animation: skeleton-shimmer 1.6s infinite ease-in-out;
+            content: '';
+            z-index: 99;
+        }
+
+        @keyframes skeleton-shimmer {
+            0% { transform: translateX(-100%); }
+            100% { transform: translateX(100%); }
+        }
+
+        /* Specific Primitive Skeleton Shapes */
+        .skeleton-box { display: block; border-radius: 12px; }
+        .skeleton-circle { border-radius: 50% !important; }
+        .skeleton-text { height: 14px; border-radius: 6px; margin-bottom: 8px; width: 100%; }
+        .skeleton-text.short { width: 45%; }
+        .skeleton-text.medium { width: 70%; }
+        .skeleton-pill { height: 24px; border-radius: 20px; width: 80px; }
+
+        /* Skeleton Card Wrapper */
+        .skeleton-card-wrap {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 4px 12px rgba(15, 23, 42, 0.03);
+        }
+        .skeleton-row {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .skeleton-table-row td {
+            padding: 16px 12px;
         }
     </style>
 </head>
@@ -238,6 +301,41 @@ $user = current_user();
 
     <?php if ($user): ?>
     <script>
+        // Global Skeleton UI Helper System
+        window.SkeletonUI = {
+            renderTableRows: function(columnsCount = 5, rowsCount = 4) {
+                let html = '';
+                for (let i = 0; i < rowsCount; i++) {
+                    html += `<tr class="skeleton-table-row">`;
+                    for (let j = 0; j < columnsCount; j++) {
+                        const widthClass = (j === 0) ? 'medium' : (j === columnsCount - 1 ? 'short' : '');
+                        html += `<td><div class="skeleton-loader skeleton-text ${widthClass}" style="margin:0;"></div></td>`;
+                    }
+                    html += `</tr>`;
+                }
+                return html;
+            },
+            renderCardGrid: function(count = 3) {
+                let html = '';
+                for (let i = 0; i < count; i++) {
+                    html += `
+                        <div class="skeleton-card-wrap">
+                            <div class="skeleton-row">
+                                <div class="skeleton-loader skeleton-circle" style="width: 44px; height: 44px; flex-shrink: 0;"></div>
+                                <div style="flex:1;">
+                                    <div class="skeleton-loader skeleton-text medium" style="height:14px;"></div>
+                                    <div class="skeleton-loader skeleton-text short" style="height:11px; margin:0;"></div>
+                                </div>
+                            </div>
+                            <div class="skeleton-loader skeleton-text" style="height:12px; margin-top:6px;"></div>
+                            <div class="skeleton-loader skeleton-text short" style="height:12px; margin:0;"></div>
+                        </div>
+                    `;
+                }
+                return html;
+            }
+        };
+
         // Global Audio Context Manager for Autoplay Unlocking on Mobile
         let myAudioContext = null;
         let audioUnlocked = false;

@@ -1696,6 +1696,11 @@ $maxChartCount = max(5, max($chartCounts));
     let lastPendingCount = -1;
 
     function refreshPendingVerifications() {
+        const feed = document.getElementById('pending-verifications-feed');
+        if (feed && feed.children.length === 0 && window.SkeletonUI) {
+            feed.innerHTML = window.SkeletonUI.renderCardGrid(2);
+        }
+
         const formData = new FormData();
         formData.append('action', 'get_pending_verifications');
 
