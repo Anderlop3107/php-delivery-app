@@ -1463,18 +1463,22 @@ $maxChartCount = max(5, max($chartCounts));
                         $statusClass = 'doc-pending';
                         $statusStyle = 'background:rgba(245, 158, 11, 0.1); color:#d97706; border:1px solid rgba(245, 158, 11, 0.3);';
 
-                        if ($statusStr === 'aceptado') {
+                        if (in_array($statusStr, ['aceptado', 'asignado'], true)) {
                             $statusLabel = 'ACEPTADO / EN CAMINO AL LOCAL';
                             $statusClass = 'doc-approved';
                             $statusStyle = 'background:rgba(37, 99, 235, 0.1); color:#2563eb; border:1px solid rgba(37, 99, 235, 0.3);';
-                        } else if ($statusStr === 'repartidor_en_local') {
-                            $statusLabel = 'EN LOCAL';
+                        } else if (in_array($statusStr, ['repartidor_en_local', 'llegue_al_local'], true)) {
+                            $statusLabel = 'EN LOCAL (RETIRANDO PEDIDO)';
                             $statusClass = 'doc-approved';
-                            $statusStyle = 'background:rgba(59, 130, 246, 0.1); color:#1d4ed8; border:1px solid rgba(59, 130, 246, 0.3);';
-                        } else if ($statusStr === 'en_camino_al_cliente') {
+                            $statusStyle = 'background:rgba(124, 58, 237, 0.1); color:#7c3aed; border:1px solid rgba(124, 58, 237, 0.3);';
+                        } else if (in_array($statusStr, ['en_camino_al_cliente', 'en_camino'], true)) {
                             $statusLabel = 'EN CAMINO AL CLIENTE';
                             $statusClass = 'doc-approved';
                             $statusStyle = 'background:rgba(16, 185, 129, 0.1); color:#059669; border:1px solid rgba(16, 185, 129, 0.3);';
+                        } else if ($statusStr === 'en_puerta') {
+                            $statusLabel = 'EN PUERTA DEL CLIENTE 🚪';
+                            $statusClass = 'doc-approved';
+                            $statusStyle = 'background:rgba(16, 185, 129, 0.2); color:#047857; border:1px solid rgba(16, 185, 129, 0.4);';
                         }
                     ?>
                         <div class="table-row-item" style="flex-direction:column; align-items:flex-start;">
@@ -2056,18 +2060,22 @@ $maxChartCount = max(5, max($chartCounts));
                 let statusClass = 'doc-pending';
                 let statusStyle = 'background:rgba(245, 158, 11, 0.1); color:#d97706; border:1px solid rgba(245, 158, 11, 0.3);';
 
-                if (statusStr === 'aceptado') {
+                if (['aceptado', 'asignado'].includes(statusStr)) {
                     statusLabel = 'ACEPTADO / EN CAMINO AL LOCAL';
                     statusClass = 'doc-approved';
                     statusStyle = 'background:rgba(37, 99, 235, 0.1); color:#2563eb; border:1px solid rgba(37, 99, 235, 0.3);';
-                } else if (statusStr === 'repartidor_en_local') {
-                    statusLabel = 'EN LOCAL';
+                } else if (['repartidor_en_local', 'llegue_al_local'].includes(statusStr)) {
+                    statusLabel = 'EN LOCAL (RETIRANDO PEDIDO)';
                     statusClass = 'doc-approved';
-                    statusStyle = 'background:rgba(59, 130, 246, 0.1); color:#1d4ed8; border:1px solid rgba(59, 130, 246, 0.3);';
-                } else if (statusStr === 'en_camino_al_cliente') {
+                    statusStyle = 'background:rgba(124, 58, 237, 0.1); color:#7c3aed; border:1px solid rgba(124, 58, 237, 0.3);';
+                } else if (['en_camino_al_cliente', 'en_camino'].includes(statusStr)) {
                     statusLabel = 'EN CAMINO AL CLIENTE';
                     statusClass = 'doc-approved';
                     statusStyle = 'background:rgba(16, 185, 129, 0.1); color:#059669; border:1px solid rgba(16, 185, 129, 0.3);';
+                } else if (statusStr === 'en_puerta') {
+                    statusLabel = 'EN PUERTA DEL CLIENTE 🚪';
+                    statusClass = 'doc-approved';
+                    statusStyle = 'background:rgba(16, 185, 129, 0.2); color:#047857; border:1px solid rgba(16, 185, 129, 0.4);';
                 }
 
                 const driverName = ad.driver_name || 'No asignado';
