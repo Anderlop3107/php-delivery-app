@@ -146,7 +146,7 @@ require __DIR__ . '/_header.php';
         transition: all 0.5s ease;
     }
     .radar-wrapper.paused { filter: grayscale(1); opacity: 0.4; }
-    .radar-center-circle { width: 72px; height: 72px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-radius: 50%; border: 4px solid #ffffff; z-index: 10; box-shadow: 0 0 30px rgba(37, 99, 235, 0.5); }
+    .radar-center-circle { width: 72px; height: 72px; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); border-radius: 50%; border: none; z-index: 10; box-shadow: 0 0 30px rgba(37, 99, 235, 0.5); }
     .radar-center-circle img { width: 100%; height: 100%; object-fit: cover; }
     .radar-ring-arc { position: absolute; border: 3px solid transparent; border-top-color: rgba(37, 99, 235, 0.4); border-radius: 50%; animation: rotate-arc linear infinite; }
     .arc-1 { width: 150px; height: 150px; animation-duration: 2s; }
