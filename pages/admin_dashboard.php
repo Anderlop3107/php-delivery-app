@@ -1234,8 +1234,8 @@ $maxChartCount = max(5, max($chartCounts));
                         <h1>Repartidores Registrados</h1>
                         <p style="margin-bottom:4px;">Verifica y edita estados de conductores y sus documentos.</p>
                         <div style="display:flex; align-items:center; gap:8px; margin-top:6px;">
-                            <span class="live-status-tag tag-online" style="font-size:11px; padding:4px 10px;">🟢 Conectados: <?= $onlineDriversTotal ?></span>
-                            <span class="live-status-tag tag-offline" style="font-size:11px; padding:4px 10px;">⚪ Desconectados: <?= $offlineDriversTotal ?></span>
+                            <span class="live-status-tag tag-online" id="header-count-online" style="font-size:11px; padding:4px 10px;">🟢 Conectados: <?= $onlineDriversTotal ?></span>
+                            <span class="live-status-tag tag-offline" id="header-count-offline" style="font-size:11px; padding:4px 10px;">⚪ Desconectados: <?= $offlineDriversTotal ?></span>
                         </div>
                     </div>
                     <button onclick="openCreateUserModal('repartidor')" style="background:var(--primary); color:#fff; border:none; border-radius:14px; padding:10px 18px; font-size:13px; font-weight:700; cursor:pointer; display:flex; align-items:center; gap:6px; box-shadow:0 4px 12px rgba(37,99,235,0.3); white-space:nowrap; transition:all 0.2s;">
@@ -1251,7 +1251,7 @@ $maxChartCount = max(5, max($chartCounts));
                 <?php else: ?>
                     <?php foreach ($activeDrivers as $d): ?>
                         <?php $dStatus = $d['subscription_status'] ?? 'pending'; ?>
-                        <div class="table-row-item row-<?= esc($dStatus) ?>" onclick="if (event.target.tagName !== 'SELECT' && event.target.tagName !== 'OPTION') window.location.href='admin_driver_detail.php?id=<?= (int)$d['id']; ?>'" style="cursor:pointer; position:relative; padding-right:50px;">
+                        <div class="table-row-item row-<?= esc($dStatus) ?>" data-driver-id="<?= (int)$d['id']; ?>" onclick="if (event.target.tagName !== 'SELECT' && event.target.tagName !== 'OPTION') window.location.href='admin_driver_detail.php?id=<?= (int)$d['id']; ?>'" style="cursor:pointer; position:relative; padding-right:50px;">
                             <div class="driver-mini-info">
                                 <div class="driver-mini-avatar" style="position:relative;">
                                     <?php if ($d['avatar_path']): ?>
@@ -1262,12 +1262,12 @@ $maxChartCount = max(5, max($chartCounts));
                                     <span class="online-indicator-dot <?= ($d['is_online'] ?? 0) == 1 ? 'is-online' : 'is-offline' ?>" title="<?= ($d['is_online'] ?? 0) == 1 ? 'Conectado / En línea' : 'Desconectado / Apagado' ?>"></span>
                                 </div>
                                 <div class="driver-text">
-                                     <div style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+                                     <div class="driver-tags-container" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                                          <b><?= esc($d['name']) ?></b>
                                          <?php if (($d['is_online'] ?? 0) == 1): ?>
-                                             <span class="live-status-tag tag-online">🟢 Conectado</span>
+                                             <span class="live-status-tag tag-status-main tag-online">🟢 Conectado</span>
                                          <?php else: ?>
-                                             <span class="live-status-tag tag-offline">⚪ Desconectado</span>
+                                             <span class="live-status-tag tag-status-main tag-offline">⚪ Desconectado</span>
                                          <?php endif; ?>
                                          <?php if ((int)($d['active_delivery_count'] ?? 0) > 0): ?>
                                              <span class="live-status-tag tag-delivering">🛵 En Entrega (<?= (int)$d['active_delivery_count'] ?>)</span>
@@ -1791,6 +1791,66 @@ $maxChartCount = max(5, max($chartCounts));
         .catch(err => console.error("Error al actualizar verificaciones pendientes:", err));
     }
 
+    function refreshDriversListLiveStatus() {
+        const formData = new FormData();
+        formData.append('action', 'get_all_drivers_live_statuses');
+
+        fetch('api_admin_action.php', { method: 'POST', body: formData })
+        .then(res => res.json())
+        .then(data => {
+            if (data.success && data.drivers) {
+                // 1. Actualizar contadores generales en la cabecera de la pestaña Repartidores
+                const headerOnline = document.getElementById('header-count-online');
+                const headerOffline = document.getElementById('header-count-offline');
+                if (headerOnline) headerOnline.textContent = '🟢 Conectados: ' + data.online_count;
+                if (headerOffline) headerOffline.textContent = '⚪ Desconectados: ' + data.offline_count;
+
+                // 2. Actualizar cada repartidor en el DOM
+                data.drivers.forEach(d => {
+                    const driverRow = document.querySelector(`.table-row-item[data-driver-id="${d.id}"]`);
+                    if (driverRow) {
+                        const isOnline = parseInt(d.is_online) === 1;
+                        const activeDeliveries = parseInt(d.active_delivery_count || 0);
+
+                        // Indicador de avatar (Punto verde / gris)
+                        const dot = driverRow.querySelector('.online-indicator-dot');
+                        if (dot) {
+                            dot.className = 'online-indicator-dot ' + (isOnline ? 'is-online' : 'is-offline');
+                            dot.title = isOnline ? 'Conectado / En línea' : 'Desconectado / Apagado';
+                        }
+
+                        // Tag de estado (🟢 Conectado / ⚪ Desconectado)
+                        const tagOnline = driverRow.querySelector('.live-status-tag.tag-status-main');
+                        if (tagOnline) {
+                            if (isOnline) {
+                                tagOnline.className = 'live-status-tag tag-status-main tag-online';
+                                tagOnline.textContent = '🟢 Conectado';
+                            } else {
+                                tagOnline.className = 'live-status-tag tag-status-main tag-offline';
+                                tagOnline.textContent = '⚪ Desconectado';
+                            }
+                        }
+
+                        // Tag de entrega activa (🛵 En Entrega X)
+                        let tagDelivering = driverRow.querySelector('.live-status-tag.tag-delivering');
+                        if (activeDeliveries > 0) {
+                            if (!tagDelivering) {
+                                tagDelivering = document.createElement('span');
+                                tagDelivering.className = 'live-status-tag tag-delivering';
+                                const tagContainer = driverRow.querySelector('.driver-tags-container');
+                                if (tagContainer) tagContainer.appendChild(tagDelivering);
+                            }
+                            tagDelivering.textContent = '🛵 En Entrega (' + activeDeliveries + ')';
+                        } else if (tagDelivering) {
+                            tagDelivering.remove();
+                        }
+                    }
+                });
+            }
+        })
+        .catch(err => console.error("Error al actualizar estados de repartidores:", err));
+    }
+
     // Cambiar entre pestañas del panel lateral
     function switchAdminTab(tabId) {
         document.querySelectorAll('.menu-item').forEach(el => el.classList.remove('active'));
@@ -1832,6 +1892,9 @@ $maxChartCount = max(5, max($chartCounts));
 
         refreshPendingVerifications();
         setInterval(refreshPendingVerifications, 4000);
+
+        refreshDriversListLiveStatus();
+        setInterval(refreshDriversListLiveStatus, 2500);
 
         // Inicializar ApexCharts Spline Chart: FLUJO DE ACTIVIDAD
         const chartOptions = {
