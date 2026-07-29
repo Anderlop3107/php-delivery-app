@@ -952,29 +952,32 @@ $maxChartCount = max(5, max($chartCounts));
         }
 
         .live-status-tag {
-            font-size: 10px;
+            font-size: 11px;
             font-weight: 800;
-            padding: 2px 7px;
-            border-radius: 6px;
+            padding: 4px 10px;
+            border-radius: 20px;
             display: inline-flex;
             align-items: center;
-            gap: 3px;
+            gap: 4px;
             line-height: 1.2;
+            letter-spacing: -0.2px;
+            transition: all 0.2s ease;
         }
         .live-status-tag.tag-online {
-            background: rgba(16, 185, 129, 0.12);
-            color: #047857;
-            border: 1px solid rgba(16, 185, 129, 0.25);
+            background: rgba(37, 99, 235, 0.1);
+            color: var(--primary);
+            border: 1px solid rgba(37, 99, 235, 0.25);
         }
         .live-status-tag.tag-offline {
             background: rgba(148, 163, 184, 0.12);
-            color: #475569;
-            border: 1px solid rgba(148, 163, 184, 0.25);
+            color: #64748b;
+            border: 1px solid rgba(148, 163, 184, 0.2);
         }
         .live-status-tag.tag-delivering {
-            background: rgba(245, 158, 11, 0.12);
-            color: #b45309;
-            border: 1px solid rgba(245, 158, 11, 0.25);
+            background: linear-gradient(135deg, rgba(37, 99, 235, 0.15) 0%, rgba(29, 78, 216, 0.2) 100%);
+            color: var(--primary);
+            border: 1px solid rgba(37, 99, 235, 0.4);
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.15);
         }
 
         /* Success & Confirmation Modal Card (Estilo del Proyecto) */
