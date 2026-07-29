@@ -747,6 +747,12 @@ $maxChartCount = max(5, max($chartCounts));
             align-items: center;
             justify-content: space-between;
             gap: 12px;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .table-row-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.08);
+            border-color: #cbd5e1;
         }
         
         /* Select sub status styling */
