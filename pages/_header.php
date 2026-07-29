@@ -243,16 +243,20 @@ $user = current_user();
         let audioUnlocked = false;
 
         function initAudioContext() {
-            if (audioUnlocked) return;
+            if (audioUnlocked && myAudioContext && myAudioContext.state === 'running') return;
             const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-            if (AudioContextClass) {
-                myAudioContext = new AudioContextClass();
+            if (AudioContextClass && !myAudioContext) {
+                try {
+                    myAudioContext = new AudioContextClass();
+                } catch (e) {}
+            }
+            if (myAudioContext) {
                 if (myAudioContext.state === 'suspended') {
                     myAudioContext.resume().then(() => {
                         audioUnlocked = true;
                         hideAudioBanner();
-                    });
-                } else {
+                    }).catch(() => {});
+                } else if (myAudioContext.state === 'running') {
                     audioUnlocked = true;
                     hideAudioBanner();
                 }
@@ -261,17 +265,24 @@ $user = current_user();
 
         function unlockAudio() {
             initAudioContext();
-            if (myAudioContext) {
-                myAudioContext.resume().catch(e => console.log(e));
+            if (myAudioContext && myAudioContext.state === 'suspended') {
+                myAudioContext.resume().then(() => {
+                    audioUnlocked = true;
+                    hideAudioBanner();
+                }).catch(() => {});
             }
             // Desbloquear HTML5 Audio reproduciendo un segundo de silencio en base64
-            const silentSrc = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA";
-            const audio = new Audio(silentSrc);
-            audio.play().then(() => {
-                audioUnlocked = true;
-                hideAudioBanner();
-                console.log("Audio HTML5 desbloqueado con éxito");
-            }).catch(e => console.log("Fallo al desbloquear Audio HTML5:", e));
+            try {
+                const silentSrc = "data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAAABkYXRhAgAAAAAA";
+                const audio = new Audio(silentSrc);
+                const playPromise = audio.play();
+                if (playPromise !== undefined) {
+                    playPromise.then(() => {
+                        audioUnlocked = true;
+                        hideAudioBanner();
+                    }).catch(() => {});
+                }
+            } catch (e) {}
         }
 
         function showAudioBanner() {
