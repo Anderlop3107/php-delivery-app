@@ -1210,8 +1210,14 @@ $maxChartCount = max(5, max($chartCounts));
                                         <option value="pending" <?= $dStatus === 'pending' ? 'selected' : '' ?>>Pendiente</option>
                                     </select>
                                 </div>
-                                <button type="button" onclick="quickDeleteDriver(<?= (int)$d['id']; ?>, '<?= esc($d['name']); ?>', event)" title="Eliminar Repartidor" style="background:#fee2e2; color:#ef4444; border:none; border-radius:8px; padding:6px 9px; font-size:12px; font-weight:700; cursor:pointer;">
-                                    🗑️
+                                <button type="button" onclick="quickDeleteDriver(<?= (int)$d['id']; ?>, '<?= esc($d['name']); ?>', event)" title="Eliminar Repartidor" style="background:transparent; color:#ef4444; border:none; padding:6px; cursor:pointer; display:flex; align-items:center; justify-content:center; border-radius:8px; transition:all 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.1)'" onmouseout="this.style.background='transparent'">
+                                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                        <path d="M3 6h18"></path>
+                                        <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"></path>
+                                        <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"></path>
+                                        <line x1="10" y1="11" x2="10" y2="17"></line>
+                                        <line x1="14" y1="11" x2="14" y2="17"></line>
+                                    </svg>
                                 </button>
                                 <div class="btn-view-chevron">&rsaquo;</div>
                             </div>
