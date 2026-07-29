@@ -1446,6 +1446,11 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             }
         }
 
+        const driverLat = <?= (float)($driverData['latitude'] ?: -25.2637) ?>;
+        const driverLng = <?= (float)($driverData['longitude'] ?: -57.5759) ?>;
+        const driverName = <?= json_encode(esc($driverData['name'])) ?>;
+        const isDriverOnline = <?= ($driverData['is_online'] == 1) ? 'true' : 'false' ?>;
+
         function updateMapPoints(points) {
             if (!map) return;
             
@@ -1464,15 +1469,44 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             routeSourceAdded = false;
             heatmapSourceAdded = false;
 
+            // Colocar SIEMPRE el marcador de ubicación actual del Repartidor
+            const driverEl = document.createElement('div');
+            driverEl.style.cssText = `
+                width: 38px; height: 38px; border-radius: 50%;
+                background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+                border: 3px solid #ffffff;
+                box-shadow: 0 4px 14px rgba(37,99,235,0.45);
+                display: flex; align-items: center; justify-content: center;
+                color: #fff; font-weight: 800; font-size: 16px; cursor: pointer;
+                z-index: 10;
+            `;
+            driverEl.innerHTML = `🛵`;
+
+            const driverPopup = new mapboxgl.Popup({ offset: 12 }).setHTML(`
+                <div style="font-family:'Plus Jakarta Sans'; font-size:12px; font-weight:700; padding:4px;">
+                    <div style="font-size:13px; font-weight:800; color:#0f172a; margin-bottom:2px;">🛵 ${driverName}</div>
+                    <div style="font-size:11px; color:${isDriverOnline ? '#10b981' : '#64748b'}; font-weight:800;">
+                        ${isDriverOnline ? '🟢 Conectado / En Línea' : '⚪ Desconectado'}
+                    </div>
+                    <a href="https://www.google.com/maps/search/?api=1&query=${driverLat},${driverLng}" target="_blank" style="color:#2563eb; text-decoration:none; display:block; margin-top:6px; font-size:11px;">Ver Ubicación en Google Maps &rarr;</a>
+                </div>
+            `);
+
+            new mapboxgl.Marker(driverEl)
+                .setLngLat([driverLng, driverLat])
+                .setPopup(driverPopup)
+                .addTo(map);
+
             if (points.length === 0) {
-                map.setCenter([-57.5759, -25.2637]);
-                map.setZoom(11);
+                map.setCenter([driverLng, driverLat]);
+                map.setZoom(13);
                 return;
             }
 
             const features = [];
             const routeCoordinates = [];
             const bounds = new mapboxgl.LngLatBounds();
+            bounds.extend([driverLng, driverLat]);
 
             points.forEach(p => {
                 const destLng = parseFloat(p.delivery_longitude);

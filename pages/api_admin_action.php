@@ -52,7 +52,7 @@ if ($action === 'create_user') {
     $businessNameValue = ($role === 'local' && $businessName !== '') ? $businessName : null;
 
     app_exec(
-        "INSERT INTO users (role, name, email, phone, password_hash, business_name, subscription_status, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 'pending', NOW(), NOW())",
+        "INSERT INTO users (role, name, email, phone, password_hash, business_name, subscription_status, latitude, longitude, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, 'pending', -25.2637, -57.5759, NOW(), NOW())",
         'ssssss',
         [$role, $name, $email, $phone, $passwordHash, $businessNameValue]
     );
