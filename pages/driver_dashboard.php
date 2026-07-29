@@ -1071,6 +1071,7 @@ function showToast(message) {
 
     function startPolling() {
         if (checkInterval) return;
+        // Polling ultrarrápido cada 1.5 segundos
         checkInterval = setInterval(async () => {
             try {
                 const resp = await fetch('api_check_new_orders.php?_t=' + Date.now());
@@ -1087,12 +1088,20 @@ function showToast(message) {
                     closeBroadcast();
                 }
             } catch (e) {}
-        }, 3000);
+        }, 1500);
     }
 
     function stopPolling() {
         if (checkInterval) { clearInterval(checkInterval); checkInterval = null; }
     }
+
+    // Inicializar polling y geolocalización al cargar la página si el repartidor está activo
+    document.addEventListener('DOMContentLoaded', () => {
+        const toggle = document.getElementById('main-status-toggle');
+        if (toggle && toggle.checked) {
+            handleScannerToggle(true, true);
+        }
+    });
 
     function showBroadcast(order) {
         currentBroadcastId = order.id;

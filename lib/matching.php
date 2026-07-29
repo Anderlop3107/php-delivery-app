@@ -30,37 +30,30 @@ function calcular_distancia_haversine(?float $lat1, ?float $lon1, ?float $lat2, 
  */
 function obtener_pedidos_disponibles_para_repartidor(int $repartidorId): array
 {
-    // 1. Obtener datos del repartidor (ubicación y conexión activa)
-    // Se valida si el repartidor está activo (GPS reportado en los últimos 60 segundos)
+    // 1. Obtener datos del repartidor (verificar que esté en línea)
     $driver = app_one("
-        SELECT id, latitude, longitude, ubicacion_actualizada_en, subscription_status, subscription_expires_at,
+        SELECT id, is_online, latitude, longitude, ubicacion_actualizada_en, subscription_status, subscription_expires_at,
                status_doc_ci, status_doc_licencia, status_doc_habilitacion, status_doc_cedula_verde
         FROM users 
         WHERE id = ? 
           AND role = 'repartidor'
-          AND ubicacion_actualizada_en >= DATE_SUB(NOW(), INTERVAL 60 SECOND)
+          AND is_online = 1
     ", "i", [$repartidorId]);
     
     if (!$driver) {
         return [];
     }
 
-    // Verificar si la documentación está completamente aprobada
-    $docsApproved = (
-        $driver['status_doc_ci'] === 'approved' &&
-        $driver['status_doc_licencia'] === 'approved' &&
-        $driver['status_doc_habilitacion'] === 'approved' &&
-        $driver['status_doc_cedula_verde'] === 'approved'
-    );
-
-    if (!$docsApproved) {
-        return [];
+    // Fallback de coordenadas si aún no ha enviado GPS
+    if (empty($driver['latitude']) || empty($driver['longitude']) || (float)$driver['latitude'] === 0.0) {
+        $driver['latitude'] = -25.2637;
+        $driver['longitude'] = -57.5759;
     }
 
     // Verificar si la suscripción está vencida
     $subscriptionExpired = true;
-    if ($driver['subscription_status'] === 'active' && !empty($driver['subscription_expires_at'])) {
-        if (strtotime($driver['subscription_expires_at']) >= time()) {
+    if ($driver['subscription_status'] === 'active') {
+        if (empty($driver['subscription_expires_at']) || strtotime($driver['subscription_expires_at']) >= time()) {
             $subscriptionExpired = false;
         }
     }

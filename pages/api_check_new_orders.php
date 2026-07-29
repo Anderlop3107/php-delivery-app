@@ -13,6 +13,13 @@ if (!$user || $user['role'] !== 'repartidor') {
     exit;
 }
 
+// Actualizar ping de actividad del repartidor
+app_exec(
+    "UPDATE users SET last_ping = NOW(), ubicacion_actualizada_en = COALESCE(ubicacion_actualizada_en, NOW()), updated_at = NOW() WHERE id = ? AND is_online = 1",
+    'i',
+    [(int)$user['id']]
+);
+
 // Obtener pedidos compatibles geográficamente y según el estado
 $matchedOrders = obtener_pedidos_disponibles_para_repartidor((int)$user['id']);
 
