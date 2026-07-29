@@ -787,7 +787,7 @@ $maxChartCount = max(5, max($chartCounts));
             border-color: #fde68a !important;
         }
 
-        .modal-overlay {
+        .modal-overlay, .admin-modal-overlay, .lightbox-overlay {
             position: fixed;
             top: 0;
             left: 0;
@@ -801,6 +801,128 @@ $maxChartCount = max(5, max($chartCounts));
             align-items: center;
             justify-content: center;
             padding: 20px;
+        }
+
+        .admin-modal-overlay.active, .lightbox-overlay.active, .modal-overlay.active {
+            display: flex !important;
+        }
+
+        .admin-modal-card {
+            background: #ffffff;
+            border-radius: 28px;
+            width: 90%;
+            max-width: 560px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 28px;
+            box-shadow: 0 25px 50px -12px rgba(15, 23, 42, 0.25);
+            animation: modalPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+        }
+
+        .modal-header-admin {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        .modal-header-admin h3 {
+            margin: 0;
+            font-size: 18px;
+            font-weight: 800;
+            color: #0f172a;
+        }
+        .modal-close-btn {
+            background: #f1f5f9;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 14px;
+            font-weight: 800;
+            color: #64748b;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .modal-close-btn:hover {
+            background: #e2e8f0;
+            color: #0f172a;
+        }
+        .driver-docs-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .doc-verify-row {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 16px;
+            padding: 16px;
+        }
+        .doc-verify-row h5 {
+            font-size: 14px;
+            font-weight: 700;
+            margin: 0 0 10px;
+            color: #0f172a;
+        }
+        .doc-images-flex {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 14px;
+        }
+        .doc-img-wrap {
+            height: 120px;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #cbd5e1;
+            cursor: pointer;
+            background: #000;
+        }
+        .doc-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.3s;
+        }
+        .doc-img-wrap:hover img {
+            transform: scale(1.05);
+        }
+        .doc-actions-admin {
+            display: flex;
+            gap: 10px;
+        }
+        .btn-action-admin {
+            flex: 1;
+            padding: 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 800;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-approve-admin {
+            background: #10b981;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+        }
+        .btn-reject-admin {
+            background: #ef4444;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        }
+        .lightbox-img {
+            max-width: 90vw;
+            max-height: 90vh;
+            object-fit: contain;
+            border-radius: 16px;
+            box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
         }
 
         /* Indicador Online/Offline de Repartidores */
