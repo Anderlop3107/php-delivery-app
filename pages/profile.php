@@ -146,8 +146,8 @@ require __DIR__ . '/_header.php';
         width: 100%;
         height: 100%;
         border-radius: 50%;
-        border: 4px solid #ffffff;
-        box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+        border: 4px solid var(--primary);
+        box-shadow: 0 10px 25px rgba(37, 99, 235, 0.25);
         background: #fff;
         overflow: hidden;
     }
