@@ -289,6 +289,120 @@ require __DIR__ . '/_header.php';
         justify-content: center; 
         padding: 20px; 
     }
+
+    /* MODAL BOTTOM SHEET DE SEGUIMIENTO EN VIVO */
+    .tracking-modal-overlay {
+        position: fixed; inset: 0; z-index: 9999;
+        background: rgba(15, 23, 42, 0.45);
+        backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+        display: flex; flex-direction: column; justify-content: flex-end;
+        animation: fadeIn 0.3s ease;
+    }
+    .tracking-header-overlay {
+        position: absolute; top: 16px; left: 16px; right: 16px; z-index: 120;
+        display: flex; align-items: center; justify-content: space-between;
+        pointer-events: none;
+    }
+    .tracking-back-btn {
+        pointer-events: auto;
+        width: 44px; height: 44px; border-radius: 50%;
+        background: #ffffff; border: none;
+        display: flex; align-items: center; justify-content: center;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
+        cursor: pointer; transition: transform 0.2s;
+    }
+    .tracking-back-btn:active { transform: scale(0.92); }
+
+    .tracking-header-title {
+        font-size: 18px; font-weight: 600; color: #1F2937;
+        background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(10px);
+        padding: 10px 22px; border-radius: 24px;
+        box-shadow: 0 4px 16px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.7);
+    }
+
+    .tracking-map-view {
+        width: 100%; height: 52vh; background: #e2e8f0; position: relative;
+    }
+
+    .tracking-bottom-sheet {
+        width: 100%; height: 48vh; background: #ffffff;
+        border-radius: 28px 28px 0 0;
+        box-shadow: 0 -10px 40px rgba(0,0,0,0.12);
+        padding: 24px; display: flex; flex-direction: column; gap: 16px;
+        overflow-y: auto; position: relative; z-index: 100;
+        animation: slideUpSheet 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes slideUpSheet {
+        from { transform: translateY(100%); }
+        to { transform: translateY(0); }
+    }
+
+    .sheet-drag-handle {
+        width: 40px; height: 4px; background: #e2e8f0; border-radius: 10px;
+        margin: -8px auto 6px; flex-shrink: 0;
+    }
+
+    .driver-profile-header {
+        display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .driver-profile-info {
+        display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;
+    }
+    .driver-avatar-circle {
+        width: 48px; height: 48px; border-radius: 50%;
+        border: 2px solid #ffffff; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+        overflow: hidden; flex-shrink: 0; background: var(--primary);
+        display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px;
+    }
+    .driver-avatar-circle img { width: 100%; height: 100%; object-fit: cover; }
+
+    .driver-name-title {
+        font-size: 17px; font-weight: 700; color: #111827;
+        display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+    }
+    .driver-status-subtitle {
+        font-size: 13px; font-weight: 400; color: #6B7280;
+        display: flex; align-items: center; gap: 6px; margin-top: 2px;
+    }
+    .live-pulse-dot {
+        width: 7px; height: 7px; background: #10b981; border-radius: 50%;
+        display: inline-block; box-shadow: 0 0 8px #10b981; animation: pulse-dot 1.5s infinite;
+    }
+
+    .driver-contact-capsule {
+        display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+    }
+
+    .sheet-divider {
+        border: none; border-top: 1px solid #f1f5f9; margin: 2px 0;
+    }
+
+    .shipment-details-block { display: flex; flex-direction: column; gap: 14px; }
+    .shipment-meta-row {
+        display: flex; justify-content: space-between; align-items: center;
+    }
+    .shipment-id-badge { font-size: 15px; font-weight: 700; color: #111827; }
+    .shipment-date { font-size: 13px; font-weight: 500; color: #9CA3AF; }
+
+    .timeline-route { display: flex; flex-direction: column; gap: 0; position: relative; padding-left: 4px; }
+    .timeline-item { display: flex; align-items: center; gap: 14px; }
+    .timeline-marker {
+        width: 16px; height: 16px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        border: 3px solid #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.15); flex-shrink: 0;
+    }
+    .marker-primary { background: var(--primary, #2563eb); }
+    .marker-green { background: #10b981; }
+
+    .timeline-connector {
+        width: 2px; height: 26px;
+        border-left: 2px dashed var(--primary, #2563eb);
+        margin-left: 7px; opacity: 0.8;
+    }
+
+    .timeline-content { display: flex; flex-direction: column; }
+    .timeline-sub { font-size: 12px; color: #6B7280; font-weight: 500; }
+    .timeline-title { font-size: 14px; font-weight: 600; color: #111827; margin-top: 1px; }
     .modal-card { 
         background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%); 
         width: 100%; 
@@ -673,6 +787,14 @@ require __DIR__ . '/_header.php';
                         <?php endif; ?>
                     </div>
                 <?php endif; ?>
+
+                <?php if ($isLocal && !empty($row['repartidor_name'])): ?>
+                    <div style="margin-top: 14px;">
+                        <button onclick='openTrackingSheetModal(<?= json_encode($row) ?>)' class="btn-action-main" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; font-size: 14px; padding: 14px; background: linear-gradient(135deg, var(--primary) 0%, #1d4ed8 100%);">
+                            📍 Ver Seguimiento de Envío en Vivo
+                        </button>
+                    </div>
+                <?php endif; ?>
                 </div>
 
                 <!-- ACCIONES DEL REPARTIDOR -->
@@ -734,18 +856,197 @@ require __DIR__ . '/_header.php';
     }
 
     function closeSuccessModal() {
+{{ ... }}
         if (deliveredTimeout) clearTimeout(deliveredTimeout);
         document.getElementById('delivered-success-modal').style.display = 'none';
         window.location.reload();
     }
 
+    let trackingSheetMap = null;
 
+    function openTrackingSheetModal(order) {
+        document.getElementById('t-driver-name').innerText = order.repartidor_name || 'Conductor';
+        
+        const avatarEl = document.getElementById('t-driver-avatar-container');
+        if (order.repartidor_avatar) {
+            const baseUrl = '<?= esc(delivery_app_url()) ?>/';
+            avatarEl.innerHTML = `<img src="${baseUrl}${order.repartidor_avatar}" alt="Avatar">`;
+        } else {
+            avatarEl.innerHTML = '🛵';
+        }
+
+        const phone = order.repartidor_phone || '';
+        let cleanPhone = phone.replace(/[^0-9]/g, '');
+        if (cleanPhone.startsWith('0')) cleanPhone = '595' + cleanPhone.substring(1);
+        else if (cleanPhone !== '' && !cleanPhone.startsWith('595')) cleanPhone = '595' + cleanPhone;
+
+        document.getElementById('t-driver-wa').href = `https://wa.me/${cleanPhone}`;
+        document.getElementById('t-driver-call').href = `tel:${phone}`;
+        document.getElementById('t-order-id').innerText = `ID #${order.id}`;
+
+        // Formatear Fecha
+        const dateObj = order.created_at ? new Date(order.created_at) : new Date();
+        const dateStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
+        document.getElementById('t-order-date').innerText = dateStr;
+
+        document.getElementById('t-step-driver').innerText = (order.status === 'aceptado') ? 'Camino al local' : 'En el local';
+        document.getElementById('t-local-name').innerText = order.local_name || 'Local / Comercio';
+        document.getElementById('t-step-local').innerText = (order.status === 'repartidor_en_local') ? 'Retirando pedido' : 'Esperando';
+
+        document.getElementById('tracking-sheet-modal').style.display = 'flex';
+
+        // Inicializar mapa de seguimiento
+        setTimeout(() => {
+            mapboxgl.accessToken = 'pk.eyJ1IjoiYW5kZXJsb3AiLCJhIjoiY21uMGJ1ZXhzMGkxMDJycHRuYzEwcmp4NCJ9.Jn4uXN5yX4DFIImQjw_R4w';
+            
+            const driverLng = parseFloat(order.repartidor_lng || order.local_lng - 0.005);
+            const driverLat = parseFloat(order.repartidor_lat || order.local_lat - 0.005);
+            const localLng = parseFloat(order.local_lng);
+            const localLat = parseFloat(order.local_lat);
+
+            if (trackingSheetMap) {
+                trackingSheetMap.remove();
+                trackingSheetMap = null;
+            }
+
+            trackingSheetMap = new mapboxgl.Map({
+                container: 'tracking-map-container',
+                style: 'mapbox://styles/mapbox/streets-v12',
+                center: [(driverLng + localLng) / 2, (driverLat + localLat) / 2],
+                zoom: 13
+            });
+
+            trackingSheetMap.on('load', async () => {
+                // Marcador Conductor (Azul marca)
+                const driverPin = document.createElement('div');
+                driverPin.innerHTML = `
+                    <div style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45); border: 2.5px solid #ffffff;">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
+                            <circle cx="12" cy="12" r="10"></circle>
+                            <polyline points="12 6 12 12 16 14"></polyline>
+                        </svg>
+                    </div>
+                `;
+                new mapboxgl.Marker(driverPin).setLngLat([driverLng, driverLat]).addTo(trackingSheetMap);
+
+                // Marcador Local (Verde)
+                new mapboxgl.Marker({ color: '#10b981' }).setLngLat([localLng, localLat]).addTo(trackingSheetMap);
+
+                // Ajustar encuadre
+                const bounds = new mapboxgl.LngLatBounds()
+                    .extend([driverLng, driverLat])
+                    .extend([localLng, localLat]);
+                trackingSheetMap.fitBounds(bounds, { padding: 50, maxZoom: 15 });
+
+                // Trazar ruta
+                const query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${driverLng},${driverLat};${localLng},${localLat}?geometries=geojson&access_token=${mapboxgl.accessToken}`);
+                const json = await query.json();
+                if (json.routes && json.routes[0]) {
+                    const route = json.routes[0];
+                    trackingSheetMap.addSource('tracking-route', { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': route.geometry } });
+                    trackingSheetMap.addLayer({ 'id': 'tracking-route', 'type': 'line', 'source': 'tracking-route', 'layout': { 'line-join': 'round', 'line-cap': 'round' }, 'paint': { 'line-color': '#2563eb', 'line-width': 4, 'line-opacity': 0.85 } });
+                }
+            });
+        }, 150);
+    }
+
+    function closeTrackingSheetModal() {
+        document.getElementById('tracking-sheet-modal').style.display = 'none';
+        if (trackingSheetMap) {
+            trackingSheetMap.remove();
+            trackingSheetMap = null;
+        }
+    }
 </script>
+
+<div id="tracking-sheet-modal" class="tracking-modal-overlay" style="display: none;">
+    <!-- ENCABEZADO SUPERPUESTO (HEADER OVERLAY) -->
+    <div class="tracking-header-overlay">
+        <button onclick="closeTrackingSheetModal()" class="tracking-back-btn" title="Volver">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1F2937" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+        </button>
+        <div class="tracking-header-title">Seguimiento de envío</div>
+        <div style="width: 44px;"></div>
+    </div>
+
+    <!-- MAPA INTERACTIVO (MITAD SUPERIOR - 52vh) -->
+    <div id="tracking-map-container" class="tracking-map-view"></div>
+
+    <!-- TARJETA INFERIOR DE INFORMACIÓN (BOTTOM SHEET - 48vh) -->
+    <div class="tracking-bottom-sheet">
+        <div class="sheet-drag-handle"></div>
+
+        <!-- SECCIÓN PERFIL DEL REPARTIDOR -->
+        <div class="driver-profile-header">
+            <div class="driver-profile-info">
+                <div class="driver-avatar-circle" id="t-driver-avatar-container">
+                    🛵
+                </div>
+                <div class="driver-name-block">
+                    <b class="driver-name-title">
+                        <span id="t-driver-name">Conductor</span>
+                        <span class="verified-badge-mini" title="Conductor Verificado" style="background: var(--primary, #2563eb); color: #fff; width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; flex-shrink: 0; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35); border: 1.5px solid #ffffff;">✓</span>
+                    </b>
+                    <span class="driver-status-subtitle">
+                        <span class="live-pulse-dot"></span> Asignado
+                    </span>
+                </div>
+            </div>
+
+            <!-- CÁPSULA DE CONTACTO (MISMA LÍNEA) -->
+            <div class="driver-contact-capsule">
+                <a id="t-driver-wa" href="#" target="_blank" class="wa-link-btn" title="Enviar WhatsApp">
+                    <svg style="width:20px; height:20px;" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.353-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.191-1.622a11.84 11.84 0 005.854 1.535h.004c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                </a>
+                <a id="t-driver-call" href="#" class="call-link-btn" title="Llamar">
+                    <svg style="width:20px; height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.387a12.035 12.035 0 01-7.108-7.108c-.155-.44.01-1.275.387-1.556l1.293-.97c.362-.27.528-.733.417-1.173L6.763 2.074a1.125 1.125 0 00-1.091-.852H4.372A2.25 2.25 0 002.122 3.472v1.028z" /></svg>
+                </a>
+            </div>
+        </div>
+
+        <hr class="sheet-divider">
+
+        <!-- SECCIÓN DETALLES DEL ENVÍO -->
+        <div class="shipment-details-block">
+            <!-- LÍNEA SUPERIOR (ID + FECHA) -->
+            <div class="shipment-meta-row">
+                <span class="shipment-id-badge" id="t-order-id">ID #--</span>
+                <span class="shipment-date" id="t-order-date">16 Sep, 2025</span>
+            </div>
+
+            <!-- TIMELINE VERTICAL (RUTA) -->
+            <div class="timeline-route">
+                <!-- ORIGEN: CONDUCTOR -->
+                <div class="timeline-item">
+                    <div class="timeline-marker marker-primary"></div>
+                    <div class="timeline-content">
+                        <small class="timeline-sub">Conductor</small>
+                        <b class="timeline-title" id="t-step-driver">Camino al local</b>
+                    </div>
+                </div>
+
+                <!-- CONECTOR VERTICAL PUNTEADO -->
+                <div class="timeline-connector"></div>
+
+                <!-- DESTINO: LOCAL -->
+                <div class="timeline-item">
+                    <div class="timeline-marker marker-green"></div>
+                    <div class="timeline-content">
+                        <small class="timeline-sub" id="t-local-name">Local / Comercio</small>
+                        <b class="timeline-title" id="t-step-local">Esperando</b>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 
 <?php if ($isDriver && !empty($activeRows)): ?>
     <script>
         document.addEventListener("DOMContentLoaded", () => {
-            mapboxgl.accessToken = 'pk.eyJ1IjoiYW5kZXJsb3AiLCJhIjoiY21uMGJ1ZXhzMGkxMDJycHRuYzEwcmp4NCJ9.Jn4uXN5yX4DFIImQjw_R4w';
             
             const driverCoords = [<?= $driverLng ?>, <?= $driverLat ?>];
             
