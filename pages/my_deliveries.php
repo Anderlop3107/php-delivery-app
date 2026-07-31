@@ -293,13 +293,13 @@ require __DIR__ . '/_header.php';
     /* MODAL BOTTOM SHEET DE SEGUIMIENTO EN VIVO */
     .tracking-modal-overlay {
         position: fixed; inset: 0; z-index: 9999;
-        background: rgba(15, 23, 42, 0.45);
-        backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-        display: flex; flex-direction: column; justify-content: flex-end;
+        background: rgba(15, 23, 42, 0.35);
+        backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
+        display: block; overflow: hidden;
         animation: fadeIn 0.3s ease;
     }
     .tracking-header-overlay {
-        position: absolute; top: 18px; left: 18px; right: 18px; z-index: 500;
+        position: absolute; top: 18px; left: 18px; right: 18px; z-index: 200;
         display: flex; align-items: center; justify-content: space-between;
         pointer-events: none;
     }
@@ -334,25 +334,33 @@ require __DIR__ . '/_header.php';
     }
 
     .tracking-map-view {
-        width: 100%; height: 52vh; background: #e2e8f0; position: relative;
+        position: absolute; inset: 0; width: 100%; height: 100%;
+        background: #e2e8f0; z-index: 10;
     }
 
     .tracking-bottom-sheet {
-        width: 100%; height: 48vh; background: #ffffff;
-        border-radius: 28px 28px 0 0;
-        box-shadow: 0 -10px 40px rgba(0,0,0,0.12);
-        padding: 24px; display: flex; flex-direction: column; gap: 16px;
+        position: absolute; bottom: 0; left: 0; right: 0;
+        width: 100%; height: 42vh; max-height: 75vh; min-height: 30vh;
+        background: #ffffff;
+        border-radius: 32px 32px 0 0;
+        box-shadow: 0 -12px 42px rgba(15, 23, 42, 0.16);
+        border: 1px solid rgba(255, 255, 255, 0.8); border-bottom: none;
+        padding: 20px 24px 28px 24px; display: flex; flex-direction: column; gap: 14px;
         overflow-y: auto; position: relative; z-index: 100;
-        animation: slideUpSheet 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        touch-action: pan-y;
     }
-    @keyframes slideUpSheet {
-        from { transform: translateY(100%); }
-        to { transform: translateY(0); }
+    .tracking-bottom-sheet.expanded {
+        height: 68vh;
     }
 
     .sheet-drag-handle {
-        width: 40px; height: 4px; background: #e2e8f0; border-radius: 10px;
-        margin: -8px auto 6px; flex-shrink: 0;
+        width: 46px; height: 5px; background: #cbd5e1; border-radius: 10px;
+        margin: -8px auto 8px; flex-shrink: 0; cursor: grab;
+        transition: background 0.2s, transform 0.2s;
+    }
+    .sheet-drag-handle:active {
+        cursor: grabbing; background: #94a3b8; transform: scaleX(1.1);
     }
 
     .driver-profile-header {
@@ -958,11 +966,11 @@ require __DIR__ . '/_header.php';
                 // Marcador Local (Verde)
                 new mapboxgl.Marker({ color: '#10b981' }).setLngLat([localLng, localLat]).addTo(trackingSheetMap);
 
-                // Ajustar encuadre
+                // Ajustar encuadre priorizando el 60% superior del mapa sobre el BottomSheet inferior
                 const bounds = new mapboxgl.LngLatBounds()
                     .extend([driverLng, driverLat])
                     .extend([localLng, localLat]);
-                trackingSheetMap.fitBounds(bounds, { padding: 50, maxZoom: 15 });
+                trackingSheetMap.fitBounds(bounds, { padding: { top: 70, bottom: 280, left: 50, right: 50 }, maxZoom: 15 });
 
                 // Polling en tiempo real cada 3 segundos para mover suavemente el marcador del conductor
                 trackingLiveInterval = setInterval(async () => {
@@ -997,6 +1005,65 @@ require __DIR__ . '/_header.php';
         }
         trackingDriverMarker = null;
     }
+
+    // Controlador de Arrastre Deslizable (BottomSheet Drag Controller)
+    document.addEventListener("DOMContentLoaded", () => {
+        const sheet = document.querySelector('.tracking-bottom-sheet');
+        const handle = document.querySelector('.sheet-drag-handle');
+        if (!sheet || !handle) return;
+
+        let startY = 0;
+        let startHeight = 0;
+        let isDragging = false;
+
+        const onTouchStart = (e) => {
+            isDragging = true;
+            startY = e.touches ? e.touches[0].clientY : e.clientY;
+            startHeight = sheet.getBoundingClientRect().height;
+            sheet.style.transition = 'none';
+        };
+
+        const onTouchMove = (e) => {
+            if (!isDragging) return;
+            const currentY = e.touches ? e.touches[0].clientY : e.clientY;
+            const deltaY = startY - currentY;
+            const newHeight = startHeight + deltaY;
+
+            if (newHeight >= 180 && newHeight <= window.innerHeight * 0.78) {
+                sheet.style.height = `${newHeight}px`;
+            }
+        };
+
+        const onTouchEnd = (e) => {
+            if (!isDragging) return;
+            isDragging = false;
+            sheet.style.transition = 'height 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
+            const currentHeight = sheet.getBoundingClientRect().height;
+            
+            if (currentHeight > window.innerHeight * 0.52) {
+                sheet.classList.add('expanded');
+                sheet.style.height = '68vh';
+            } else if (currentHeight < 220) {
+                closeTrackingSheetModal();
+            } else {
+                sheet.classList.remove('expanded');
+                sheet.style.height = '42vh';
+            }
+        };
+
+        handle.addEventListener('touchstart', onTouchStart, { passive: true });
+        handle.addEventListener('touchmove', onTouchMove, { passive: true });
+        handle.addEventListener('touchend', onTouchEnd);
+
+        handle.addEventListener('mousedown', onTouchStart);
+        window.addEventListener('mousemove', onTouchMove);
+        window.addEventListener('mouseup', onTouchEnd);
+
+        handle.addEventListener('click', () => {
+            sheet.classList.toggle('expanded');
+            sheet.style.height = sheet.classList.contains('expanded') ? '68vh' : '42vh';
+        });
+    });
 </script>
 
 <div id="tracking-sheet-modal" class="tracking-modal-overlay" style="display: none;">
