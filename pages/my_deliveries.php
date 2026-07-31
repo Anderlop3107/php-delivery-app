@@ -91,7 +91,7 @@ $title = 'Pedidos en curso';
 require __DIR__ . '/_header.php';
 ?>
 
-<?php if ($isDriver && !empty($activeRows)): ?>
+<?php if (!empty($activeRows)): ?>
 <!-- Mapbox GL JS & CSS -->
 <link href="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.css" rel="stylesheet">
 <script src="https://api.mapbox.com/mapbox-gl-js/v3.2.0/mapbox-gl.js"></script>
