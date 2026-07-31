@@ -1204,8 +1204,22 @@ function showToast(message) {
             interactive: false
         });
 
-        miniMap.on('load', async () => {
-            new mapboxgl.Marker({ color: '#ff4444' }).setLngLat([order.local_lng, order.local_lat]).addTo(miniMap);
+            // Marcador de Local (Comercio) con icono de tienda en azul marca
+            const localPinEl = document.createElement('div');
+            localPinEl.innerHTML = `
+                <div style="
+                    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+                    width: 36px; height: 36px;
+                    border-radius: 50%;
+                    display: flex; align-items: center; justify-content: center;
+                    font-size: 17px;
+                    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45);
+                    border: 2.5px solid #ffffff;
+                ">🏪</div>
+            `;
+            new mapboxgl.Marker(localPinEl).setLngLat([order.local_lng, order.local_lat]).addTo(miniMap);
+
+            // Marcador de Cliente (Destino) verde estándar
             new mapboxgl.Marker({ color: '#10b981' }).setLngLat([order.dest_lng, order.dest_lat]).addTo(miniMap);
             
             const query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${order.local_lng},${order.local_lat};${order.dest_lng},${order.dest_lat}?geometries=geojson&access_token=${mapboxgl.accessToken}`);
