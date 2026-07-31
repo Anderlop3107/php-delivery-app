@@ -862,8 +862,15 @@ require __DIR__ . '/_header.php';
     }
 
     let trackingSheetMap = null;
+    let trackingLiveInterval = null;
+    let trackingDriverMarker = null;
 
     function openTrackingSheetModal(order) {
+        if (trackingLiveInterval) {
+            clearInterval(trackingLiveInterval);
+            trackingLiveInterval = null;
+        }
+
         document.getElementById('t-driver-name').innerText = order.repartidor_name || 'Conductor';
         
         const avatarEl = document.getElementById('t-driver-avatar-container');
@@ -928,7 +935,7 @@ require __DIR__ . '/_header.php';
                         </svg>
                     </div>
                 `;
-                new mapboxgl.Marker(driverPin).setLngLat([driverLng, driverLat]).addTo(trackingSheetMap);
+                trackingDriverMarker = new mapboxgl.Marker(driverPin).setLngLat([driverLng, driverLat]).addTo(trackingSheetMap);
 
                 // Marcador Local (Verde)
                 new mapboxgl.Marker({ color: '#10b981' }).setLngLat([localLng, localLat]).addTo(trackingSheetMap);
@@ -947,16 +954,39 @@ require __DIR__ . '/_header.php';
                     trackingSheetMap.addSource('tracking-route', { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': route.geometry } });
                     trackingSheetMap.addLayer({ 'id': 'tracking-route', 'type': 'line', 'source': 'tracking-route', 'layout': { 'line-join': 'round', 'line-cap': 'round' }, 'paint': { 'line-color': '#22c55e', 'line-width': 5, 'line-opacity': 0.9 } });
                 }
+
+                // Polling en tiempo real cada 3 segundos para mover suavemente el marcador del conductor
+                trackingLiveInterval = setInterval(async () => {
+                    try {
+                        const resp = await fetch(`api_get_order_live_location.php?order_id=${order.id}`);
+                        const res = await resp.json();
+                        if (res.success && res.driver_lat && res.driver_lng && trackingDriverMarker) {
+                            const liveLng = parseFloat(res.driver_lng);
+                            const liveLat = parseFloat(res.driver_lat);
+                            trackingDriverMarker.setLngLat([liveLng, liveLat]);
+
+                            if (res.status) {
+                                document.getElementById('t-step-driver').innerText = (res.status === 'aceptado') ? 'Camino al local' : 'En el local';
+                                document.getElementById('t-step-local').innerText = (res.status === 'repartidor_en_local') ? 'Retirando pedido' : 'Esperando';
+                            }
+                        }
+                    } catch (e) {}
+                }, 3000);
             });
         }, 150);
     }
 
     function closeTrackingSheetModal() {
+        if (trackingLiveInterval) {
+            clearInterval(trackingLiveInterval);
+            trackingLiveInterval = null;
+        }
         document.getElementById('tracking-sheet-modal').style.display = 'none';
         if (trackingSheetMap) {
             trackingSheetMap.remove();
             trackingSheetMap = null;
         }
+        trackingDriverMarker = null;
     }
 </script>
 
