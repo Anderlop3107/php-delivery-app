@@ -339,7 +339,7 @@ require __DIR__ . '/_header.php';
     }
 
     .tracking-bottom-sheet {
-        position: fixed !important; bottom: 16px !important; top: auto !important; left: 16px !important; right: 16px !important;
+        position: fixed !important; bottom: 25px !important; top: auto !important; left: 25px !important; right: 25px !important;
         width: auto !important; height: 42vh; max-height: 72vh; min-height: 28vh;
         background: #ffffff;
         border-radius: 24px !important;
