@@ -202,10 +202,31 @@ require __DIR__ . '/_header.php';
         background: #fff; width: 100%; max-width: 410px; border-radius: 32px; 
         padding: 32px 28px; 
         border-top: 6px solid var(--primary, #2563eb);
-        box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.6) inset; 
-        animation: modalPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); 
+        box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.25), 0 0 20px rgba(37, 99, 235, 0.18), 0 0 0 1px rgba(255, 255, 255, 0.6) inset; 
+        animation: modalPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), techPulseGlow 3s ease-in-out infinite; 
     }
     @keyframes modalPop { from { transform: scale(0.85); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    @keyframes techPulseGlow {
+        0%, 100% { box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.25), 0 0 20px rgba(37, 99, 235, 0.15), 0 0 0 1px rgba(255, 255, 255, 0.6) inset; }
+        50% { box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.35), 0 0 40px rgba(37, 99, 235, 0.32), 0 0 0 1px rgba(255, 255, 255, 0.8) inset; }
+    }
+
+    .map-laser-scanner {
+        position: absolute;
+        top: 0; left: 0; right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, transparent 0%, rgba(37, 99, 235, 0.85) 50%, transparent 100%);
+        box-shadow: 0 0 10px rgba(37, 99, 235, 0.9);
+        z-index: 10;
+        pointer-events: none;
+        border-radius: 2px;
+        animation: laserScan 2.5s ease-in-out infinite alternate;
+    }
+    @keyframes laserScan {
+        0% { top: 4px; opacity: 0.2; }
+        50% { opacity: 1; }
+        100% { top: calc(100% - 6px); opacity: 0.2; }
+    }
 
     .shop-header { display: flex; align-items: center; gap: 15px; margin-bottom: 20px; }
     .shop-avatar { 
@@ -321,6 +342,21 @@ require __DIR__ . '/_header.php';
         box-shadow: inset 0 2px 4px rgba(0,0,0,0.1), 0 10px 25px rgba(37, 99, 235, 0.2);
         user-select: none;
         margin-top: 10px;
+    }
+    .swipe-track::after {
+        content: '';
+        position: absolute;
+        top: 0; left: -100%;
+        width: 60%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+        transform: skewX(-20deg);
+        pointer-events: none;
+        animation: shimmerSweep 3.5s infinite;
+        z-index: 2;
+    }
+    @keyframes shimmerSweep {
+        0% { left: -100%; }
+        30%, 100% { left: 180%; }
     }
     .swipe-bg-fill {
         position: absolute;
@@ -867,13 +903,17 @@ document.addEventListener('DOMContentLoaded', function() {
         <div class="shop-header">
             <div class="shop-avatar" id="m-shop-logo-container">🏢</div>
             <div class="shop-info">
-                <p>NUEVO PEDIDO DE</p>
+                <p style="display:inline-flex; align-items:center; gap:5px;">
+                    <span style="width:6px; height:6px; background:#10b981; border-radius:50%; box-shadow:0 0 8px #10b981; animation:pulse-dot 1.5s infinite;"></span>
+                    NUEVO PEDIDO · EN TIEMPO REAL
+                </p>
                 <h3 id="m-shop-name">-</h3>
             </div>
         </div>
 
         <div style="position: relative; margin-bottom: 20px;">
             <div id="mini-route-map"></div>
+            <div class="map-laser-scanner"></div>
             <!-- Floating Live Status Pill -->
             <div id="map-route-badge" style="
                 position: absolute; top: 12px; right: 12px;
