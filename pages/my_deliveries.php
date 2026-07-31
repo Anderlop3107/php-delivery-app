@@ -371,7 +371,7 @@ require __DIR__ . '/_header.php';
     }
     .driver-avatar-circle {
         width: 48px; height: 48px; border-radius: 50%;
-        border: 2px solid #ffffff; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+        border: 2.5px solid var(--primary, #2563eb); box-shadow: 0 4px 14px rgba(37, 99, 235, 0.3);
         overflow: hidden; flex-shrink: 0; background: var(--primary);
         display: flex; align-items: center; justify-content: center; color: #fff; font-size: 20px;
     }
