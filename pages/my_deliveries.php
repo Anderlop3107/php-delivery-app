@@ -340,18 +340,18 @@ require __DIR__ . '/_header.php';
 
     .tracking-bottom-sheet {
         position: fixed !important; bottom: 25px !important; top: auto !important; left: 25px !important; right: 25px !important;
-        width: auto !important; height: 42vh; max-height: 72vh; min-height: 28vh;
+        width: auto !important; height: auto !important; max-height: 70vh;
         background: #ffffff;
         border-radius: 24px !important;
         box-shadow: 0 16px 48px rgba(15, 23, 42, 0.22), 0 4px 12px rgba(0,0,0,0.08);
         border: 1.5px solid rgba(255, 255, 255, 0.9);
-        padding: 20px 22px 24px 22px; display: flex; flex-direction: column; gap: 14px;
+        padding: 16px 20px 18px 20px; display: flex; flex-direction: column; gap: 10px;
         overflow-y: auto; z-index: 100;
-        transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         touch-action: pan-y;
     }
     .tracking-bottom-sheet.expanded {
-        height: 68vh;
+        max-height: 75vh;
     }
 
     .sheet-drag-handle {
