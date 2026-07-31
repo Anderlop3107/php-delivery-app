@@ -688,6 +688,9 @@ $user = current_user();
                         playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_completed.mp3")) ?>');
                         showDesktopNotification("¡Pedido Entregado!", notificationText);
                         showFloatingToast("¡Pedido Entregado!", notificationText, '✅', '#10b981');
+                        if (typeof showSuccessModal === 'function') {
+                            showSuccessModal("¡Pedido Entregado!", "¡Buen trabajo! El pedido ha sido completado con éxito.");
+                        }
                         soundPlayed = true;
                     } else if (playAssignedSound) {
                         playNotificationSound('<?= esc(delivery_app_url("uploads/sounds/delivery_assigned.mp3")) ?>');
@@ -697,26 +700,19 @@ $user = current_user();
                     }
 
                     // Recargar pantalla si hubo CUALQUIER cambio de estado
-                    if (statusChanged) {
+                    if (statusChanged && !playCompletedSound) {
                         const onTrackingPage = window.location.pathname.indexOf('my_deliveries.php') !== -1;
                         if (onTrackingPage) {
                             if (document.visibilityState === 'visible') {
                                 if (soundPlayed) {
                                     setTimeout(() => {
-                                        if (playCompletedSound) {
-                                            window.location.href = '<?= esc(delivery_app_url("dashboard.php")) ?>';
-                                        } else {
-                                            window.location.reload();
-                                        }
+                                        window.location.reload();
                                     }, 2000);
                                 } else {
                                     window.location.reload();
                                 }
                             } else {
                                 sessionStorage.setItem('needs_reload', 'true');
-                                if (playCompletedSound) {
-                                    sessionStorage.setItem('needs_redirect_dashboard', 'true');
-                                }
                             }
                         }
                     }
