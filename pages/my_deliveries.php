@@ -122,7 +122,7 @@ require __DIR__ . '/_header.php';
         overflow: hidden; 
     }
     .status-card.state-pendiente { border-left-color: var(--primary, #2563eb); }
-    .status-card.state-local { border-left-color: #f59e0b; }
+    .status-card.state-local { border-left-color: var(--primary, #2563eb); }
     .status-card.state-transit { border-left-color: var(--primary); }
     .status-card.state-entregado { border-left-color: #10b981; }
     .status-card.delivered-anim { transform: scale(0.9); opacity: 0; height: 0; margin-bottom: 0; padding: 0; border: none; }
@@ -147,8 +147,9 @@ require __DIR__ . '/_header.php';
         border: 1px solid rgba(37, 99, 235, 0.2);
     }
     .status-pill-tech.status-local {
-        background: rgba(245, 158, 11, 0.08);
-        color: #d97706;
+        background: rgba(37, 99, 235, 0.08);
+        color: var(--primary, #2563eb);
+        border: 1px solid rgba(37, 99, 235, 0.2);
     }
     .status-pill-tech.status-transit {
         background: var(--primary-soft);
@@ -191,6 +192,12 @@ require __DIR__ . '/_header.php';
     .person-box { 
         display: flex; align-items: center; gap: 12px; margin-top: 20px; padding: 16px; 
         background: #f8fafc; border-radius: 18px; border: 1px solid rgba(0,0,0,0.02);
+    }
+    .person-box.assigned-box {
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(37, 99, 235, 0.08) 100%);
+        border: 1px solid rgba(37, 99, 235, 0.12);
+        border-left: 4px solid var(--primary, #2563eb);
+        border-radius: 18px;
     }
     .person-avatar { 
         width: 44px; height: 44px; border-radius: 14px; background: var(--primary); 
@@ -429,6 +436,8 @@ require __DIR__ . '/_header.php';
                     <span class="status-pill-tech <?= $statusClass ?>">
                         <?php if ($s === 'pendiente'): ?>
                             <span style="width: 6px; height: 6px; background: var(--primary, #2563eb); border-radius: 50%; display: inline-block; box-shadow: 0 0 8px var(--primary, #2563eb); animation: pulse-dot 1.5s infinite;"></span>
+                        <?php elseif ($s === 'aceptado' || $s === 'repartidor_en_local'): ?>
+                            <span style="font-size: 11px;">🛵</span>
                         <?php endif; ?>
                         <?= $current['label'] ?>
                     </span>
@@ -567,7 +576,7 @@ require __DIR__ . '/_header.php';
                 </div>
 
                 <!-- BLOQUE DEL LOCAL / REPARTIDOR -->
-                <div class="person-box <?= $ocultarLocal ? 'oculto' : '' ?>" id="info-local-<?= $row['id'] ?>">
+                <div class="person-box <?= $ocultarLocal ? 'oculto' : '' ?> <?= ($isLocal && !empty($row['repartidor_name'])) ? 'assigned-box' : '' ?>" id="info-local-<?= $row['id'] ?>">
                     <?php if ($isLocal && empty($row['repartidor_name'])): ?>
                         <div class="person-avatar searching-avatar">
                             <div class="searching-radar-ring"></div>
@@ -584,7 +593,7 @@ require __DIR__ . '/_header.php';
                             <span>Búsqueda en tiempo real activa</span>
                         </div>
                     <?php else: ?>
-                        <div class="person-avatar">
+                        <div class="person-avatar" style="<?= ($isLocal && !empty($row['repartidor_name'])) ? 'border: 2px solid #ffffff; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);' : '' ?>">
                             <?php if (!$isLocal && !empty($row['local_logo'])): ?>
                                 <img src="<?= esc(delivery_app_url($row['local_logo'])) ?>" alt="Logo Local" style="width: 100%; height: 100%; object-fit: cover;">
                             <?php elseif ($isLocal && !empty($row['repartidor_avatar'])): ?>
@@ -594,8 +603,18 @@ require __DIR__ . '/_header.php';
                             <?php endif; ?>
                         </div>
                         <div class="person-details">
-                            <b><?= esc($isLocal ? $row['repartidor_name'] : $row['local_name']) ?></b>
-                            <span><?= $isLocal ? 'Conductor asignado' : 'Punto de retiro' ?></span>
+                            <b style="display: flex; align-items: center; gap: 5px;">
+                                <?= esc($isLocal ? $row['repartidor_name'] : $row['local_name']) ?>
+                                <?php if ($isLocal && !empty($row['repartidor_name'])): ?>
+                                    <span style="color: var(--primary, #2563eb); font-size: 13px;" title="Conductor Verificado">✓</span>
+                                <?php endif; ?>
+                            </b>
+                            <span style="display: flex; align-items: center; gap: 5px;">
+                                <?php if ($isLocal && !empty($row['repartidor_name'])): ?>
+                                    <span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; display: inline-block;"></span>
+                                <?php endif; ?>
+                                <?= $isLocal ? 'Conductor asignado' : 'Punto de retiro' ?>
+                            </span>
                         </div>
                     <?php endif; ?>
                     <?php 
