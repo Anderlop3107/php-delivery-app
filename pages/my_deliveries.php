@@ -408,17 +408,26 @@ require __DIR__ . '/_header.php';
     .timeline-route { display: flex; flex-direction: column; gap: 0; position: relative; padding-left: 4px; }
     .timeline-item { display: flex; align-items: center; gap: 14px; }
     .timeline-marker {
-        width: 16px; height: 16px; border-radius: 50%;
+        width: 24px; height: 24px; border-radius: 50%;
         display: flex; align-items: center; justify-content: center;
-        border: 3px solid #ffffff; box-shadow: 0 2px 8px rgba(0,0,0,0.15); flex-shrink: 0;
+        border: 2px solid #ffffff; box-shadow: 0 3px 10px rgba(0,0,0,0.15); flex-shrink: 0;
     }
     .marker-primary { background: var(--primary, #2563eb); }
     .marker-green { background: #10b981; }
 
+    .animated-pin-marker {
+        animation: pinBounce 1.8s infinite ease-in-out;
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+    }
+    @keyframes pinBounce {
+        0%, 100% { transform: translateY(0) scale(1); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); }
+        50% { transform: translateY(-3px) scale(1.08); box-shadow: 0 8px 18px rgba(16, 185, 129, 0.55); }
+    }
+
     .timeline-connector {
-        width: 2px; height: 26px;
+        width: 2px; height: 24px;
         border-left: 2px dashed var(--primary, #2563eb);
-        margin-left: 7px; opacity: 0.8;
+        margin-left: 11px; opacity: 0.8;
     }
 
     .timeline-content { display: flex; flex-direction: column; }
@@ -1111,7 +1120,9 @@ require __DIR__ . '/_header.php';
             <div class="timeline-route">
                 <!-- ORIGEN: CONDUCTOR -->
                 <div class="timeline-item">
-                    <div class="timeline-marker marker-primary"></div>
+                    <div class="timeline-marker marker-primary">
+                        <div style="width: 7px; height: 7px; background: #ffffff; border-radius: 50%;"></div>
+                    </div>
                     <div class="timeline-content">
                         <small class="timeline-sub">Conductor</small>
                         <b class="timeline-title" id="t-step-driver">Camino al local</b>
@@ -1124,7 +1135,12 @@ require __DIR__ . '/_header.php';
                 <!-- DESTINO: LOCAL -->
                 <div class="timeline-item" style="justify-content: space-between;">
                     <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
-                        <div class="timeline-marker marker-green"></div>
+                        <div class="timeline-marker marker-green animated-pin-marker" title="Ubicación del Local">
+                            <svg style="width:13px; height:13px; color: #ffffff;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                            </svg>
+                        </div>
                         <div class="timeline-content">
                             <small class="timeline-sub" id="t-local-name">Local / Comercio</small>
                             <b class="timeline-title" id="t-step-local">Esperando</b>
