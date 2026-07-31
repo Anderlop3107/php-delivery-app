@@ -434,10 +434,8 @@ require __DIR__ . '/_header.php';
                         <?php endif; ?>
                     </div>
                     <span class="status-pill-tech <?= $statusClass ?>">
-                        <?php if ($s === 'pendiente'): ?>
+                        <?php if ($s === 'pendiente' || $s === 'aceptado' || $s === 'repartidor_en_local'): ?>
                             <span style="width: 6px; height: 6px; background: var(--primary, #2563eb); border-radius: 50%; display: inline-block; box-shadow: 0 0 8px var(--primary, #2563eb); animation: pulse-dot 1.5s infinite;"></span>
-                        <?php elseif ($s === 'aceptado' || $s === 'repartidor_en_local'): ?>
-                            <span style="font-size: 11px;">🛵</span>
                         <?php endif; ?>
                         <?= $current['label'] ?>
                     </span>
@@ -602,16 +600,16 @@ require __DIR__ . '/_header.php';
                                 <?= $isLocal ? '🛵' : '🏪' ?>
                             <?php endif; ?>
                         </div>
-                        <div class="person-details">
-                            <b style="display: flex; align-items: center; gap: 5px;">
-                                <?= esc($isLocal ? $row['repartidor_name'] : $row['local_name']) ?>
+                        <div class="person-details" style="min-width: 0;">
+                            <b style="display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;">
+                                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: calc(100% - 22px);"><?= esc($isLocal ? $row['repartidor_name'] : $row['local_name']) ?></span>
                                 <?php if ($isLocal && !empty($row['repartidor_name'])): ?>
-                                    <span style="color: var(--primary, #2563eb); font-size: 13px;" title="Conductor Verificado">✓</span>
+                                    <span class="verified-badge-mini" title="Conductor Verificado" style="background: var(--primary, #2563eb); color: #fff; width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; flex-shrink: 0; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35); border: 1.5px solid #ffffff;">✓</span>
                                 <?php endif; ?>
                             </b>
-                            <span style="display: flex; align-items: center; gap: 5px;">
+                            <span style="display: flex; align-items: center; gap: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                                 <?php if ($isLocal && !empty($row['repartidor_name'])): ?>
-                                    <span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; display: inline-block;"></span>
+                                    <span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; display: inline-block; flex-shrink: 0;"></span>
                                 <?php endif; ?>
                                 <?= $isLocal ? 'Conductor asignado' : 'Punto de retiro' ?>
                             </span>
