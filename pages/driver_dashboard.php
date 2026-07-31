@@ -904,8 +904,8 @@ document.addEventListener('DOMContentLoaded', function() {
             <div class="shop-avatar" id="m-shop-logo-container">🏢</div>
             <div class="shop-info">
                 <p style="display:inline-flex; align-items:center; gap:5px;">
-                    <span style="width:6px; height:6px; background:#10b981; border-radius:50%; box-shadow:0 0 8px #10b981; animation:pulse-dot 1.5s infinite;"></span>
-                    NUEVO PEDIDO · EN TIEMPO REAL
+                    <span style="width:6px; height:6px; background:var(--primary, #2563eb); border-radius:50%; box-shadow:0 0 8px var(--primary, #2563eb); animation:pulse-dot 1.5s infinite;"></span>
+                    NUEVO PEDIDO DE
                 </p>
                 <h3 id="m-shop-name">-</h3>
             </div>
