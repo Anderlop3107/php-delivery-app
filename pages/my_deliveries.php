@@ -576,68 +576,104 @@ require __DIR__ . '/_header.php';
                 </div>
 
                 <!-- BLOQUE DEL LOCAL / REPARTIDOR -->
-                <div class="person-box <?= $ocultarLocal ? 'oculto' : '' ?> <?= ($isLocal && !empty($row['repartidor_name'])) ? 'assigned-box' : '' ?>" id="info-local-<?= $row['id'] ?>">
-                    <?php if ($isLocal && empty($row['repartidor_name'])): ?>
-                        <div class="person-avatar searching-avatar">
-                            <div class="searching-radar-ring"></div>
-                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary, #2563eb)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="animation: pulse-dot 1.5s infinite; position: relative; z-index: 2;">
-                                <circle cx="11" cy="11" r="8"></circle>
-                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
-                                <path d="M11 8a3 3 0 0 1 3 3"></path>
-                            </svg>
-                        </div>
-                        <div class="person-details">
-                            <b style="color: var(--primary, #2563eb); display: flex; align-items: center; gap: 6px;">
-                                Buscando repartidor...
-                            </b>
-                            <span>Búsqueda en tiempo real activa</span>
-                        </div>
-                    <?php else: ?>
-                        <div class="person-avatar" style="<?= ($isLocal && !empty($row['repartidor_name'])) ? 'border: 2px solid #ffffff; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);' : '' ?>">
-                            <?php if (!$isLocal && !empty($row['local_logo'])): ?>
-                                <img src="<?= esc(delivery_app_url($row['local_logo'])) ?>" alt="Logo Local" style="width: 100%; height: 100%; object-fit: cover;">
-                            <?php elseif ($isLocal && !empty($row['repartidor_avatar'])): ?>
-                                <img src="<?= esc(delivery_app_url($row['repartidor_avatar'])) ?>" alt="Avatar Repartidor" style="width: 100%; height: 100%; object-fit: cover;">
-                            <?php else: ?>
-                                <?= $isLocal ? '🛵' : '🏪' ?>
-                            <?php endif; ?>
-                        </div>
-                        <div class="person-details" style="min-width: 0;">
-                            <b style="display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 15px; font-weight: 800; color: var(--text);"><?= esc($isLocal ? $row['repartidor_name'] : $row['local_name']) ?></span>
-                                <?php if ($isLocal && !empty($row['repartidor_name'])): ?>
+                <?php if ($isLocal && !empty($row['repartidor_name'])): ?>
+                    <!-- Tarjeta de Repartidor Asignado (Formato Amplio + Botones Inferior Derecha) -->
+                    <div class="person-box assigned-box <?= $ocultarLocal ? 'oculto' : '' ?>" id="info-local-<?= $row['id'] ?>" style="display: flex; flex-direction: column; padding: 18px; gap: 12px;">
+                        <!-- Fila Superior: Avatar + Nombre Completo en Ancho Total -->
+                        <div style="display: flex; align-items: center; gap: 14px; width: 100%;">
+                            <div class="person-avatar" style="border: 2px solid #ffffff; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); flex-shrink: 0;">
+                                <?php if (!empty($row['repartidor_avatar'])): ?>
+                                    <img src="<?= esc(delivery_app_url($row['repartidor_avatar'])) ?>" alt="Avatar Repartidor" style="width: 100%; height: 100%; object-fit: cover;">
+                                <?php else: ?>
+                                    🛵
+                                <?php endif; ?>
+                            </div>
+                            <div class="person-details" style="flex: 1; min-width: 0;">
+                                <b style="display: flex; align-items: center; gap: 6px; font-size: 15.5px; font-weight: 800; color: var(--text);">
+                                    <span><?= esc($row['repartidor_name']) ?></span>
                                     <span class="verified-badge-mini" title="Conductor Verificado" style="background: var(--primary, #2563eb); color: #fff; width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; flex-shrink: 0; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35); border: 1.5px solid #ffffff;">✓</span>
-                                <?php endif; ?>
-                            </b>
-                            <span style="display: flex; align-items: center; gap: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                                <?php if ($isLocal && !empty($row['repartidor_name'])): ?>
-                                    <span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; display: inline-block; flex-shrink: 0;"></span>
-                                <?php endif; ?>
-                                <?= $isLocal ? 'Conductor asignado' : 'Punto de retiro' ?>
-                            </span>
+                                </b>
+                                <span style="display: flex; align-items: center; gap: 6px; margin-top: 3px; font-size: 12px; font-weight: 600; color: var(--muted);">
+                                    <span style="width: 7px; height: 7px; background: #10b981; border-radius: 50%; display: inline-block; flex-shrink: 0;"></span>
+                                    Conductor asignado
+                                </span>
+                            </div>
                         </div>
-                    <?php endif; ?>
-                    <?php 
-                        $phone = $isLocal ? $row['repartidor_phone'] : $row['local_phone'];
-                        if ($phone): 
-                    ?>
-                        <div style="display: flex; gap: 10px;">
+
+                        <!-- Fila Inferior: Botones de Acción Alineados a la Inferior Derecha -->
+                        <?php if (!empty($row['repartidor_phone'])): ?>
                             <?php 
-                                $cleanLPhone = preg_replace('/[^0-9]/', '', $phone);
+                                $cleanLPhone = preg_replace('/[^0-9]/', '', $row['repartidor_phone']);
                                 if (str_starts_with($cleanLPhone, '0')) {
                                     $cleanLPhone = '595' . substr($cleanLPhone, 1);
                                 } elseif ($cleanLPhone !== '' && !str_starts_with($cleanLPhone, '595')) {
                                     $cleanLPhone = '595' . $cleanLPhone;
                                 }
                             ?>
-                            <a href="https://wa.me/<?= $cleanLPhone ?>" target="_blank" class="wa-link-btn">
-                                <svg style="width:20px; height:20px;" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.353-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.191-1.622a11.84 11.84 0 005.854 1.535h.004c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-                            </a>
-                            <a href="tel:<?= $phone ?>" class="call-link-btn">
-                                <svg style="width:20px; height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.387a12.035 12.035 0 01-7.108-7.108c-.155-.44.01-1.275.387-1.556l1.293-.97c.362-.27.528-.733.417-1.173L6.763 2.074a1.125 1.125 0 00-1.091-.852H4.372A2.25 2.25 0 002.122 3.472v1.028z" /></svg>
-                            </a>
-                        </div>
-                    <?php endif; ?>
+                            <div style="display: flex; justify-content: flex-end; align-items: center; gap: 10px; width: 100%; padding-top: 10px; border-top: 1px dashed rgba(37, 99, 235, 0.15);">
+                                <a href="https://wa.me/<?= $cleanLPhone ?>" target="_blank" class="wa-link-btn" title="Enviar WhatsApp">
+                                    <svg style="width:20px; height:20px;" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.353-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.191-1.622a11.84 11.84 0 005.854 1.535h.004c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                                </a>
+                                <a href="tel:<?= $row['repartidor_phone'] ?>" class="call-link-btn" title="Llamar al repartidor">
+                                    <svg style="width:20px; height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.387a12.035 12.035 0 01-7.108-7.108c-.155-.44.01-1.275.387-1.556l1.293-.97c.362-.27.528-.733.417-1.173L6.763 2.074a1.125 1.125 0 00-1.091-.852H4.372A2.25 2.25 0 002.122 3.472v1.028z" /></svg>
+                                </a>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                <?php else: ?>
+                    <!-- Tarjeta para Estado Buscando o Vista Repartidor -->
+                    <div class="person-box <?= $ocultarLocal ? 'oculto' : '' ?>" id="info-local-<?= $row['id'] ?>">
+                        <?php if ($isLocal && empty($row['repartidor_name'])): ?>
+                            <div class="person-avatar searching-avatar">
+                                <div class="searching-radar-ring"></div>
+                                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary, #2563eb)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="animation: pulse-dot 1.5s infinite; position: relative; z-index: 2;">
+                                    <circle cx="11" cy="11" r="8"></circle>
+                                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                    <path d="M11 8a3 3 0 0 1 3 3"></path>
+                                </svg>
+                            </div>
+                            <div class="person-details">
+                                <b style="color: var(--primary, #2563eb); display: flex; align-items: center; gap: 6px;">
+                                    Buscando repartidor...
+                                </b>
+                                <span>Búsqueda en tiempo real activa</span>
+                            </div>
+                        <?php else: ?>
+                            <div class="person-avatar">
+                                <?php if (!$isLocal && !empty($row['local_logo'])): ?>
+                                    <img src="<?= esc(delivery_app_url($row['local_logo'])) ?>" alt="Logo Local" style="width: 100%; height: 100%; object-fit: cover;">
+                                <?php else: ?>
+                                    🏪
+                                <?php endif; ?>
+                            </div>
+                            <div class="person-details">
+                                <b><?= esc($row['local_name']) ?></b>
+                                <span>Punto de retiro</span>
+                            </div>
+                        <?php endif; ?>
+                        <?php 
+                            $phone = $isLocal ? $row['repartidor_phone'] : $row['local_phone'];
+                            if ($phone): 
+                        ?>
+                            <div style="display: flex; gap: 10px;">
+                                <?php 
+                                    $cleanLPhone = preg_replace('/[^0-9]/', '', $phone);
+                                    if (str_starts_with($cleanLPhone, '0')) {
+                                        $cleanLPhone = '595' . substr($cleanLPhone, 1);
+                                    } elseif ($cleanLPhone !== '' && !str_starts_with($cleanLPhone, '595')) {
+                                        $cleanLPhone = '595' . $cleanLPhone;
+                                    }
+                                ?>
+                                <a href="https://wa.me/<?= $cleanLPhone ?>" target="_blank" class="wa-link-btn">
+                                    <svg style="width:20px; height:20px;" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.353-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.191-1.622a11.84 11.84 0 005.854 1.535h.004c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                                </a>
+                                <a href="tel:<?= $phone ?>" class="call-link-btn">
+                                    <svg style="width:20px; height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.387a12.035 12.035 0 01-7.108-7.108c-.155-.44.01-1.275.387-1.556l1.293-.97c.362-.27.528-.733.417-1.173L6.763 2.074a1.125 1.125 0 00-1.091-.852H4.372A2.25 2.25 0 002.122 3.472v1.028z" /></svg>
+                                </a>
+                            </div>
+                        <?php endif; ?>
+                    </div>
+                <?php endif; ?>
                 </div>
 
                 <!-- ACCIONES DEL REPARTIDOR -->
