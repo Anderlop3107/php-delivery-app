@@ -283,7 +283,7 @@ require __DIR__ . '/_header.php';
         background: rgba(15, 23, 42, 0.4); 
         backdrop-filter: blur(8px); 
         -webkit-backdrop-filter: blur(8px);
-        z-index: 3000; 
+        z-index: 10000; 
         display: none; 
         align-items: center; 
         justify-content: center; 
@@ -510,14 +510,14 @@ require __DIR__ . '/_header.php';
 <!-- Modal de Éxito (Pedido Entregado) -->
 <div id="delivered-success-modal" class="modal-overlay">
     <div class="modal-card">
-        <button class="modal-close-top" onclick="closeSuccessModal()">✕</button>
+        <button type="button" class="modal-close-top" onclick="closeSuccessModal()">✕</button>
         <div class="status-icon-container">
             <div class="status-icon-waves"></div>
             <span class="check-mark">✓</span>
         </div>
-        <h2>¡Pedido Entregado!</h2>
-        <p>¡Buen trabajo! Has completado esta entrega con éxito.</p>
-        <button class="btn-listo" onclick="closeSuccessModal()">Listo</button>
+        <h2 id="success-modal-title">¡Pedido Entregado!</h2>
+        <p id="success-modal-message">¡Buen trabajo! El pedido ha sido completado con éxito.</p>
+        <button type="button" class="btn-listo" onclick="closeSuccessModal()">Listo</button>
     </div>
 </div>
 
@@ -548,8 +548,8 @@ require __DIR__ . '/_header.php';
                 'pendiente' => ['label' => 'Buscando Repartidor', 'prog' => 1],
                 'aceptado' => ['label' => 'Camino al Local', 'prog' => 2],
                 'repartidor_en_local' => ['label' => 'En el Local / Retirando', 'prog' => 3],
-                'en_camino_al_cliente' => ['label' => 'Entregando Pedido', 'prog' => 4],
-                'en_puerta' => ['label' => 'Entregando Pedido', 'prog' => 4],
+                'en_camino_al_cliente' => ['label' => 'Camino al Cliente', 'prog' => 4],
+                'en_puerta' => ['label' => 'Camino al Cliente', 'prog' => 4],
                 'entregado' => ['label' => '¡Pedido Entregado!', 'prog' => 5],
             ];
             
@@ -557,8 +557,8 @@ require __DIR__ . '/_header.php';
             $prog = $current['prog'];
 
             // Lógica de visibilidad estricta
-            $ocultarCliente = ($s === 'pendiente' || $s === 'aceptado' || $s === 'repartidor_en_local');
-            $ocultarLocal = ($s === 'en_camino_al_cliente' || $s === 'en_puerta');
+            $ocultarCliente = $isLocal || ($s === 'pendiente' || $s === 'aceptado' || $s === 'repartidor_en_local');
+            $ocultarLocal = $isDriver && ($s === 'en_camino_al_cliente' || $s === 'en_puerta');
             // Determinar clases de estado para bordes y pills premium dinámicos
             $cardStateClass = '';
             $statusClass = '';
@@ -869,11 +869,6 @@ require __DIR__ . '/_header.php';
 
             if (res.success) {
                 if (newStatus === 'entregado') {
-                    if (window.playNotificationSound) {
-                        window.playNotificationSound('<?= esc(delivery_app_url('assets/sounds/delivered.mp3')) ?>');
-                    } else {
-                        new Audio('<?= esc(delivery_app_url('assets/sounds/delivered.mp3')) ?>').play().catch(e => console.log(e));
-                    }
                     showSuccessModal();
                 } else {
                     window.location.reload();
@@ -884,10 +879,24 @@ require __DIR__ . '/_header.php';
 
     let deliveredTimeout = null;
 
-    function showSuccessModal() {
-        document.getElementById('delivered-success-modal').style.display = 'flex';
+    function showSuccessModal(title, message) {
+        if (typeof closeTrackingSheetModal === 'function') {
+            closeTrackingSheetModal();
+        }
+        if (title) {
+            const tEl = document.getElementById('success-modal-title');
+            if (tEl) tEl.innerText = title;
+        }
+        if (message) {
+            const mEl = document.getElementById('success-modal-message');
+            if (mEl) mEl.innerText = message;
+        }
+        const modal = document.getElementById('delivered-success-modal');
+        if (modal) {
+            modal.style.display = 'flex';
+        }
         
-        // Redirección automática en 5 segundos a la misma página (para refrescar el estado del dashboard de entregas)
+        // Redirección automática en 5 segundos a la misma página
         deliveredTimeout = setTimeout(() => {
             window.location.reload();
         }, 5000);
@@ -895,7 +904,8 @@ require __DIR__ . '/_header.php';
 
     function closeSuccessModal() {
         if (deliveredTimeout) clearTimeout(deliveredTimeout);
-        document.getElementById('delivered-success-modal').style.display = 'none';
+        const modal = document.getElementById('delivered-success-modal');
+        if (modal) modal.style.display = 'none';
         window.location.reload();
     }
 
@@ -933,9 +943,17 @@ require __DIR__ . '/_header.php';
         const dateStr = dateObj.toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: 'numeric' });
         document.getElementById('t-order-date').innerText = dateStr;
 
-        document.getElementById('t-step-driver').innerText = (order.status === 'aceptado') ? 'Camino al local' : 'En el local';
         document.getElementById('t-local-name').innerText = order.local_name || 'Local / Comercio';
-        document.getElementById('t-step-local').innerText = (order.status === 'repartidor_en_local') ? 'Entregando pedido' : 'Esperando';
+        if (order.status === 'en_puerta' || order.status === 'en_camino_al_cliente') {
+            document.getElementById('t-step-driver').innerText = 'Camino al cliente';
+            document.getElementById('t-step-local').innerText = 'Esperando entrega';
+        } else if (order.status === 'repartidor_en_local') {
+            document.getElementById('t-step-driver').innerText = 'En el local';
+            document.getElementById('t-step-local').innerText = 'En el local';
+        } else {
+            document.getElementById('t-step-driver').innerText = 'Camino al local';
+            document.getElementById('t-step-local').innerText = 'Esperando';
+        }
 
         document.getElementById('tracking-sheet-modal').style.display = 'flex';
 
@@ -1000,8 +1018,16 @@ require __DIR__ . '/_header.php';
                             trackingDriverMarker.setLngLat([liveLng, liveLat]);
 
                             if (res.status) {
-                                document.getElementById('t-step-driver').innerText = (res.status === 'aceptado') ? 'Camino al local' : 'En el local';
-                                document.getElementById('t-step-local').innerText = (res.status === 'repartidor_en_local') ? 'Entregando pedido' : 'Esperando';
+                                if (res.status === 'en_puerta' || res.status === 'en_camino_al_cliente') {
+                                    document.getElementById('t-step-driver').innerText = 'Camino al cliente';
+                                    document.getElementById('t-step-local').innerText = 'Esperando entrega';
+                                } else if (res.status === 'repartidor_en_local') {
+                                    document.getElementById('t-step-driver').innerText = 'En el local';
+                                    document.getElementById('t-step-local').innerText = 'En el local';
+                                } else {
+                                    document.getElementById('t-step-driver').innerText = 'Camino al local';
+                                    document.getElementById('t-step-local').innerText = 'Esperando';
+                                }
                             }
                         }
                     } catch (e) {}
