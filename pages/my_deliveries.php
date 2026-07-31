@@ -339,14 +339,14 @@ require __DIR__ . '/_header.php';
     }
 
     .tracking-bottom-sheet {
-        position: absolute; bottom: 0; left: 0; right: 0;
+        position: fixed !important; bottom: 0 !important; top: auto !important; left: 0 !important; right: 0 !important;
         width: 100%; height: 42vh; max-height: 75vh; min-height: 30vh;
         background: #ffffff;
         border-radius: 32px 32px 0 0;
-        box-shadow: 0 -12px 42px rgba(15, 23, 42, 0.16);
+        box-shadow: 0 -12px 42px rgba(15, 23, 42, 0.22);
         border: 1px solid rgba(255, 255, 255, 0.8); border-bottom: none;
         padding: 20px 24px 28px 24px; display: flex; flex-direction: column; gap: 14px;
-        overflow-y: auto; position: relative; z-index: 100;
+        overflow-y: auto; z-index: 100;
         transition: height 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         touch-action: pan-y;
     }
