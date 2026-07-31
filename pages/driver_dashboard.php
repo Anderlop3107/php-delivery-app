@@ -1222,6 +1222,12 @@ function showToast(message) {
 
             // Marcador de Cliente (Destino) verde estándar
             new mapboxgl.Marker({ color: '#10b981' }).setLngLat([order.dest_lng, order.dest_lat]).addTo(miniMap);
+
+            // Ajustar encuadre de mapa con margen amplio (55px) para que ningún marcador sea tapado por los bordes
+            const bounds = new mapboxgl.LngLatBounds()
+                .extend([order.local_lng, order.local_lat])
+                .extend([order.dest_lng, order.dest_lat]);
+            miniMap.fitBounds(bounds, { padding: 55, maxZoom: 15 });
             
             const query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${order.local_lng},${order.local_lat};${order.dest_lng},${order.dest_lat}?geometries=geojson&access_token=${mapboxgl.accessToken}`);
             const json = await query.json();
@@ -1239,8 +1245,6 @@ function showToast(message) {
 
                 miniMap.addSource('route', { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': route.geometry } });
                 miniMap.addLayer({ 'id': 'route', 'type': 'line', 'source': 'route', 'layout': { 'line-join': 'round', 'line-cap': 'round' }, 'paint': { 'line-color': '#2563eb', 'line-width': 4, 'line-opacity': 0.8 } });
-                const bounds = new mapboxgl.LngLatBounds([order.local_lng, order.local_lat], [order.dest_lng, order.dest_lat]);
-                miniMap.fitBounds(bounds, { padding: 30 });
             }
         });
     }
