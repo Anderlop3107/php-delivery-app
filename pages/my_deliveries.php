@@ -303,6 +303,16 @@ require __DIR__ . '/_header.php';
         display: flex; align-items: center; justify-content: space-between;
         pointer-events: none;
     }
+    .tracking-header-title-pill {
+        font-size: 16px; font-weight: 800; color: #0f172a;
+        letter-spacing: 0.4px; text-transform: uppercase;
+        background: rgba(255, 255, 255, 0.45);
+        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        padding: 8px 22px; border-radius: 20px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        pointer-events: auto;
+    }
     .tracking-back-btn {
         pointer-events: auto !important;
         width: 44px !important; height: 44px !important;
@@ -1079,6 +1089,8 @@ require __DIR__ . '/_header.php';
     <!-- ENCABEZADO SUPERPUESTO (HEADER OVERLAY) -->
     <div class="tracking-header-overlay">
         <button type="button" onclick="closeTrackingSheetModal()" class="tracking-back-btn" title="Volver a entregas" aria-label="Volver a entregas"></button>
+        <div class="tracking-header-title-pill">Tracking</div>
+        <div style="width: 44px;"></div>
     </div>
 
     <!-- MAPA INTERACTIVO (MITAD SUPERIOR - 52vh) -->
