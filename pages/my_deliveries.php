@@ -935,7 +935,7 @@ require __DIR__ . '/_header.php';
 
         document.getElementById('t-step-driver').innerText = (order.status === 'aceptado') ? 'Camino al local' : 'En el local';
         document.getElementById('t-local-name').innerText = order.local_name || 'Local / Comercio';
-        document.getElementById('t-step-local').innerText = (order.status === 'repartidor_en_local') ? 'Retirando pedido' : 'Esperando';
+        document.getElementById('t-step-local').innerText = (order.status === 'repartidor_en_local') ? 'Entregando pedido' : 'Esperando';
 
         document.getElementById('tracking-sheet-modal').style.display = 'flex';
 
@@ -1001,7 +1001,7 @@ require __DIR__ . '/_header.php';
 
                             if (res.status) {
                                 document.getElementById('t-step-driver').innerText = (res.status === 'aceptado') ? 'Camino al local' : 'En el local';
-                                document.getElementById('t-step-local').innerText = (res.status === 'repartidor_en_local') ? 'Retirando pedido' : 'Esperando';
+                                document.getElementById('t-step-local').innerText = (res.status === 'repartidor_en_local') ? 'Entregando pedido' : 'Esperando';
                             }
                         }
                     } catch (e) {}
