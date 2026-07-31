@@ -1204,6 +1204,7 @@ function showToast(message) {
             interactive: false
         });
 
+        miniMap.on('load', async () => {
             // Marcador de Local (Comercio) con icono de tienda en azul marca
             const localPinEl = document.createElement('div');
             localPinEl.innerHTML = `
