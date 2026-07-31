@@ -306,17 +306,20 @@ require __DIR__ . '/_header.php';
     .tracking-back-btn {
         pointer-events: auto !important;
         width: 44px; height: 44px; border-radius: 50%;
-        background: #ffffff !important;
-        border: 1px solid rgba(0,0,0,0.08);
-        display: flex; align-items: center; justify-content: center;
-        box-shadow: 0 6px 18px rgba(0,0,0,0.14);
-        cursor: pointer; transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+        background-color: #ffffff !important;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 12H5M12 19L5 12L12 5'/%3E%3C/svg%3E") !important;
+        background-repeat: no-repeat !important;
+        background-position: center !important;
+        background-size: 22px 22px !important;
+        border: 1.5px solid rgba(37, 99, 235, 0.22) !important;
+        box-shadow: 0 6px 18px rgba(0,0,0,0.14) !important;
+        cursor: pointer !important; transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative; z-index: 501;
     }
     .tracking-back-btn:hover {
         transform: translateY(-2px) scale(1.06);
-        box-shadow: 0 8px 22px rgba(0,0,0,0.2);
-        background: #ffffff !important;
+        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.3);
+        border-color: var(--primary, #2563eb) !important;
     }
     .tracking-back-btn:active { transform: scale(0.92); }
 
@@ -996,11 +999,7 @@ require __DIR__ . '/_header.php';
 <div id="tracking-sheet-modal" class="tracking-modal-overlay" style="display: none;">
     <!-- ENCABEZADO SUPERPUESTO (HEADER OVERLAY) -->
     <div class="tracking-header-overlay">
-        <button type="button" onclick="closeTrackingSheetModal()" class="tracking-back-btn" title="Volver a entregas" aria-label="Volver a entregas">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" style="display: block; width: 24px; height: 24px;">
-                <path d="M20 12H4M10 18L4 12L10 6" stroke="#2563eb" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
-        </button>
+        <button type="button" onclick="closeTrackingSheetModal()" class="tracking-back-btn" title="Volver a entregas" aria-label="Volver a entregas"></button>
         <div class="tracking-header-title">Seguimiento de envío</div>
         <div style="width: 44px;"></div>
     </div>
