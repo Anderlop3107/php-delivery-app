@@ -370,6 +370,18 @@ require __DIR__ . '/_header.php';
         color: var(--primary) !important;
         opacity: 1 !important;
         transition: transform 0.2s;
+        animation: chevronSlide 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+
+    @keyframes chevronSlide {
+        0%, 100% {
+            transform: translateX(0);
+            opacity: 0.85;
+        }
+        50% {
+            transform: translateX(5px);
+            opacity: 1;
+        }
     }
     
     /* Estado cuando se desliza completamente y se procesa */
