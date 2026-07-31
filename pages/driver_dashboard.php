@@ -222,16 +222,18 @@ require __DIR__ . '/_header.php';
 
     #mini-route-map { height: 170px; border-radius: 22px; border: 1.5px solid var(--border); box-shadow: 0 8px 20px rgba(0,0,0,0.02); }
 
-    .money-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 28px; }
+    .money-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
     .money-box { 
         background: #ffffff; 
-        padding: 16px; 
-        border-radius: 20px; 
+        padding: 10px 12px; 
+        border-radius: 14px; 
         border: 1.5px solid rgba(0,0,0,0.05); 
         display: flex;
         flex-direction: column;
-        justify-content: space-between;
-        min-height: 85px;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        min-height: 56px;
         transition: all 0.2s ease;
     }
     .money-box:hover {
@@ -246,12 +248,12 @@ require __DIR__ . '/_header.php';
         border-color: rgba(37, 99, 235, 0.15);
     }
     .money-box small { 
-        display: block; font-size: 9.5px; font-weight: 850; color: var(--muted); 
-        text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; 
+        display: block; font-size: 9px; font-weight: 850; color: var(--muted); 
+        text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 3px; 
     }
     .money-box.earnings small { color: #10b981; }
     .money-box.local-pay small { color: var(--primary, #2563eb); }
-    .money-box b { font-size: 19px; color: var(--text); font-weight: 800; letter-spacing: -0.5px; }
+    .money-box b { font-size: 16px; color: var(--text); font-weight: 800; letter-spacing: -0.3px; }
     .money-box.earnings b { color: #10b981; }
     .money-box.local-pay b { color: var(--primary, #2563eb); }
 
