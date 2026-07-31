@@ -11,7 +11,7 @@ $isDriver = ($user['role'] === 'repartidor');
 if ($isLocal) {
     // Incluir entregas que cambiaron de estado recientemente (último minuto) para poder notificar por audio en tiempo real
     $rows = app_all(
-        "SELECT d.*, r.name AS repartidor_name, r.phone AS repartidor_phone, r.logo_path AS repartidor_avatar, u_local.latitude as local_lat, u_local.longitude as local_lng
+        "SELECT d.*, r.name AS repartidor_name, r.phone AS repartidor_phone, r.logo_path AS repartidor_avatar, r.latitude as repartidor_lat, r.longitude as repartidor_lng, u_local.latitude as local_lat, u_local.longitude as local_lng
          FROM deliveries d
          LEFT JOIN users r ON r.id = d.repartidor_user_id
          JOIN users u_local ON d.local_user_id = u_local.id
@@ -916,7 +916,9 @@ require __DIR__ . '/_header.php';
             });
 
             trackingSheetMap.on('load', async () => {
-                // Marcador Conductor (Azul marca)
+                trackingSheetMap.resize();
+
+                // Marcador Conductor (Azul marca con icono)
                 const driverPin = document.createElement('div');
                 driverPin.innerHTML = `
                     <div style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45); border: 2.5px solid #ffffff;">
@@ -937,13 +939,13 @@ require __DIR__ . '/_header.php';
                     .extend([localLng, localLat]);
                 trackingSheetMap.fitBounds(bounds, { padding: 50, maxZoom: 15 });
 
-                // Trazar ruta
+                // Trazar ruta verde/azul en vivo
                 const query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${driverLng},${driverLat};${localLng},${localLat}?geometries=geojson&access_token=${mapboxgl.accessToken}`);
                 const json = await query.json();
                 if (json.routes && json.routes[0]) {
                     const route = json.routes[0];
                     trackingSheetMap.addSource('tracking-route', { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': route.geometry } });
-                    trackingSheetMap.addLayer({ 'id': 'tracking-route', 'type': 'line', 'source': 'tracking-route', 'layout': { 'line-join': 'round', 'line-cap': 'round' }, 'paint': { 'line-color': '#2563eb', 'line-width': 4, 'line-opacity': 0.85 } });
+                    trackingSheetMap.addLayer({ 'id': 'tracking-route', 'type': 'line', 'source': 'tracking-route', 'layout': { 'line-join': 'round', 'line-cap': 'round' }, 'paint': { 'line-color': '#22c55e', 'line-width': 5, 'line-opacity': 0.9 } });
                 }
             });
         }, 150);
