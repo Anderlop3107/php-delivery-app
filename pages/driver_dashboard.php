@@ -242,18 +242,18 @@ require __DIR__ . '/_header.php';
         border-color: rgba(16, 185, 129, 0.15); 
     }
     .money-box.local-pay {
-        background: rgba(245, 158, 11, 0.06);
-        border-color: rgba(245, 158, 11, 0.15);
+        background: rgba(37, 99, 235, 0.06);
+        border-color: rgba(37, 99, 235, 0.15);
     }
     .money-box small { 
         display: block; font-size: 9.5px; font-weight: 850; color: var(--muted); 
         text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 6px; 
     }
     .money-box.earnings small { color: #10b981; }
-    .money-box.local-pay small { color: #d97706; }
+    .money-box.local-pay small { color: var(--primary, #2563eb); }
     .money-box b { font-size: 19px; color: var(--text); font-weight: 800; letter-spacing: -0.5px; }
     .money-box.earnings b { color: #10b981; }
-    .money-box.local-pay b { color: #d97706; }
+    .money-box.local-pay b { color: var(--primary, #2563eb); }
 
     .btn-submit-payment {
         width: 100%;
