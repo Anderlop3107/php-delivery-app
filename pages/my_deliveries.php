@@ -925,14 +925,19 @@ require __DIR__ . '/_header.php';
             trackingSheetMap.on('load', async () => {
                 trackingSheetMap.resize();
 
-                // Marcador Conductor (Azul marca con icono)
+                // Marcador Conductor (Avatar Foto de Perfil)
                 const driverPin = document.createElement('div');
+                let avatarContent = '';
+                if (order.repartidor_avatar) {
+                    const baseUrl = '<?= esc(delivery_app_url()) ?>/';
+                    avatarContent = `<img src="${baseUrl}${order.repartidor_avatar}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+                } else {
+                    avatarContent = `<span style="font-size: 20px;">🛵</span>`;
+                }
+
                 driverPin.innerHTML = `
-                    <div style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); width: 38px; height: 38px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45); border: 2.5px solid #ffffff;">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <polyline points="12 6 12 12 16 14"></polyline>
-                        </svg>
+                    <div style="background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); width: 44px; height: 44px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 6px 18px rgba(37, 99, 235, 0.45); border: 2.5px solid #ffffff; overflow: hidden;">
+                        ${avatarContent}
                     </div>
                 `;
                 trackingDriverMarker = new mapboxgl.Marker(driverPin).setLngLat([driverLng, driverLat]).addTo(trackingSheetMap);
