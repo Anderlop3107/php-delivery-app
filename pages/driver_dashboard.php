@@ -1205,25 +1205,8 @@ function showToast(message) {
         });
 
         miniMap.on('load', async () => {
-            // Marcador de Local (Comercio) con vector SVG de tienda en azul marca
-            const localPinEl = document.createElement('div');
-            localPinEl.innerHTML = `
-                <div style="
-                    background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-                    width: 38px; height: 38px;
-                    border-radius: 50%;
-                    display: flex; align-items: center; justify-content: center;
-                    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.45);
-                    border: 2.5px solid #ffffff;
-                ">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-                        <path d="M3 21h18v-8a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v8z"></path>
-                        <path d="M3 11l2-7h14l2 7"></path>
-                        <path d="M9 11a3 3 0 0 0 6 0"></path>
-                    </svg>
-                </div>
-            `;
-            new mapboxgl.Marker(localPinEl).setLngLat([order.local_lng, order.local_lat]).addTo(miniMap);
+            // Marcador de Local (Comercio) pin azul marca
+            new mapboxgl.Marker({ color: '#2563eb' }).setLngLat([order.local_lng, order.local_lat]).addTo(miniMap);
 
             // Marcador de Cliente (Destino) verde estándar
             new mapboxgl.Marker({ color: '#10b981' }).setLngLat([order.dest_lng, order.dest_lat]).addTo(miniMap);
