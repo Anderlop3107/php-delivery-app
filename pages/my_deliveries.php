@@ -306,16 +306,17 @@ require __DIR__ . '/_header.php';
     .tracking-back-btn {
         pointer-events: auto !important;
         width: 44px; height: 44px; border-radius: 50%;
-        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
-        border: 2.5px solid #ffffff;
+        background: #ffffff !important;
+        border: 1px solid rgba(0,0,0,0.08);
         display: flex; align-items: center; justify-content: center;
-        box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+        box-shadow: 0 6px 18px rgba(0,0,0,0.14);
         cursor: pointer; transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative; z-index: 501;
     }
     .tracking-back-btn:hover {
         transform: translateY(-2px) scale(1.06);
-        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.55);
+        box-shadow: 0 8px 22px rgba(0,0,0,0.2);
+        background: #ffffff !important;
     }
     .tracking-back-btn:active { transform: scale(0.92); }
 
@@ -996,8 +997,8 @@ require __DIR__ . '/_header.php';
     <!-- ENCABEZADO SUPERPUESTO (HEADER OVERLAY) -->
     <div class="tracking-header-overlay">
         <button type="button" onclick="closeTrackingSheetModal()" class="tracking-back-btn" title="Volver a entregas" aria-label="Volver a entregas">
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#ffffff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" style="display: block; width: 22px; height: 22px;">
-                <path d="M19 12H5M12 19L5 12L12 5"/>
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block; width: 24px; height: 24px; pointer-events: none;">
+                <path d="M19 12H5M12 19L5 12L12 5" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </button>
         <div class="tracking-header-title">Seguimiento de envío</div>
