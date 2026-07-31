@@ -201,6 +201,7 @@ require __DIR__ . '/_header.php';
     .broadcast-card { 
         background: #fff; width: 100%; max-width: 410px; border-radius: 32px; 
         padding: 32px 28px; 
+        border-top: 6px solid var(--primary, #2563eb);
         box-shadow: 0 25px 60px -15px rgba(15, 23, 42, 0.25), 0 0 0 1px rgba(255, 255, 255, 0.6) inset; 
         animation: modalPop 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); 
     }
