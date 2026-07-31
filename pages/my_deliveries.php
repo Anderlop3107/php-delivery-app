@@ -946,15 +946,6 @@ require __DIR__ . '/_header.php';
                     .extend([localLng, localLat]);
                 trackingSheetMap.fitBounds(bounds, { padding: 50, maxZoom: 15 });
 
-                // Trazar ruta verde/azul en vivo
-                const query = await fetch(`https://api.mapbox.com/directions/v5/mapbox/driving/${driverLng},${driverLat};${localLng},${localLat}?geometries=geojson&access_token=${mapboxgl.accessToken}`);
-                const json = await query.json();
-                if (json.routes && json.routes[0]) {
-                    const route = json.routes[0];
-                    trackingSheetMap.addSource('tracking-route', { 'type': 'geojson', 'data': { 'type': 'Feature', 'geometry': route.geometry } });
-                    trackingSheetMap.addLayer({ 'id': 'tracking-route', 'type': 'line', 'source': 'tracking-route', 'layout': { 'line-join': 'round', 'line-cap': 'round' }, 'paint': { 'line-color': '#22c55e', 'line-width': 5, 'line-opacity': 0.9 } });
-                }
-
                 // Polling en tiempo real cada 3 segundos para mover suavemente el marcador del conductor
                 trackingLiveInterval = setInterval(async () => {
                     try {
