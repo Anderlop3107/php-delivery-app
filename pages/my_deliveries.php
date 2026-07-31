@@ -416,12 +416,12 @@ require __DIR__ . '/_header.php';
     .marker-green { background: #10b981; }
 
     .animated-pin-marker {
-        animation: pinBounce 1.8s infinite ease-in-out;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+        animation: pinBounce 2.5s infinite ease-in-out;
+        box-shadow: 0 3px 8px rgba(16, 185, 129, 0.3);
     }
     @keyframes pinBounce {
-        0%, 100% { transform: translateY(0) scale(1); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); }
-        50% { transform: translateY(-3px) scale(1.08); box-shadow: 0 8px 18px rgba(16, 185, 129, 0.55); }
+        0%, 100% { transform: translateY(0); box-shadow: 0 3px 8px rgba(16, 185, 129, 0.3); }
+        50% { transform: translateY(-1.5px); box-shadow: 0 5px 12px rgba(16, 185, 129, 0.42); }
     }
 
     .timeline-connector {
