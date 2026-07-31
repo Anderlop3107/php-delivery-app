@@ -581,7 +581,7 @@ require __DIR__ . '/_header.php';
                     <div class="person-box assigned-box <?= $ocultarLocal ? 'oculto' : '' ?>" id="info-local-<?= $row['id'] ?>" style="display: flex; flex-direction: column; padding: 18px; gap: 12px;">
                         <!-- Fila Superior: Avatar + Nombre Completo en Ancho Total -->
                         <div style="display: flex; align-items: center; gap: 14px; width: 100%;">
-                            <div class="person-avatar" style="border: 2px solid #ffffff; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25); flex-shrink: 0;">
+                            <div class="person-avatar" style="width: 54px; height: 54px; border-radius: 16px; border: 2.5px solid #ffffff; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25); flex-shrink: 0; font-size: 22px;">
                                 <?php if (!empty($row['repartidor_avatar'])): ?>
                                     <img src="<?= esc(delivery_app_url($row['repartidor_avatar'])) ?>" alt="Avatar Repartidor" style="width: 100%; height: 100%; object-fit: cover;">
                                 <?php else: ?>
