@@ -998,8 +998,9 @@ require __DIR__ . '/_header.php';
     <!-- ENCABEZADO SUPERPUESTO (HEADER OVERLAY) -->
     <div class="tracking-header-overlay">
         <button type="button" onclick="closeTrackingSheetModal()" class="tracking-back-btn" title="Volver a entregas" aria-label="Volver a entregas">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="display: block; width: 24px; height: 24px; pointer-events: none;">
-                <path d="M19 12H5M12 19L5 12L12 5" stroke="#2563eb" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary, #2563eb)" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="19" y1="12" x2="5" y2="12"></line>
+                <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
         </button>
         <div class="tracking-header-title">Seguimiento de envío</div>
