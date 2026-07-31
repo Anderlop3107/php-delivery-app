@@ -588,14 +588,14 @@ require __DIR__ . '/_header.php';
                                 <?php endif; ?>
                             </div>
                             <div class="person-details" style="flex: 1; min-width: 0;">
-                                <b style="display: flex; align-items: center; gap: 6px; font-size: 15.5px; font-weight: 800; color: var(--text);">
+                                <small style="display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 800; color: var(--primary, #2563eb); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px;">
+                                    <span style="width: 6px; height: 6px; background: #10b981; border-radius: 50%; display: inline-block; flex-shrink: 0;"></span>
+                                    Conductor asignado
+                                </small>
+                                <b style="display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 850; color: var(--text);">
                                     <span><?= esc($row['repartidor_name']) ?></span>
                                     <span class="verified-badge-mini" title="Conductor Verificado" style="background: var(--primary, #2563eb); color: #fff; width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; flex-shrink: 0; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35); border: 1.5px solid #ffffff;">✓</span>
                                 </b>
-                                <span style="display: flex; align-items: center; gap: 6px; margin-top: 3px; font-size: 12px; font-weight: 600; color: var(--muted);">
-                                    <span style="width: 7px; height: 7px; background: #10b981; border-radius: 50%; display: inline-block; flex-shrink: 0;"></span>
-                                    Conductor asignado
-                                </span>
                             </div>
                         </div>
 
