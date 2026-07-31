@@ -1459,7 +1459,7 @@ $maxChartCount = max(5, max($chartCounts));
                 <?php else: ?>
                     <?php foreach ($activeDeliveries as $ad): 
                         $statusStr = strtolower($ad['status'] ?? 'pendiente');
-                        $statusLabel = 'Pedido Recibido';
+                        $statusLabel = 'Buscando Repartidor';
                         $statusClass = 'doc-pending';
                         $statusStyle = 'background:rgba(245, 158, 11, 0.1); color:#d97706; border:1px solid rgba(245, 158, 11, 0.3);';
 
@@ -2052,7 +2052,7 @@ $maxChartCount = max(5, max($chartCounts));
             let html = '';
             data.deliveries.forEach(ad => {
                 const statusStr = (ad.status || 'pendiente').toLowerCase();
-                let statusLabel = 'Pedido Recibido';
+                let statusLabel = 'Buscando Repartidor';
                 let statusClass = 'doc-pending';
                 let statusStyle = 'background:rgba(245, 158, 11, 0.1); color:#d97706; border:1px solid rgba(245, 158, 11, 0.3);';
 
