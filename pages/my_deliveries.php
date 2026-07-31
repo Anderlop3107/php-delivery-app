@@ -310,21 +310,21 @@ require __DIR__ . '/_header.php';
         max-width: 44px !important; max-height: 44px !important;
         border-radius: 50% !important; aspect-ratio: 1 / 1 !important;
         padding: 0 !important; margin: 0 !important; box-sizing: border-box !important;
-        background-color: rgba(255, 255, 255, 0.55) !important;
+        background-color: rgba(255, 255, 255, 0.25) !important;
         backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important;
         background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='3.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M19 12H5M12 19L5 12L12 5'/%3E%3C/svg%3E") !important;
         background-repeat: no-repeat !important;
         background-position: center !important;
         background-size: 22px 22px !important;
-        border: 1.5px solid rgba(255, 255, 255, 0.6) !important;
-        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12) !important;
+        border: 1px solid rgba(255, 255, 255, 0.4) !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1) !important;
         cursor: pointer !important; transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative; z-index: 501; flex-shrink: 0;
     }
     .tracking-back-btn:hover {
         transform: translateY(-2px) scale(1.06);
         box-shadow: 0 8px 24px rgba(37, 99, 235, 0.25);
-        background-color: rgba(255, 255, 255, 0.78) !important;
+        background-color: rgba(255, 255, 255, 0.5) !important;
     }
     .tracking-back-btn:active { transform: scale(0.92); }
 
