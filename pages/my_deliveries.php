@@ -113,16 +113,15 @@ require __DIR__ . '/_header.php';
     
     .status-card { 
         background: #fff; 
-        border-radius: var(--card-radius); 
+        border-radius: 24px; 
         padding: 24px; 
-        margin-bottom: 20px; 
-        box-shadow: var(--shadow);
-        border: 1px solid rgba(0,0,0,0.01);
+        margin-bottom: 24px; 
+        box-shadow: 0 12px 32px -6px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(0,0,0,0.03);
         border-left: 6px solid #cbd5e1;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
         overflow: hidden; 
     }
-    .status-card.state-pendiente { border-left-color: #94a3b8; }
+    .status-card.state-pendiente { border-left-color: var(--primary, #2563eb); }
     .status-card.state-local { border-left-color: #f59e0b; }
     .status-card.state-transit { border-left-color: var(--primary); }
     .status-card.state-entregado { border-left-color: #10b981; }
@@ -133,15 +132,19 @@ require __DIR__ . '/_header.php';
     
     .status-pill-tech {
         padding: 6px 14px;
-        border-radius: 10px;
+        border-radius: 20px;
         font-size: 10px;
-        font-weight: 800;
+        font-weight: 850;
         text-transform: uppercase;
         letter-spacing: 0.5px;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
     }
     .status-pill-tech.status-pendiente {
-        background: rgba(148, 163, 184, 0.12);
-        color: #64748b;
+        background: rgba(37, 99, 235, 0.08);
+        color: var(--primary, #2563eb);
+        border: 1px solid rgba(37, 99, 235, 0.2);
     }
     .status-pill-tech.status-local {
         background: rgba(245, 158, 11, 0.08);
@@ -179,6 +182,7 @@ require __DIR__ . '/_header.php';
     .progress-bar-segment.active { 
         background: var(--primary); 
         animation: pulse-active-bar 1.8s infinite ease-in-out;
+        box-shadow: 0 0 12px rgba(37, 99, 235, 0.5);
     }
     .progress-bar-segment.completed { background: #10b981; }
 
@@ -423,6 +427,9 @@ require __DIR__ . '/_header.php';
                         <?php endif; ?>
                     </div>
                     <span class="status-pill-tech <?= $statusClass ?>">
+                        <?php if ($s === 'pendiente'): ?>
+                            <span style="width: 6px; height: 6px; background: var(--primary, #2563eb); border-radius: 50%; display: inline-block; box-shadow: 0 0 8px var(--primary, #2563eb); animation: pulse-dot 1.5s infinite;"></span>
+                        <?php endif; ?>
                         <?= $current['label'] ?>
                     </span>
                 </div>
