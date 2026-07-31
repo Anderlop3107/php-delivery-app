@@ -196,7 +196,6 @@ require __DIR__ . '/_header.php';
     .person-box.assigned-box {
         background: linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(37, 99, 235, 0.08) 100%);
         border: 1px solid rgba(37, 99, 235, 0.12);
-        border-left: 4px solid var(--primary, #2563eb);
         border-radius: 18px;
     }
     .person-avatar { 
