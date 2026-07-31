@@ -304,13 +304,11 @@ require __DIR__ . '/_header.php';
         pointer-events: none;
     }
     .tracking-header-title-pill {
-        font-size: 16px; font-weight: 800; color: #0f172a;
-        letter-spacing: 0.4px; text-transform: uppercase;
-        background: rgba(255, 255, 255, 0.45);
-        backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
-        border: 1px solid rgba(255, 255, 255, 0.5);
-        padding: 8px 22px; border-radius: 20px;
-        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+        font-size: 17px; font-weight: 800; color: #0f172a;
+        letter-spacing: 0.5px; text-transform: uppercase;
+        background: transparent; border: none; padding: 0; margin: 0;
+        box-shadow: none; backdrop-filter: none; -webkit-backdrop-filter: none;
+        text-shadow: 0 2px 8px rgba(255, 255, 255, 0.9), 0 1px 3px rgba(0, 0, 0, 0.1);
         pointer-events: auto;
     }
     .tracking-back-btn {
