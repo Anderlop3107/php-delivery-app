@@ -345,7 +345,7 @@ require __DIR__ . '/_header.php';
         border-radius: 24px !important;
         box-shadow: 0 16px 48px rgba(15, 23, 42, 0.22), 0 4px 12px rgba(0,0,0,0.08);
         border: 1.5px solid rgba(255, 255, 255, 0.9);
-        padding: 16px 20px 10px 20px; display: flex; flex-direction: column; gap: 10px;
+        padding: 16px 20px 14px 20px; display: flex; flex-direction: column; gap: 10px;
         overflow-y: auto; z-index: 100;
         transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         touch-action: pan-y;
