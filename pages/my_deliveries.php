@@ -381,7 +381,7 @@ require __DIR__ . '/_header.php';
 
             // MAPA DE FLUJO DE 5 ETAPAS (Simplificado: Confirmar Retiro pasa directo a Entregando Pedido)
             $flow = [
-                'pendiente' => ['label' => 'Pedido Recibido', 'prog' => 1],
+                'pendiente' => ['label' => 'Buscando Repartidor', 'prog' => 1],
                 'aceptado' => ['label' => 'Camino al Local', 'prog' => 2],
                 'repartidor_en_local' => ['label' => 'En el Local / Retirando', 'prog' => 3],
                 'en_camino_al_cliente' => ['label' => 'Entregando Pedido', 'prog' => 4],
