@@ -998,8 +998,6 @@ require __DIR__ . '/_header.php';
     <!-- ENCABEZADO SUPERPUESTO (HEADER OVERLAY) -->
     <div class="tracking-header-overlay">
         <button type="button" onclick="closeTrackingSheetModal()" class="tracking-back-btn" title="Volver a entregas" aria-label="Volver a entregas"></button>
-        <div class="tracking-header-title">Seguimiento de envío</div>
-        <div style="width: 44px;"></div>
     </div>
 
     <!-- MAPA INTERACTIVO (MITAD SUPERIOR - 52vh) -->
