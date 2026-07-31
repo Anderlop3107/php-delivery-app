@@ -11,7 +11,7 @@ $isDriver = ($user['role'] === 'repartidor');
 if ($isLocal) {
     // Incluir entregas que cambiaron de estado recientemente (último minuto) para poder notificar por audio en tiempo real
     $rows = app_all(
-        "SELECT d.*, r.name AS repartidor_name, r.phone AS repartidor_phone, u_local.latitude as local_lat, u_local.longitude as local_lng
+        "SELECT d.*, r.name AS repartidor_name, r.phone AS repartidor_phone, r.logo_path AS repartidor_avatar, u_local.latitude as local_lat, u_local.longitude as local_lng
          FROM deliveries d
          LEFT JOIN users r ON r.id = d.repartidor_user_id
          JOIN users u_local ON d.local_user_id = u_local.id
@@ -191,7 +191,25 @@ require __DIR__ . '/_header.php';
     .person-avatar { 
         width: 44px; height: 44px; border-radius: 14px; background: var(--primary); 
         display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 800; font-size: 16px; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
-        overflow: hidden;
+        overflow: hidden; flex-shrink: 0;
+    }
+    .searching-avatar {
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(37, 99, 235, 0.18) 100%) !important;
+        border: 1.5px solid rgba(37, 99, 235, 0.25) !important;
+        box-shadow: 0 0 16px rgba(37, 99, 235, 0.15) !important;
+        position: relative;
+    }
+    .searching-radar-ring {
+        position: absolute;
+        width: 100%; height: 100%;
+        border-radius: 14px;
+        border: 2px solid var(--primary, #2563eb);
+        animation: radarPing 1.8s cubic-bezier(0, 0.2, 0.8, 1) infinite;
+        opacity: 0;
+    }
+    @keyframes radarPing {
+        0% { transform: scale(0.7); opacity: 0.85; }
+        100% { transform: scale(1.45); opacity: 0; }
     }
     .person-details { flex: 1; }
     .person-details b { display: block; font-size: 15px; font-weight: 700; color: var(--text); }
@@ -541,19 +559,38 @@ require __DIR__ . '/_header.php';
                     </div>
                 </div>
 
-                <!-- BLOQUE DEL LOCAL -->
+                <!-- BLOQUE DEL LOCAL / REPARTIDOR -->
                 <div class="person-box <?= $ocultarLocal ? 'oculto' : '' ?>" id="info-local-<?= $row['id'] ?>">
-                    <div class="person-avatar">
-                        <?php if (!$isLocal && !empty($row['local_logo'])): ?>
-                            <img src="<?= esc(delivery_app_url($row['local_logo'])) ?>" alt="Logo Local" style="width: 100%; height: 100%; object-fit: cover;">
-                        <?php else: ?>
-                            <?= $isLocal ? '🛵' : '🏠' ?>
-                        <?php endif; ?>
-                    </div>
-                    <div class="person-details">
-                        <b><?= esc($isLocal ? ($row['repartidor_name'] ?: 'Buscando...') : $row['local_name']) ?></b>
-                        <span><?= $isLocal ? 'Conductor asignado' : 'Punto de retiro' ?></span>
-                    </div>
+                    <?php if ($isLocal && empty($row['repartidor_name'])): ?>
+                        <div class="person-avatar searching-avatar">
+                            <div class="searching-radar-ring"></div>
+                            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--primary, #2563eb)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="animation: pulse-dot 1.5s infinite; position: relative; z-index: 2;">
+                                <circle cx="11" cy="11" r="8"></circle>
+                                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                                <path d="M11 8a3 3 0 0 1 3 3"></path>
+                            </svg>
+                        </div>
+                        <div class="person-details">
+                            <b style="color: var(--primary, #2563eb); display: flex; align-items: center; gap: 6px;">
+                                Buscando repartidor...
+                            </b>
+                            <span>Búsqueda en tiempo real activa</span>
+                        </div>
+                    <?php else: ?>
+                        <div class="person-avatar">
+                            <?php if (!$isLocal && !empty($row['local_logo'])): ?>
+                                <img src="<?= esc(delivery_app_url($row['local_logo'])) ?>" alt="Logo Local" style="width: 100%; height: 100%; object-fit: cover;">
+                            <?php elseif ($isLocal && !empty($row['repartidor_avatar'])): ?>
+                                <img src="<?= esc(delivery_app_url($row['repartidor_avatar'])) ?>" alt="Avatar Repartidor" style="width: 100%; height: 100%; object-fit: cover;">
+                            <?php else: ?>
+                                <?= $isLocal ? '🛵' : '🏪' ?>
+                            <?php endif; ?>
+                        </div>
+                        <div class="person-details">
+                            <b><?= esc($isLocal ? $row['repartidor_name'] : $row['local_name']) ?></b>
+                            <span><?= $isLocal ? 'Conductor asignado' : 'Punto de retiro' ?></span>
+                        </div>
+                    <?php endif; ?>
                     <?php 
                         $phone = $isLocal ? $row['repartidor_phone'] : $row['local_phone'];
                         if ($phone): 
