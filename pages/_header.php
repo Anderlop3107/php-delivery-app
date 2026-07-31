@@ -343,16 +343,27 @@ $user = current_user();
         function initAudioContext() {
             if (audioUnlocked && myAudioContext && myAudioContext.state === 'running') return;
             const AudioContextClass = window.AudioContext || window.webkitAudioContext;
-            if (AudioContextClass && !myAudioContext) {
+            if (!AudioContextClass) return;
+
+            // Evitar inicializar AudioContext si la política de autoplay requiere un gesto previo del usuario
+            if (navigator.userActivation && !navigator.userActivation.hasBeenActive) {
+                return;
+            }
+
+            if (!myAudioContext) {
                 try {
                     myAudioContext = new AudioContextClass();
-                } catch (e) {}
+                } catch (e) {
+                    return;
+                }
             }
             if (myAudioContext) {
                 if (myAudioContext.state === 'suspended') {
                     myAudioContext.resume().then(() => {
-                        audioUnlocked = true;
-                        hideAudioBanner();
+                        if (myAudioContext && myAudioContext.state === 'running') {
+                            audioUnlocked = true;
+                            hideAudioBanner();
+                        }
                     }).catch(() => {});
                 } else if (myAudioContext.state === 'running') {
                     audioUnlocked = true;
@@ -362,11 +373,18 @@ $user = current_user();
         }
 
         function unlockAudio() {
-            initAudioContext();
+            const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+            if (AudioContextClass && !myAudioContext) {
+                try {
+                    myAudioContext = new AudioContextClass();
+                } catch (e) {}
+            }
             if (myAudioContext && myAudioContext.state === 'suspended') {
                 myAudioContext.resume().then(() => {
-                    audioUnlocked = true;
-                    hideAudioBanner();
+                    if (myAudioContext && myAudioContext.state === 'running') {
+                        audioUnlocked = true;
+                        hideAudioBanner();
+                    }
                 }).catch(() => {});
             }
             // Desbloquear HTML5 Audio reproduciendo un segundo de silencio en base64
