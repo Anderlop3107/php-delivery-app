@@ -324,10 +324,8 @@ require __DIR__ . '/_header.php';
     .tracking-back-btn:active { transform: scale(0.92); }
 
     .tracking-header-title {
-        font-size: 18px; font-weight: 600; color: #1F2937;
-        background: rgba(255, 255, 255, 0.94); backdrop-filter: blur(10px);
-        padding: 10px 22px; border-radius: 24px;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.08); border: 1px solid rgba(255,255,255,0.7);
+        font-size: 18px; font-weight: 800; color: #111827;
+        background: transparent; border: none; box-shadow: none; padding: 0;
     }
 
     .tracking-map-view {
