@@ -299,19 +299,25 @@ require __DIR__ . '/_header.php';
         animation: fadeIn 0.3s ease;
     }
     .tracking-header-overlay {
-        position: absolute; top: 16px; left: 16px; right: 16px; z-index: 120;
+        position: absolute; top: 18px; left: 18px; right: 18px; z-index: 500;
         display: flex; align-items: center; justify-content: space-between;
         pointer-events: none;
     }
     .tracking-back-btn {
-        pointer-events: auto;
+        pointer-events: auto !important;
         width: 44px; height: 44px; border-radius: 50%;
-        background: #ffffff; border: none;
+        background: #ffffff; border: 1px solid rgba(0,0,0,0.06);
         display: flex; align-items: center; justify-content: center;
-        box-shadow: 0 4px 16px rgba(0,0,0,0.12);
-        cursor: pointer; transition: transform 0.2s;
+        box-shadow: 0 6px 20px rgba(0,0,0,0.18);
+        cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative; z-index: 501;
     }
-    .tracking-back-btn:active { transform: scale(0.92); }
+    .tracking-back-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.24);
+        background: #f8fafc;
+    }
+    .tracking-back-btn:active { transform: scale(0.90); }
 
     .tracking-header-title {
         font-size: 18px; font-weight: 600; color: #1F2937;
@@ -989,8 +995,8 @@ require __DIR__ . '/_header.php';
 <div id="tracking-sheet-modal" class="tracking-modal-overlay" style="display: none;">
     <!-- ENCABEZADO SUPERPUESTO (HEADER OVERLAY) -->
     <div class="tracking-header-overlay">
-        <button onclick="closeTrackingSheetModal()" class="tracking-back-btn" title="Volver">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1F2937" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <button type="button" onclick="closeTrackingSheetModal()" class="tracking-back-btn" title="Volver" aria-label="Volver">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#1F2937" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <line x1="19" y1="12" x2="5" y2="12"></line>
                 <polyline points="12 19 5 12 12 5"></polyline>
             </svg>
