@@ -856,7 +856,6 @@ require __DIR__ . '/_header.php';
     }
 
     function closeSuccessModal() {
-{{ ... }}
         if (deliveredTimeout) clearTimeout(deliveredTimeout);
         document.getElementById('delivered-success-modal').style.display = 'none';
         window.location.reload();
