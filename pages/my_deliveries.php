@@ -639,7 +639,7 @@ require __DIR__ . '/_header.php';
                                         <?= $current['label'] ?>
                                     </span>
                                 </div>
-                                <b style="display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 850; color: var(--text);">
+                                <b style="display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 850; color: var(--text); margin-left: 20px;">
                                     <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?= esc($row['repartidor_name']) ?></span>
                                     <span class="verified-badge-mini" title="Conductor Verificado" style="background: var(--primary, #2563eb); color: #fff; width: 15px; height: 15px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 8.5px; font-weight: 800; flex-shrink: 0; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35); border: 1.5px solid #ffffff;">✓</span>
                                 </b>
