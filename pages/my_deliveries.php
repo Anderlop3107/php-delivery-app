@@ -638,9 +638,9 @@ require __DIR__ . '/_header.php';
                                 </b>
                                 <!-- Fila 2 (Abajo): Estado con Punto Parpadeante -->
                                 <div style="display: flex; align-items: center; gap: 6px;">
-                                    <span class="status-pill-tech <?= $statusClass ?>" style="font-size: 10.5px; padding: 3px 9px; margin: 0;">
+                                    <span class="status-pill-tech <?= $statusClass ?>" style="font-size: 9px; padding: 2px 7px; margin: 0; font-weight: 800; letter-spacing: 0.3px;">
                                         <?php if ($s === 'pendiente' || $s === 'aceptado' || $s === 'repartidor_en_local'): ?>
-                                            <span style="width: 5px; height: 5px; background: var(--primary, #2563eb); border-radius: 50%; display: inline-block; box-shadow: 0 0 6px var(--primary, #2563eb); animation: pulse-dot 1.5s infinite;"></span>
+                                            <span style="width: 4.5px; height: 4.5px; background: var(--primary, #2563eb); border-radius: 50%; display: inline-block; box-shadow: 0 0 5px var(--primary, #2563eb); animation: pulse-dot 1.5s infinite;"></span>
                                         <?php endif; ?>
                                         <?= $current['label'] ?>
                                     </span>
