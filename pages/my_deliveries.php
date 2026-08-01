@@ -591,21 +591,13 @@ require __DIR__ . '/_header.php';
             }
         ?>
             <div class="status-card <?= $cardStateClass ?>" id="card-<?= $row['id'] ?>">
-                <div class="status-top">
-                    <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <?php if ($isDriver && count($activeRows) > 1 && isset($row['sequence_number'])): ?>
-                            <span style="font-size: 11px; font-weight: 800; color: var(--primary); background: var(--primary-soft); padding: 4px 8px; border-radius: 6px; display: inline-block; width: max-content; margin-top: 4px; letter-spacing: 0.5px;">
-                                📍 PARADA <?= $row['sequence_number'] ?>
-                            </span>
-                        <?php endif; ?>
+                <?php if ($isDriver && count($activeRows) > 1 && isset($row['sequence_number'])): ?>
+                    <div class="status-top">
+                        <span style="font-size: 11px; font-weight: 800; color: var(--primary); background: var(--primary-soft); padding: 4px 8px; border-radius: 6px; display: inline-block; width: max-content; margin-top: 4px; letter-spacing: 0.5px;">
+                            📍 PARADA <?= $row['sequence_number'] ?>
+                        </span>
                     </div>
-                    <span class="status-pill-tech <?= $statusClass ?>">
-                        <?php if ($s === 'pendiente' || $s === 'aceptado' || $s === 'repartidor_en_local'): ?>
-                            <span style="width: 6px; height: 6px; background: var(--primary, #2563eb); border-radius: 50%; display: inline-block; box-shadow: 0 0 8px var(--primary, #2563eb); animation: pulse-dot 1.5s infinite;"></span>
-                        <?php endif; ?>
-                        <?= $current['label'] ?>
-                    </span>
-                </div>
+                <?php endif; ?>
 
 
 
@@ -754,11 +746,19 @@ require __DIR__ . '/_header.php';
                             </div>
                         </div>
 
-                        <!-- Icono Flecha > Derecha en Círculo -->
-                        <div class="chevron-tracking-arrow" style="width: 34px; height: 34px; border-radius: 50%; background: var(--primary, #2563eb); color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); transition: all 0.2s;" title="Ver seguimiento de envío en vivo">
-                            <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                            </svg>
+                        <!-- Pill de Estado del Envío + Icono Flecha > Derecha -->
+                        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                            <span class="status-pill-tech <?= $statusClass ?>" style="font-size: 11.5px; padding: 5px 11px; margin: 0;">
+                                <?php if ($s === 'pendiente' || $s === 'aceptado' || $s === 'repartidor_en_local'): ?>
+                                    <span style="width: 6px; height: 6px; background: var(--primary, #2563eb); border-radius: 50%; display: inline-block; box-shadow: 0 0 8px var(--primary, #2563eb); animation: pulse-dot 1.5s infinite;"></span>
+                                <?php endif; ?>
+                                <?= $current['label'] ?>
+                            </span>
+                            <div class="chevron-tracking-arrow" style="width: 34px; height: 34px; border-radius: 50%; background: var(--primary, #2563eb); color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); transition: all 0.2s;" title="Ver seguimiento de envío en vivo">
+                                <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                </svg>
+                            </div>
                         </div>
                     </div>
                 <?php else: ?>
