@@ -743,9 +743,9 @@ require __DIR__ . '/_header.php';
                 <!-- BLOQUE DEL LOCAL / REPARTIDOR -->
                 <?php if ($isLocal && !empty($row['repartidor_name'])): ?>
                     <!-- Tarjeta de Repartidor Asignado (Clic abre Seguimiento en Vivo con Icono >) -->
-                    <div class="person-box assigned-box <?= $ocultarLocal ? 'oculto' : '' ?>" id="info-local-<?= $row['id'] ?>" onclick='openTrackingSheetModal(<?= json_encode($row) ?>)' style="display: flex; align-items: center; justify-content: space-between; padding: 16px; gap: 12px; cursor: pointer; transition: all 0.2s ease;">
+                    <div class="person-box assigned-box <?= $ocultarLocal ? 'oculto' : '' ?>" id="info-local-<?= $row['id'] ?>" onclick='openTrackingSheetModal(<?= json_encode($row) ?>)' style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; margin-top: 12px; background: linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(37, 99, 235, 0.01) 100%); border: 1.5px solid rgba(37, 99, 235, 0.12); border-radius: 18px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.04);" onmouseover="this.style.borderColor='rgba(37, 99, 235, 0.35)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(37, 99, 235, 0.1)';" onmouseout="this.style.borderColor='rgba(37, 99, 235, 0.12)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(37, 99, 235, 0.04)';">
                         <div style="display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1;">
-                            <div class="person-avatar" style="width: 50px; height: 50px; border-radius: 16px; border: 2.5px solid #ffffff; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25); flex-shrink: 0; font-size: 22px;">
+                            <div class="person-avatar" style="width: 48px; height: 48px; border-radius: 14px; border: 2.5px solid #ffffff; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); flex-shrink: 0; font-size: 20px; overflow: hidden; background: #e0f2fe; display: flex; align-items: center; justify-content: center;">
                                 <?php if (!empty($row['repartidor_avatar'])): ?>
                                     <img src="<?= esc(delivery_app_url($row['repartidor_avatar'])) ?>" alt="Avatar Repartidor" style="width: 100%; height: 100%; object-fit: cover;">
                                 <?php else: ?>
@@ -757,18 +757,21 @@ require __DIR__ . '/_header.php';
                                     <span class="live-pulse-dot" style="width: 5px; height: 5px; background: #10b981; border-radius: 50%; display: inline-block; flex-shrink: 0; animation: pulse-dot 1.5s infinite;"></span>
                                     Conductor asignado
                                 </small>
-                                <b style="display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 850; color: var(--text);">
-                                    <span><?= esc($row['repartidor_name']) ?></span>
+                                <b style="display: flex; align-items: center; gap: 6px; font-size: 15.5px; font-weight: 850; color: var(--text);">
+                                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?= esc($row['repartidor_name']) ?></span>
                                     <span class="verified-badge-mini" title="Conductor Verificado" style="background: var(--primary, #2563eb); color: #fff; width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; flex-shrink: 0; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35); border: 1.5px solid #ffffff;">✓</span>
                                 </b>
                             </div>
                         </div>
 
-                        <!-- Icono Flecha > Derecha para Abrir Seguimiento en Vivo -->
-                        <div class="chevron-tracking-arrow" style="width: 36px; height: 36px; border-radius: 50%; background: rgba(37, 99, 235, 0.08); color: var(--primary, #2563eb); display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: all 0.2s;" title="Ver seguimiento de envío en vivo">
-                            <svg style="width: 18px; height: 18px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                            </svg>
+                        <!-- Icono Flecha > Derecha en Círculo con indicador "Seguimiento" -->
+                        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                            <span style="font-size: 11px; font-weight: 800; color: var(--primary, #2563eb); letter-spacing: 0.3px;">Seguimiento</span>
+                            <div class="chevron-tracking-arrow" style="width: 34px; height: 34px; border-radius: 50%; background: var(--primary, #2563eb); color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); transition: all 0.2s;" title="Ver seguimiento de envío en vivo">
+                                <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                                </svg>
+                            </div>
                         </div>
                     </div>
                 <?php else: ?>
