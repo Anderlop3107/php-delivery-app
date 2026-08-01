@@ -221,6 +221,20 @@ require __DIR__ . '/_header.php';
         0% { transform: scale(0.7); opacity: 0.85; }
         100% { transform: scale(1.45); opacity: 0; }
     }
+    @keyframes pulse-dot {
+        0% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.8);
+        }
+        70% {
+            transform: scale(1.25);
+            box-shadow: 0 0 0 8px rgba(16, 185, 129, 0);
+        }
+        100% {
+            transform: scale(0.95);
+            box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+        }
+    }
     .person-details { flex: 1; }
     .person-details b { display: block; font-size: 15px; font-weight: 700; color: var(--text); }
     .person-details span { font-size: 11px; color: var(--muted); font-weight: 600; }
@@ -740,7 +754,7 @@ require __DIR__ . '/_header.php';
                             </div>
                             <div class="person-details" style="flex: 1; min-width: 0;">
                                 <small style="display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 800; color: var(--primary, #2563eb); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px;">
-                                    <span style="width: 7px; height: 7px; background: #10b981; border-radius: 50%; display: inline-block; flex-shrink: 0; box-shadow: 0 0 8px #10b981; animation: pulse-dot 1.5s infinite;"></span>
+                                    <span class="live-pulse-dot" style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; flex-shrink: 0; animation: pulse-dot 1.5s infinite;"></span>
                                     Conductor asignado
                                 </small>
                                 <b style="display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 850; color: var(--text);">
