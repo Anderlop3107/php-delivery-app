@@ -632,8 +632,8 @@ require __DIR__ . '/_header.php';
                             </div>
                             <div class="person-details" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
                                 <!-- Fila 1 (Arriba): Conductor + Check Verificado -->
-                                <b style="display: flex; align-items: center; gap: 5px; font-size: 15px; font-weight: 850; color: var(--text); margin-left: 0;">
-                                    <span class="verified-badge-mini" title="Conductor Verificado" style="background: var(--primary, #2563eb); color: #fff; width: 14px; height: 14px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 8px; font-weight: 800; flex-shrink: 0; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35); border: 1.5px solid #ffffff; margin-left: 4px;">✓</span>
+                                <b style="display: flex; align-items: center; gap: 6px; font-size: 17.5px; font-weight: 850; color: var(--text); margin-left: 0;">
+                                    <span class="verified-badge-mini" title="Conductor Verificado" style="background: var(--primary, #2563eb); color: #fff; width: 15px; height: 15px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 8.5px; font-weight: 800; flex-shrink: 0; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35); border: 1.5px solid #ffffff; margin-left: 3px;">✓</span>
                                     <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?= esc($row['repartidor_name']) ?></span>
                                 </b>
                                 <!-- Fila 2 (Abajo): Estado con Punto Parpadeante -->
