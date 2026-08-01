@@ -194,9 +194,30 @@ require __DIR__ . '/_header.php';
         background: #f8fafc; border-radius: 18px; border: 1px solid rgba(0,0,0,0.02);
     }
     .person-box.assigned-box {
-        background: linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(37, 99, 235, 0.08) 100%);
-        border: 1px solid rgba(37, 99, 235, 0.12);
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(37, 99, 235, 0.01) 100%);
+        border: 1.5px solid rgba(37, 99, 235, 0.12);
         border-radius: 18px;
+        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.04);
+        cursor: pointer;
+    }
+    .person-box.assigned-box:hover {
+        border-color: rgba(37, 99, 235, 0.35);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.1);
+    }
+    .person-box.assigned-box:active {
+        transform: scale(0.985);
+        opacity: 0.95;
+    }
+    @media (max-width: 480px) {
+        .assigned-box-right {
+            gap: 6px !important;
+        }
+        .assigned-box-right .status-pill-tech {
+            font-size: 10.5px !important;
+            padding: 4px 8px !important;
+        }
     }
     .person-avatar { 
         width: 44px; height: 44px; border-radius: 14px; background: var(--primary); 
@@ -651,13 +672,13 @@ require __DIR__ . '/_header.php';
                     </div>
 
                     <!-- Tarjeta Dirección -->
-                    <div style="background: rgba(37, 99, 235, 0.04); border: 1px solid rgba(37, 99, 235, 0.08); border-left: 4px solid var(--primary); border-radius: 16px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                    <div style="background: rgba(14, 165, 233, 0.04); border: 1px solid rgba(14, 165, 233, 0.12); border-left: 4px solid #0ea5e9; border-radius: 16px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
                         <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;">
-                            <div style="background: var(--primary); color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);">
+                            <div style="background: #0ea5e9; color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(14, 165, 233, 0.25);">
                                 <svg style="width:16px; height:16px; color: #fff; opacity: 1;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                             </div>
                             <div style="min-width: 0; flex: 1;">
-                                <small style="display: block; font-size: 9px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Dirección de Entrega</small>
+                                <small style="display: block; font-size: 9px; font-weight: 800; color: #0ea5e9; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Dirección de Entrega</small>
                                 <span style="font-size: 13.5px; font-weight: 600; color: var(--text); display: block; line-height: 1.4;"><?= esc($row['delivery_address']) ?></span>
                             </div>
                         </div>
@@ -665,13 +686,13 @@ require __DIR__ . '/_header.php';
 
                     <!-- Tarjeta Referencia -->
                     <?php if (!empty($row['order_description'])): ?>
-                        <div style="background: rgba(37, 99, 235, 0.04); border: 1px solid rgba(37, 99, 235, 0.08); border-left: 4px solid var(--primary); border-radius: 16px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                        <div style="background: rgba(100, 116, 139, 0.04); border: 1px solid rgba(100, 116, 139, 0.1); border-left: 4px solid #64748b; border-radius: 16px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
                             <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;">
-                                <div style="background: var(--primary); color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);">
+                                <div style="background: #64748b; color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(100, 116, 139, 0.25);">
                                     <svg style="width:16px; height:16px; color: #fff; opacity: 1;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                 </div>
                                 <div style="min-width: 0; flex: 1;">
-                                    <small style="display: block; font-size: 9px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Indicaciones / Referencia</small>
+                                    <small style="display: block; font-size: 9px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Indicaciones / Referencia</small>
                                     <span style="font-size: 13px; font-weight: 550; color: var(--muted); display: block; line-height: 1.4;"><?= esc($row['order_description']) ?></span>
                                 </div>
                             </div>
@@ -725,7 +746,7 @@ require __DIR__ . '/_header.php';
                 <!-- BLOQUE DEL LOCAL / REPARTIDOR -->
                 <?php if ($isLocal && !empty($row['repartidor_name'])): ?>
                     <!-- Tarjeta de Repartidor Asignado (Clic abre Seguimiento en Vivo con Icono >) -->
-                    <div class="person-box assigned-box <?= $ocultarLocal ? 'oculto' : '' ?>" id="info-local-<?= $row['id'] ?>" onclick='openTrackingSheetModal(<?= json_encode($row) ?>)' style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; margin-top: 12px; background: linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(37, 99, 235, 0.01) 100%); border: 1.5px solid rgba(37, 99, 235, 0.12); border-radius: 18px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.04);" onmouseover="this.style.borderColor='rgba(37, 99, 235, 0.35)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(37, 99, 235, 0.1)';" onmouseout="this.style.borderColor='rgba(37, 99, 235, 0.12)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(37, 99, 235, 0.04)';">
+                    <div class="person-box assigned-box <?= $ocultarLocal ? 'oculto' : '' ?>" id="info-local-<?= $row['id'] ?>" onclick='openTrackingSheetModal(<?= json_encode($row) ?>)'>
                         <div style="display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1;">
                             <div class="person-avatar" style="width: 48px; height: 48px; border-radius: 14px; border: 2.5px solid #ffffff; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); flex-shrink: 0; font-size: 20px; overflow: hidden; background: #e0f2fe; display: flex; align-items: center; justify-content: center;">
                                 <?php if (!empty($row['repartidor_avatar'])): ?>
@@ -747,7 +768,7 @@ require __DIR__ . '/_header.php';
                         </div>
 
                         <!-- Pill de Estado del Envío + Icono Flecha > Derecha -->
-                        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+                        <div class="assigned-box-right" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
                             <span class="status-pill-tech <?= $statusClass ?>" style="font-size: 11.5px; padding: 5px 11px; margin: 0;">
                                 <?php if ($s === 'pendiente' || $s === 'aceptado' || $s === 'repartidor_en_local'): ?>
                                     <span style="width: 6px; height: 6px; background: var(--primary, #2563eb); border-radius: 50%; display: inline-block; box-shadow: 0 0 8px var(--primary, #2563eb); animation: pulse-dot 1.5s infinite;"></span>
