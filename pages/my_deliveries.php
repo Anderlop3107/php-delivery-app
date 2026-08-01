@@ -894,6 +894,8 @@ require __DIR__ . '/_header.php';
     let trackingLiveInterval = null;
     let trackingDriverMarker = null;
 
+    let isTrackingModalHistoryPushed = false;
+
     function openTrackingSheetModal(order) {
         if (trackingLiveInterval) {
             clearInterval(trackingLiveInterval);
@@ -937,6 +939,15 @@ require __DIR__ . '/_header.php';
         }
 
         document.getElementById('tracking-sheet-modal').style.display = 'flex';
+
+        // Manejo del botón atrás del celular
+        if (!isTrackingModalHistoryPushed) {
+            isTrackingModalHistoryPushed = true;
+            try {
+                history.pushState({ trackingModalOpen: true }, '');
+            } catch(e) {}
+        }
+
 
         // Inicializar mapa de seguimiento
         setTimeout(() => {
@@ -1017,7 +1028,7 @@ require __DIR__ . '/_header.php';
         }, 150);
     }
 
-    function closeTrackingSheetModal() {
+    function closeTrackingSheetModal(fromPopState = false) {
         if (trackingLiveInterval) {
             clearInterval(trackingLiveInterval);
             trackingLiveInterval = null;
@@ -1028,7 +1039,25 @@ require __DIR__ . '/_header.php';
             trackingSheetMap = null;
         }
         trackingDriverMarker = null;
+
+        if (isTrackingModalHistoryPushed && !fromPopState) {
+            isTrackingModalHistoryPushed = false;
+            try {
+                if (history.state && history.state.trackingModalOpen) {
+                    history.back();
+                }
+            } catch(e) {}
+        } else if (fromPopState) {
+            isTrackingModalHistoryPushed = false;
+        }
     }
+
+    window.addEventListener('popstate', (e) => {
+        const modal = document.getElementById('tracking-sheet-modal');
+        if (modal && modal.style.display !== 'none') {
+            closeTrackingSheetModal(true);
+        }
+    });
 
     // Controlador de Arrastre Deslizable (BottomSheet Drag Controller)
     document.addEventListener("DOMContentLoaded", () => {
