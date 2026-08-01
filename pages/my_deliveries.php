@@ -194,30 +194,9 @@ require __DIR__ . '/_header.php';
         background: #f8fafc; border-radius: 18px; border: 1px solid rgba(0,0,0,0.02);
     }
     .person-box.assigned-box {
-        background: linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(37, 99, 235, 0.01) 100%);
-        border: 1.5px solid rgba(37, 99, 235, 0.12);
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(37, 99, 235, 0.08) 100%);
+        border: 1px solid rgba(37, 99, 235, 0.12);
         border-radius: 18px;
-        transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.04);
-        cursor: pointer;
-    }
-    .person-box.assigned-box:hover {
-        border-color: rgba(37, 99, 235, 0.35);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(37, 99, 235, 0.1);
-    }
-    .person-box.assigned-box:active {
-        transform: scale(0.985);
-        opacity: 0.95;
-    }
-    @media (max-width: 480px) {
-        .assigned-box-right {
-            gap: 6px !important;
-        }
-        .assigned-box-right .status-pill-tech {
-            font-size: 10.5px !important;
-            padding: 4px 8px !important;
-        }
     }
     .person-avatar { 
         width: 44px; height: 44px; border-radius: 14px; background: var(--primary); 
@@ -592,7 +571,7 @@ require __DIR__ . '/_header.php';
             $prog = $current['prog'];
 
             // Lógica de visibilidad estricta
-            $ocultarCliente = $isDriver && ($s === 'pendiente' || $s === 'aceptado' || $s === 'repartidor_en_local');
+            $ocultarCliente = $isLocal || ($s === 'pendiente' || $s === 'aceptado' || $s === 'repartidor_en_local');
             $ocultarLocal = $isDriver && ($s === 'en_camino_al_cliente' || $s === 'en_puerta');
             // Determinar clases de estado para bordes y pills premium dinámicos
             $cardStateClass = '';
@@ -612,88 +591,140 @@ require __DIR__ . '/_header.php';
             }
         ?>
             <div class="status-card <?= $cardStateClass ?>" id="card-<?= $row['id'] ?>">
-                <?php if ($isDriver && count($activeRows) > 1 && isset($row['sequence_number'])): ?>
-                    <div class="status-top">
-                        <span style="font-size: 11px; font-weight: 800; color: var(--primary); background: var(--primary-soft); padding: 4px 8px; border-radius: 6px; display: inline-block; width: max-content; margin-top: 4px; letter-spacing: 0.5px;">
-                            📍 PARADA <?= $row['sequence_number'] ?>
-                        </span>
+                <div class="status-top">
+                    <div style="display: flex; flex-direction: column; gap: 4px;">
+                        <?php if ($isDriver && count($activeRows) > 1 && isset($row['sequence_number'])): ?>
+                            <span style="font-size: 11px; font-weight: 800; color: var(--primary); background: var(--primary-soft); padding: 4px 8px; border-radius: 6px; display: inline-block; width: max-content; margin-top: 4px; letter-spacing: 0.5px;">
+                                📍 PARADA <?= $row['sequence_number'] ?>
+                            </span>
+                        <?php endif; ?>
                     </div>
-                <?php endif; ?>
+                    <span class="status-pill-tech <?= $statusClass ?>">
+                        <?php if ($s === 'pendiente' || $s === 'aceptado' || $s === 'repartidor_en_local'): ?>
+                            <span style="width: 6px; height: 6px; background: var(--primary, #2563eb); border-radius: 50%; display: inline-block; box-shadow: 0 0 8px var(--primary, #2563eb); animation: pulse-dot 1.5s infinite;"></span>
+                        <?php endif; ?>
+                        <?= $current['label'] ?>
+                    </span>
+                </div>
 
 
 
 
-                <!-- CONTENIDO PRINCIPAL INTEGRADO (SIN SUB-TARJETAS ANIDADAS) -->
-                <div class="customer-info <?= $ocultarCliente ? 'oculto' : '' ?>" id="info-cliente-<?= $row['id'] ?>" style="margin-top: 10px; display: flex; flex-direction: column; gap: 12px;">
+                <!-- BLOQUE DEL CLIENTE -->
+                <div class="customer-info <?= $ocultarCliente ? 'oculto' : '' ?>" id="info-cliente-<?= $row['id'] ?>" style="margin-top: 20px; display: flex; flex-direction: column; gap: 10px;">
                     
-                    <!-- Fila 1: Dirección y Referencia -->
-                    <div style="display: flex; flex-direction: column; gap: 6px; padding-bottom: 12px; border-bottom: 1px solid rgba(226, 232, 240, 0.8);">
-                        <div style="display: flex; align-items: flex-start; gap: 10px;">
-                            <div style="background: rgba(37, 99, 235, 0.08); color: var(--primary); width: 32px; height: 32px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px;">
-                                <svg style="width:17px; height:17px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    <!-- Tarjeta Cliente -->
+                    <div style="background: rgba(37, 99, 235, 0.04); border: 1px solid rgba(37, 99, 235, 0.08); border-left: 4px solid var(--primary); border-radius: 16px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;">
+                            <div style="background: var(--primary); color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);">
+                                <svg style="width:16px; height:16px; color: #fff; opacity: 1;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                                 </svg>
                             </div>
-                            <div style="flex: 1; min-width: 0;">
-                                <small style="display: block; font-size: 10px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Dirección de Entrega</small>
-                                <span style="font-size: 14px; font-weight: 750; color: var(--text); line-height: 1.35; display: block;"><?= esc($row['delivery_address']) ?></span>
-                                <?php if (!empty($row['order_description'])): ?>
-                                    <span style="font-size: 12.5px; font-weight: 550; color: var(--muted); display: block; margin-top: 4px;">📌 <?= esc($row['order_description']) ?></span>
-                                <?php endif; ?>
+                            <div style="min-width: 0; flex: 1;">
+                                <small style="display: block; font-size: 9px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Cliente</small>
+                                <span style="font-size: 15px; font-weight: 800; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;"><?= esc($row['customer_name'] ?: 'Cliente') ?></span>
                             </div>
                         </div>
-
-                        <!-- Cliente y Botones de Contacto -->
-                        <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 4px; padding-left: 42px;">
-                            <div style="display: flex; align-items: center; gap: 6px; min-width: 0; flex: 1;">
-                                <span style="font-size: 11px; font-weight: 700; color: var(--muted);">Cliente:</span>
-                                <b style="font-size: 13.5px; font-weight: 800; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?= esc($row['customer_name'] ?: 'Cliente') ?></b>
-                            </div>
-                            
-                            <?php if (!$ocultarCliente && !empty($row['customer_phone'])): ?>
-                                <div style="display: flex; gap: 6px; flex-shrink: 0;">
-                                    <?php 
-                                        $cleanCustPhone = preg_replace('/[^0-9]/', '', $row['customer_phone'] ?? '');
-                                        if (str_starts_with($cleanCustPhone, '0')) {
-                                            $cleanCustPhone = '595' . substr($cleanCustPhone, 1);
-                                        } elseif ($cleanCustPhone !== '' && !str_starts_with($cleanCustPhone, '595')) {
-                                            $cleanCustPhone = '595' . $cleanCustPhone;
-                                        }
-                                        $businessName = $row['local_name'] ?? 'el local';
-                                        $custName = $row['customer_name'] ?: 'Cliente';
-                                        if (($row['status'] ?? '') === 'en_puerta') {
-                                            $waMsg = "¡Hola {$custName}! Soy tu repartidor. Ya estoy afuera con tu pedido de {$businessName}. 🚪🛵";
-                                        } elseif (($row['status'] ?? '') === 'en_camino_al_cliente') {
-                                            $waMsg = "¡Hola {$custName}! Soy tu repartidor. Ya retiré tu pedido de {$businessName} y voy en camino a tu ubicación. 🛵";
-                                        } else {
-                                            $waMsg = "¡Hola {$custName}! Soy tu repartidor. Ya acepté tu pedido de {$businessName} y lo estoy preparando. 🛵";
-                                        }
-                                        $waUrl = "https://wa.me/{$cleanCustPhone}?text=" . urlencode($waMsg);
-                                    ?>
-                                    <a href="<?= $waUrl ?>" target="_blank" class="wa-link-btn" style="width: 32px; height: 32px; font-size: 14px;" title="Enviar WhatsApp">
-                                        <svg style="width:15px; height:15px;" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.353-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.191-1.622a11.84 11.84 0 005.854 1.535h.004c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
-                                    </a>
-                                    <a href="tel:<?= $row['customer_phone'] ?>" class="call-link-btn" style="width: 32px; height: 32px; font-size: 14px;" title="Llamar">
-                                        <svg style="width:15px; height:15px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.387a12.035 12.035 0 01-7.108-7.108c-.155-.44.01-1.275.387-1.556l1.293-.97c.362-.27.528-.733.417-1.173L6.763 2.074a1.125 1.125 0 00-1.091-.852H4.372A2.25 2.25 0 002.122 3.472v1.028z" /></svg>
-                                    </a>
-                                </div>
-                            <?php endif; ?>
+                        
+                        <!-- Botones de Acción (Llamada / WhatsApp) -->
+                        <div style="display: flex; gap: 8px; flex-shrink: 0;">
+                            <?php 
+                                $cleanCustPhone = preg_replace('/[^0-9]/', '', $row['customer_phone'] ?? '');
+                                if (str_starts_with($cleanCustPhone, '0')) {
+                                    $cleanCustPhone = '595' . substr($cleanCustPhone, 1);
+                                } elseif ($cleanCustPhone !== '' && !str_starts_with($cleanCustPhone, '595')) {
+                                    $cleanCustPhone = '595' . $cleanCustPhone;
+                                }
+                                
+                                // Mensaje contextual para WhatsApp según el estado de la entrega
+                                $businessName = $row['local_name'] ?? 'el local';
+                                $custName = $row['customer_name'] ?: 'Cliente';
+                                if (($row['status'] ?? '') === 'en_puerta') {
+                                    $waMsg = "¡Hola {$custName}! Soy tu repartidor. Ya estoy afuera con tu pedido de {$businessName}. 🚪🛵";
+                                } elseif (($row['status'] ?? '') === 'en_camino_al_cliente') {
+                                    $waMsg = "¡Hola {$custName}! Soy tu repartidor. Ya retiré tu pedido de {$businessName} y voy en camino a tu ubicación. 🛵";
+                                } else {
+                                    $waMsg = "¡Hola {$custName}! Soy tu repartidor. Ya acepté tu pedido de {$businessName} y lo estoy preparando. 🛵";
+                                }
+                                $waUrl = "https://wa.me/{$cleanCustPhone}?text=" . urlencode($waMsg);
+                            ?>
+                            <a href="<?= $waUrl ?>" target="_blank" class="wa-link-btn" style="width: 36px; height: 36px; box-shadow: 0 3px 8px rgba(37, 211, 102, 0.15);" title="Enviar mensaje de WhatsApp predefinido">
+                                <svg style="width:18px; height:18px;" fill="currentColor" viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.353-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L0 24l6.191-1.622a11.84 11.84 0 005.854 1.535h.004c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413Z"/></svg>
+                            </a>
+                            <a href="tel:<?= $row['customer_phone'] ?>" class="call-link-btn" style="width: 36px; height: 36px; box-shadow: 0 3px 8px rgba(59, 130, 246, 0.15);">
+                                <svg style="width:16px; height:16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 002.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.387a12.035 12.035 0 01-7.108-7.108c-.155-.44.01-1.275.387-1.556l1.293-.97c.362-.27.528-.733.417-1.173L6.763 2.074a1.125 1.125 0 00-1.091-.852H4.372A2.25 2.25 0 002.122 3.472v1.028z" /></svg>
+                            </a>
                         </div>
                     </div>
 
-                    <!-- Fila 2: Resumen Financiero -->
-                    <div style="padding-bottom: 4px;">
+                    <!-- Tarjeta Dirección -->
+                    <div style="background: rgba(37, 99, 235, 0.04); border: 1px solid rgba(37, 99, 235, 0.08); border-left: 4px solid var(--primary); border-radius: 16px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                        <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;">
+                            <div style="background: var(--primary); color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);">
+                                <svg style="width:16px; height:16px; color: #fff; opacity: 1;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            </div>
+                            <div style="min-width: 0; flex: 1;">
+                                <small style="display: block; font-size: 9px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Dirección de Entrega</small>
+                                <span style="font-size: 13.5px; font-weight: 600; color: var(--text); display: block; line-height: 1.4;"><?= esc($row['delivery_address']) ?></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tarjeta Referencia -->
+                    <?php if (!empty($row['order_description'])): ?>
+                        <div style="background: rgba(37, 99, 235, 0.04); border: 1px solid rgba(37, 99, 235, 0.08); border-left: 4px solid var(--primary); border-radius: 16px; padding: 12px 14px; display: flex; align-items: center; justify-content: space-between; gap: 12px;">
+                            <div style="display: flex; align-items: center; gap: 12px; min-width: 0; flex: 1;">
+                                <div style="background: var(--primary); color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(37, 99, 235, 0.25);">
+                                    <svg style="width:16px; height:16px; color: #fff; opacity: 1;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                </div>
+                                <div style="min-width: 0; flex: 1;">
+                                    <small style="display: block; font-size: 9px; font-weight: 800; color: var(--primary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Indicaciones / Referencia</small>
+                                    <span style="font-size: 13px; font-weight: 550; color: var(--muted); display: block; line-height: 1.4;"><?= esc($row['order_description']) ?></span>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
+
+                    <!-- Tarjeta de Cobro / Ganancia -->
+                    <div style="background: rgba(16, 185, 129, 0.04); border: 1px solid rgba(16, 185, 129, 0.08); border-left: 4px solid #10b981; border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px;">
                         <?php if ((int)$row['driver_pays_local'] === 1): ?>
-                            <div style="display: flex; justify-content: space-between; align-items: center; font-size: 12.5px;">
-                                <span style="color: var(--muted); font-weight: 550;">Producto: <b style="color: var(--text);"><?= gs($row['amount']) ?></b></span>
-                                <span style="color: var(--muted); font-weight: 550;">Envío: <b style="color: #10b981;"><?= gs($row['delivery_cost']) ?></b></span>
-                                <span style="font-size: 12px; font-weight: 800; color: var(--primary);">Total: <?= gs($row['amount'] + $row['delivery_cost']) ?></span>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="background: #10b981; color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);">
+                                    <svg style="width:16px; height:16px; color: #fff; opacity: 1;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <span style="font-size: 14px; font-weight: 800; color: #10b981; display: block; margin-top: 2px;">Resumen de la entrega</span>
+                                </div>
+                            </div>
+                            
+                            <div style="margin-top: 4px; display: flex; flex-direction: column; gap: 6px; font-size: 13px;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 4px; border-bottom: 1px dashed rgba(0,0,0,0.06);">
+                                    <span style="color: var(--muted); font-weight: 550;">Recibes por Producto:</span>
+                                    <b style="color: var(--text);"><?= gs($row['amount']) ?></b>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 4px; border-bottom: 1px dashed rgba(0,0,0,0.06);">
+                                    <span style="color: var(--muted); font-weight: 550;">Ganancia de Envío:</span>
+                                    <b style="color: #10b981;"><?= gs($row['delivery_cost']) ?></b>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: center; padding-top: 2px;">
+                                    <span style="color: var(--text); font-weight: 800;">Cobro Total al Cliente:</span>
+                                    <b style="color: var(--primary); font-size: 15px; font-weight: 850;"><?= gs($row['amount'] + $row['delivery_cost']) ?></b>
+                                </div>
                             </div>
                         <?php else: ?>
-                            <div style="display: flex; justify-content: space-between; align-items: center;">
-                                <span style="font-size: 12px; font-weight: 700; color: var(--muted);">Ganancia del Envío:</span>
-                                <b style="font-size: 15px; font-weight: 850; color: #10b981;"><?= gs($row['delivery_cost']) ?></b>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                <div style="background: #10b981; color: #fff; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(16, 185, 129, 0.25);">
+                                    <svg style="width:16px; height:16px; color: #fff; opacity: 1;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    </svg>
+                                </div>
+                                <div>
+                                    <small style="display: block; font-size: 9px; font-weight: 800; color: #10b981; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Ganancia</small>
+                                    <span style="font-size: 18px; font-weight: 850; color: #10b981; display: block; margin-top: 2px;"><?= gs($row['delivery_cost']) ?></span>
+                                </div>
                             </div>
                         <?php endif; ?>
                     </div>
@@ -702,33 +733,29 @@ require __DIR__ . '/_header.php';
                 <!-- BLOQUE DEL LOCAL / REPARTIDOR -->
                 <?php if ($isLocal && !empty($row['repartidor_name'])): ?>
                     <!-- Tarjeta de Repartidor Asignado (Clic abre Seguimiento en Vivo con Icono >) -->
-                    <div class="person-box assigned-box <?= $ocultarLocal ? 'oculto' : '' ?>" id="info-local-<?= $row['id'] ?>" onclick='openTrackingSheetModal(<?= json_encode($row) ?>)'>
+                    <div class="person-box assigned-box <?= $ocultarLocal ? 'oculto' : '' ?>" id="info-local-<?= $row['id'] ?>" onclick='openTrackingSheetModal(<?= json_encode($row) ?>)' style="display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; margin-top: 12px; background: linear-gradient(135deg, rgba(37, 99, 235, 0.04) 0%, rgba(37, 99, 235, 0.01) 100%); border: 1.5px solid rgba(37, 99, 235, 0.12); border-radius: 18px; cursor: pointer; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.04);" onmouseover="this.style.borderColor='rgba(37, 99, 235, 0.35)'; this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 24px rgba(37, 99, 235, 0.1)';" onmouseout="this.style.borderColor='rgba(37, 99, 235, 0.12)'; this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(37, 99, 235, 0.04)';">
                         <div style="display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1;">
-                            <div class="person-avatar" style="width: 58px; height: 58px; border-radius: 16px; border: 2.5px solid #ffffff; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.22); flex-shrink: 0; font-size: 24px; overflow: hidden; background: #e0f2fe; display: flex; align-items: center; justify-content: center;">
+                            <div class="person-avatar" style="width: 48px; height: 48px; border-radius: 14px; border: 2.5px solid #ffffff; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); flex-shrink: 0; font-size: 20px; overflow: hidden; background: #e0f2fe; display: flex; align-items: center; justify-content: center;">
                                 <?php if (!empty($row['repartidor_avatar'])): ?>
                                     <img src="<?= esc(delivery_app_url($row['repartidor_avatar'])) ?>" alt="Avatar Repartidor" style="width: 100%; height: 100%; object-fit: cover;">
                                 <?php else: ?>
                                     🛵
                                 <?php endif; ?>
                             </div>
-                            <div class="person-details" style="flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px;">
-                                <div style="display: flex; align-items: center; gap: 6px;">
-                                    <span class="status-pill-tech <?= $statusClass ?>" style="font-size: 10.5px; padding: 3px 9px; margin: 0;">
-                                        <?php if ($s === 'pendiente' || $s === 'aceptado' || $s === 'repartidor_en_local'): ?>
-                                            <span style="width: 5px; height: 5px; background: var(--primary, #2563eb); border-radius: 50%; display: inline-block; box-shadow: 0 0 6px var(--primary, #2563eb); animation: pulse-dot 1.5s infinite;"></span>
-                                        <?php endif; ?>
-                                        <?= $current['label'] ?>
-                                    </span>
-                                </div>
-                                <b style="display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 850; color: var(--text);">
+                            <div class="person-details" style="flex: 1; min-width: 0;">
+                                <small style="display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 800; color: var(--primary, #2563eb); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px;">
+                                    <span class="live-pulse-dot" style="width: 5px; height: 5px; background: #10b981; border-radius: 50%; display: inline-block; flex-shrink: 0; animation: pulse-dot 1.5s infinite;"></span>
+                                    Conductor asignado
+                                </small>
+                                <b style="display: flex; align-items: center; gap: 6px; font-size: 15.5px; font-weight: 850; color: var(--text);">
                                     <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis;"><?= esc($row['repartidor_name']) ?></span>
-                                    <span class="verified-badge-mini" title="Conductor Verificado" style="background: var(--primary, #2563eb); color: #fff; width: 15px; height: 15px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 8.5px; font-weight: 800; flex-shrink: 0; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35); border: 1.5px solid #ffffff;">✓</span>
+                                    <span class="verified-badge-mini" title="Conductor Verificado" style="background: var(--primary, #2563eb); color: #fff; width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; flex-shrink: 0; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35); border: 1.5px solid #ffffff;">✓</span>
                                 </b>
                             </div>
                         </div>
 
-                        <!-- Icono Flecha > Derecha -->
-                        <div class="chevron-tracking-arrow" style="width: 36px; height: 36px; border-radius: 50%; background: var(--primary, #2563eb); color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); transition: all 0.2s;" title="Ver seguimiento de envío en vivo">
+                        <!-- Icono Flecha > Derecha en Círculo -->
+                        <div class="chevron-tracking-arrow" style="width: 34px; height: 34px; border-radius: 50%; background: var(--primary, #2563eb); color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); transition: all 0.2s;" title="Ver seguimiento de envío en vivo">
                             <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                                 <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
                             </svg>
