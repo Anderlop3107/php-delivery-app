@@ -592,7 +592,7 @@ require __DIR__ . '/_header.php';
             $prog = $current['prog'];
 
             // Lógica de visibilidad estricta
-            $ocultarCliente = $isLocal || ($s === 'pendiente' || $s === 'aceptado' || $s === 'repartidor_en_local');
+            $ocultarCliente = $isDriver && ($s === 'pendiente' || $s === 'aceptado' || $s === 'repartidor_en_local');
             $ocultarLocal = $isDriver && ($s === 'en_camino_al_cliente' || $s === 'en_puerta');
             // Determinar clases de estado para bordes y pills premium dinámicos
             $cardStateClass = '';
