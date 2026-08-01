@@ -78,3 +78,18 @@ function get_next_store_expiration_date(?DateTimeInterface $from = null): string
         return $twoMonthsAhead->format('Y-m-d H:i:s');
     }
 }
+
+/**
+ * Desconecta automáticamente en la BD a repartidores inactivos (> 15 minutos sin ping).
+ */
+function cleanup_inactive_drivers(int $inactiveMinutes = 15): int
+{
+    return app_exec("
+        UPDATE users 
+        SET is_online = 0, updated_at = NOW() 
+        WHERE role = 'repartidor' 
+          AND is_online = 1 
+          AND (last_ping IS NULL OR last_ping < DATE_SUB(NOW(), INTERVAL ? MINUTE))
+    ", "i", [$inactiveMinutes]);
+}
+

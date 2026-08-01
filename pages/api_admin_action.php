@@ -1134,8 +1134,9 @@ if ($action === 'get_active_drivers') {
 }
 
 if ($action === 'get_all_drivers_live_statuses') {
+    cleanup_inactive_drivers(15);
     $drivers = app_all("
-        SELECT id, is_online,
+        SELECT id, is_online, last_ping,
                (SELECT COUNT(*) FROM deliveries WHERE repartidor_user_id = users.id AND status NOT IN ('entregado', 'cancelado', 'rechazado')) as active_delivery_count
         FROM users 
         WHERE role = 'repartidor'
@@ -1144,8 +1145,12 @@ if ($action === 'get_all_drivers_live_statuses') {
     $onlineCount = 0;
     $offlineCount = 0;
     $deliveringCount = 0;
-    foreach ($drivers as $d) {
-        if ((int)$d['is_online'] === 1) {
+    foreach ($drivers as &$d) {
+        $recentPing = !empty($d['last_ping']) && (time() - strtotime($d['last_ping'])) <= 180;
+        $isTrulyOnline = ((int)$d['is_online'] === 1) && $recentPing;
+        $d['is_online'] = $isTrulyOnline ? 1 : 0;
+
+        if ($isTrulyOnline) {
             $onlineCount++;
         } else {
             $offlineCount++;
@@ -1154,6 +1159,7 @@ if ($action === 'get_all_drivers_live_statuses') {
             $deliveringCount++;
         }
     }
+    unset($d);
 
     echo json_encode([
         'success' => true,

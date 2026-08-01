@@ -15,8 +15,10 @@ $todayOrders = app_one("
     WHERE DATE(created_at) = DATE(NOW())
 ")['count'] ?? 0;
 
+cleanup_inactive_drivers(15);
+
 $activeDrivers = app_all("
-    SELECT id, name, logo_path as avatar_path, latitude, longitude, is_online, 
+    SELECT id, name, logo_path as avatar_path, latitude, longitude, is_online, last_ping,
            status_doc_ci, status_doc_licencia, status_doc_habilitacion, status_doc_cedula_verde,
            doc_ci_path, doc_ci_back_path, doc_licencia_path, doc_licencia_back_path,
            doc_habilitacion_path, doc_habilitacion_back_path, doc_cedula_verde_path, doc_cedula_verde_back_path,
@@ -32,8 +34,13 @@ $onlineDriversCount = 0;
 $onlineDriversTotal = 0;
 $offlineDriversTotal = 0;
 $deliveringDriversTotal = 0;
-foreach ($activeDrivers as $d) {
-    if (($d['is_online'] ?? 0) == 1) {
+foreach ($activeDrivers as &$d) {
+    // Activo = is_online=1 Y hizo ping en los últimos 3 minutos (180 seg)
+    $recentPing = !empty($d['last_ping']) && (time() - strtotime($d['last_ping'])) <= 180;
+    $isTrulyOnline = (($d['is_online'] ?? 0) == 1) && $recentPing;
+    $d['is_truly_online'] = $isTrulyOnline;
+
+    if ($isTrulyOnline) {
         $onlineDriversTotal++;
     } else {
         $offlineDriversTotal++;
@@ -41,12 +48,12 @@ foreach ($activeDrivers as $d) {
     if ((int)($d['active_delivery_count'] ?? 0) > 0) {
         $deliveringDriversTotal++;
     }
-    // Activo = is_online=1 Y hizo ping en los últimos 2 minutos
-    $recentPing = !empty($d['last_ping']) && (time() - strtotime($d['last_ping'])) < 120;
-    if ($d['is_online'] == 1 && $recentPing && $d['latitude'] && $d['longitude']) {
+    if ($isTrulyOnline && $d['latitude'] && $d['longitude']) {
         $onlineDriversCount++;
     }
 }
+unset($d);
+
 
 $activeLocals = app_all("
     SELECT * 
@@ -1404,12 +1411,12 @@ $maxChartCount = max(5, max($chartCounts));
                                     <?php else: ?>
                                         👤
                                     <?php endif; ?>
-                                    <span class="online-indicator-dot <?= ($d['is_online'] ?? 0) == 1 ? 'is-online' : 'is-offline' ?>" title="<?= ($d['is_online'] ?? 0) == 1 ? 'Conectado / En línea' : 'Desconectado / Apagado' ?>"></span>
+                                    <span class="online-indicator-dot <?= !empty($d['is_truly_online']) ? 'is-online' : 'is-offline' ?>" title="<?= !empty($d['is_truly_online']) ? 'Conectado / En línea' : 'Desconectado / Apagado' ?>"></span>
                                 </div>
                                 <div class="driver-text">
                                      <div class="driver-tags-container" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
                                          <b><?= esc($d['name']) ?></b>
-                                         <?php if (($d['is_online'] ?? 0) == 1): ?>
+                                         <?php if (!empty($d['is_truly_online'])): ?>
                                              <span class="live-status-tag tag-status-main tag-online">🟢 Conectado</span>
                                          <?php else: ?>
                                              <span class="live-status-tag tag-status-main tag-offline">⚪ Desconectado</span>
