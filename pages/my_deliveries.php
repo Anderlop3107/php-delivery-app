@@ -608,16 +608,7 @@ require __DIR__ . '/_header.php';
                     </span>
                 </div>
 
-                <!-- BARRA DE PROGRESO (4 Segmentos) -->
-                <div class="delivery-progress-bento" style="margin-top: 16px;">
-                    <?php for($i=1; $i<=4; $i++): 
-                        $class = '';
-                        if ($prog > $i) $class = 'completed';
-                        elseif ($prog == $i) $class = 'active';
-                    ?>
-                        <div class="progress-bar-segment <?= $class ?>"></div>
-                    <?php endfor; ?>
-                </div>
+
 
 
                 <!-- BLOQUE DEL CLIENTE -->
