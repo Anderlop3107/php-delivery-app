@@ -764,14 +764,11 @@ require __DIR__ . '/_header.php';
                             </div>
                         </div>
 
-                        <!-- Icono Flecha > Derecha en Círculo con indicador "Seguimiento" -->
-                        <div style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
-                            <span style="font-size: 11px; font-weight: 800; color: var(--primary, #2563eb); letter-spacing: 0.3px;">Seguimiento</span>
-                            <div class="chevron-tracking-arrow" style="width: 34px; height: 34px; border-radius: 50%; background: var(--primary, #2563eb); color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); transition: all 0.2s;" title="Ver seguimiento de envío en vivo">
-                                <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                                </svg>
-                            </div>
+                        <!-- Icono Flecha > Derecha en Círculo -->
+                        <div class="chevron-tracking-arrow" style="width: 34px; height: 34px; border-radius: 50%; background: var(--primary, #2563eb); color: #ffffff; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); transition: all 0.2s;" title="Ver seguimiento de envío en vivo">
+                            <svg style="width: 16px; height: 16px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+                            </svg>
                         </div>
                     </div>
                 <?php else: ?>
