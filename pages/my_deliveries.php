@@ -593,7 +593,6 @@ require __DIR__ . '/_header.php';
             <div class="status-card <?= $cardStateClass ?>" id="card-<?= $row['id'] ?>">
                 <div class="status-top">
                     <div style="display: flex; flex-direction: column; gap: 4px;">
-                        <span class="order-id">ID #<?= $row['id'] ?></span>
                         <?php if ($isDriver && count($activeRows) > 1 && isset($row['sequence_number'])): ?>
                             <span style="font-size: 11px; font-weight: 800; color: var(--primary); background: var(--primary-soft); padding: 4px 8px; border-radius: 6px; display: inline-block; width: max-content; margin-top: 4px; letter-spacing: 0.5px;">
                                 📍 PARADA <?= $row['sequence_number'] ?>
