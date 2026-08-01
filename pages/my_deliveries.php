@@ -754,7 +754,7 @@ require __DIR__ . '/_header.php';
                             </div>
                             <div class="person-details" style="flex: 1; min-width: 0;">
                                 <small style="display: flex; align-items: center; gap: 6px; font-size: 10px; font-weight: 800; color: var(--primary, #2563eb); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 3px;">
-                                    <span class="live-pulse-dot" style="width: 8px; height: 8px; background: #10b981; border-radius: 50%; display: inline-block; flex-shrink: 0; animation: pulse-dot 1.5s infinite;"></span>
+                                    <span class="live-pulse-dot" style="width: 5px; height: 5px; background: #10b981; border-radius: 50%; display: inline-block; flex-shrink: 0; animation: pulse-dot 1.5s infinite;"></span>
                                     Conductor asignado
                                 </small>
                                 <b style="display: flex; align-items: center; gap: 6px; font-size: 16px; font-weight: 850; color: var(--text);">
