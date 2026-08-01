@@ -748,7 +748,7 @@ require __DIR__ . '/_header.php';
                     <!-- Tarjeta de Repartidor Asignado (Clic abre Seguimiento en Vivo con Icono >) -->
                     <div class="person-box assigned-box <?= $ocultarLocal ? 'oculto' : '' ?>" id="info-local-<?= $row['id'] ?>" onclick='openTrackingSheetModal(<?= json_encode($row) ?>)'>
                         <div style="display: flex; align-items: center; gap: 14px; min-width: 0; flex: 1;">
-                            <div class="person-avatar" style="width: 46px; height: 46px; border-radius: 14px; border: 2.5px solid #ffffff; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); flex-shrink: 0; font-size: 20px; overflow: hidden; background: #e0f2fe; display: flex; align-items: center; justify-content: center;">
+                            <div class="person-avatar" style="width: 58px; height: 58px; border-radius: 16px; border: 2.5px solid #ffffff; box-shadow: 0 4px 14px rgba(37, 99, 235, 0.22); flex-shrink: 0; font-size: 24px; overflow: hidden; background: #e0f2fe; display: flex; align-items: center; justify-content: center;">
                                 <?php if (!empty($row['repartidor_avatar'])): ?>
                                     <img src="<?= esc(delivery_app_url($row['repartidor_avatar'])) ?>" alt="Avatar Repartidor" style="width: 100%; height: 100%; object-fit: cover;">
                                 <?php else: ?>
