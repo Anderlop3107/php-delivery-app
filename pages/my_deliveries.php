@@ -781,7 +781,7 @@ require __DIR__ . '/_header.php';
                     <div class="driver-actions" style="margin-top: 14px;">
                         <?php if ($s === 'aceptado'): ?>
                             <button onclick="window.open('https://www.google.com/maps/search/?api=1&query=<?= $row['local_lat'] ?>,<?= $row['local_lng'] ?>')" class="btn-action-gps">🗺️ Abrir GPS al Local</button>
-                            <button onclick="updateStatus(<?= $row['id'] ?>, 'repartidor_en_local')" class="btn-action-main">📍 Llegué al Local</button>
+                            <button onclick="updateStatus(<?= $row['id'] ?>, 'repartidor_en_local')" class="btn-action-main">Llegué al Local</button>
                         <?php elseif ($s === 'repartidor_en_local'): ?>
                             <button onclick="updateStatus(<?= $row['id'] ?>, 'en_puerta')" class="btn-action-main">Confirmar Retiro</button>
                         <?php elseif ($s === 'en_puerta' || $s === 'en_camino_al_cliente'): ?>
@@ -952,7 +952,7 @@ require __DIR__ . '/_header.php';
 
             if (s === 'aceptado') {
                 targetStatus = 'repartidor_en_local';
-                btnText = '📍 Llegué al Local';
+                btnText = 'Llegué al Local';
             } else if (s === 'repartidor_en_local') {
                 targetStatus = 'en_puerta';
                 btnText = '🛍️ Confirmar Retiro';
@@ -1275,7 +1275,7 @@ require __DIR__ . '/_header.php';
     <!-- CONTENEDOR FLOTANTE EN LA PARTE INFERIOR SOBRE EL MAPA (BOTÓN DIRECTO) -->
     <div id="tracking-floating-action-bar" class="tracking-floating-action-bar">
         <button id="t-floating-action-btn" type="button" class="btn-action-floating">
-            📍 Llegué al Local
+            Llegué al Local
         </button>
     </div>
 </div>
