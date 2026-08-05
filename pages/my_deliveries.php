@@ -429,8 +429,74 @@ require __DIR__ . '/_header.php';
         touch-action: pan-y;
     }
     .tracking-bottom-sheet.expanded {
-        max-height: 75vh;
+        max-height: 82vh;
     }
+
+    /* PANEL DE PAGO (oculto hasta que el driver preciona Llegada) */
+    #t-payment-panel {
+        display: none;
+        opacity: 0;
+        transform: translateY(12px);
+        transition: opacity 0.3s ease, transform 0.3s ease;
+        margin-top: 4px;
+        padding-top: 14px;
+        border-top: 1.5px dashed rgba(37,99,235,0.18);
+    }
+    #t-payment-panel.visible {
+        display: block;
+        opacity: 1;
+        transform: translateY(0);
+    }
+    .payment-panel-title {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.8px;
+        color: #6b7280;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+    .payment-amount-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+        border-radius: 14px;
+        padding: 14px 18px;
+        margin-bottom: 12px;
+        border: 1.5px solid rgba(37,99,235,0.12);
+    }
+    .payment-label {
+        font-size: 12px;
+        color: #6b7280;
+        font-weight: 600;
+    }
+    .payment-value {
+        font-size: 20px;
+        font-weight: 900;
+        color: #1d4ed8;
+    }
+    .payment-note {
+        font-size: 11px;
+        color: #9ca3af;
+        text-align: center;
+        margin-bottom: 12px;
+    }
+    .btn-entregado {
+        width: 100%;
+        height: 54px;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: #fff;
+        border: none;
+        border-radius: 28px;
+        font-size: 15px;
+        font-weight: 800;
+        letter-spacing: 0.5px;
+        cursor: pointer;
+        box-shadow: 0 10px 24px rgba(16,185,129,0.35), 0 4px 10px rgba(0,0,0,0.1);
+        transition: all 0.22s ease;
+    }
+    .btn-entregado:active { transform: scale(0.97); }
+    .btn-entregado:disabled { opacity: 0.6; cursor: not-allowed; }
 
     body.has-floating-action .tracking-bottom-sheet {
         bottom: 86px !important;
@@ -853,8 +919,17 @@ require __DIR__ . '/_header.php';
     let trackingSheetMap = null;
     let trackingLiveInterval = null;
     let trackingDriverMarker = null;
+    let currentTrackingOrder = null; // Referencia al pedido activo en el mapa
 
     let isTrackingModalHistoryPushed = false;
+
+    // Confirmar entrega definitiva (llamado desde el panel de pago en la tarjeta)
+    async function confirmarEntregado() {
+        if (!currentTrackingOrder) return;
+        const btn = document.getElementById('t-btn-entregado');
+        if (btn) { btn.disabled = true; btn.innerText = 'Cargando...'; }
+        await updateStatus(currentTrackingOrder.id, 'entregado');
+    }
 
     function openTrackingSheetModal(order) {
         if (trackingLiveInterval) {
@@ -863,6 +938,30 @@ require __DIR__ . '/_header.php';
         }
 
         const isUserDriver = <?= $isDriver ? 'true' : 'false' ?>;
+
+        // Guardar referencia global al pedido activo
+        currentTrackingOrder = order;
+
+        // Reset panel de pago (ocultar si estaba visible de sesión anterior)
+        const payPanelReset = document.getElementById('t-payment-panel');
+        const sheetReset = document.querySelector('.tracking-bottom-sheet');
+        if (payPanelReset) { payPanelReset.classList.remove('visible'); payPanelReset.style.display = 'none'; }
+        if (sheetReset) sheetReset.classList.remove('expanded');
+
+        // Poblar monto a cobrar en el panel de pago
+        const payAmountEl = document.getElementById('t-payment-amount');
+        if (payAmountEl) {
+            const cost = parseFloat(order.delivery_cost || 0);
+            const amount = parseFloat(order.amount || 0);
+            const total = cost + amount;
+            if (total > 0) {
+                payAmountEl.innerText = `Gs. ${total.toLocaleString('es-PY')}`;
+            } else {
+                payAmountEl.innerText = '—';
+                const noteEl = document.getElementById('t-payment-note');
+                if (noteEl) noteEl.innerText = 'Sin cobro al cliente';
+            }
+        }
 
         const nameEl = document.getElementById('t-driver-name');
         const avatarEl = document.getElementById('t-driver-avatar-container');
@@ -982,9 +1081,9 @@ require __DIR__ . '/_header.php';
                 targetStatus = 'en_puerta';
                 btnText = 'Ir al cliente';
             } else if (s === 'en_puerta' || s === 'en_camino_al_cliente') {
-                targetStatus = 'entregado';
-                btnText = '✅ Confirmar Pedido Entregado';
-                isSuccessBtn = true;
+                targetStatus = 'llegada'; // pseudo-status local, no actualiza BD
+                btnText = 'Llegada';
+                isSuccessBtn = false;
             }
 
             if (targetStatus) {
@@ -995,11 +1094,30 @@ require __DIR__ . '/_header.php';
                 } else {
                     floatingBtn.classList.remove('btn-success');
                 }
-                floatingBtn.onclick = async () => {
-                    floatingBtn.disabled = true;
-                    floatingBtn.innerText = 'Cargando...';
-                    await updateStatus(order.id, targetStatus);
-                };
+
+                if (targetStatus === 'llegada') {
+                    // Llegada: solo expandir la tarjeta y mostrar panel de pago, sin cambiar estado en BD
+                    floatingBtn.onclick = () => {
+                        const sheet = document.querySelector('.tracking-bottom-sheet');
+                        const payPanel = document.getElementById('t-payment-panel');
+                        if (sheet) sheet.classList.add('expanded');
+                        if (payPanel) {
+                            payPanel.style.display = 'block';
+                            requestAnimationFrame(() => payPanel.classList.add('visible'));
+                        }
+                        // Ocultar el botón flotante para que el usuario use el botón en la tarjeta
+                        floatingBar.style.display = 'none';
+                        document.body.classList.remove('has-floating-action');
+                        // Scroll al fondo de la tarjeta para mostrar el panel
+                        if (sheet) setTimeout(() => sheet.scrollTo({ top: sheet.scrollHeight, behavior: 'smooth' }), 200);
+                    };
+                } else {
+                    floatingBtn.onclick = async () => {
+                        floatingBtn.disabled = true;
+                        floatingBtn.innerText = 'Cargando...';
+                        await updateStatus(order.id, targetStatus);
+                    };
+                }
 
                 floatingBar.style.display = 'block';
                 document.body.classList.add('has-floating-action');
@@ -1224,15 +1342,31 @@ require __DIR__ . '/_header.php';
             isDragging = false;
             sheet.style.transition = 'height 0.3s cubic-bezier(0.16, 1, 0.3, 1)';
             const currentHeight = sheet.getBoundingClientRect().height;
-            
+            const payPanel = document.getElementById('t-payment-panel');
+            const isPanelVisible = payPanel && payPanel.classList.contains('visible');
+
             if (currentHeight > window.innerHeight * 0.52) {
                 sheet.classList.add('expanded');
-                sheet.style.height = '68vh';
+                sheet.style.height = '70vh';
+                // Si el panel no estaba visible, mostrarlo al expandir (solo si está en estado en_puerta)
+                if (!isPanelVisible && payPanel && currentTrackingOrder) {
+                    const s = (currentTrackingOrder.status || '').toLowerCase();
+                    if (s === 'en_puerta' || s === 'en_camino_al_cliente') {
+                        payPanel.style.display = 'block';
+                        requestAnimationFrame(() => payPanel.classList.add('visible'));
+                        setTimeout(() => sheet.scrollTo({ top: sheet.scrollHeight, behavior: 'smooth' }), 200);
+                    }
+                }
             } else if (currentHeight < 220) {
                 closeTrackingSheetModal();
             } else {
                 sheet.classList.remove('expanded');
                 sheet.style.height = '42vh';
+                // Ocultar panel de pago al colapsar
+                if (isPanelVisible && payPanel) {
+                    payPanel.classList.remove('visible');
+                    setTimeout(() => { payPanel.style.display = 'none'; }, 300);
+                }
             }
         };
 
@@ -1349,6 +1483,19 @@ require __DIR__ . '/_header.php';
                     </div>
                 </div>
             </div>
+
+            <!-- PANEL DE PAGO: visible solo para repartidor tras presionar Llegada -->
+            <?php if ($isDriver): ?>
+            <div id="t-payment-panel">
+                <p class="payment-panel-title">Cobro al cliente</p>
+                <div class="payment-amount-row">
+                    <span class="payment-label">Monto a cobrar</span>
+                    <span class="payment-value" id="t-payment-amount">—</span>
+                </div>
+                <p class="payment-note" id="t-payment-note">Recibí el pago y luego confirma la entrega</p>
+                <button class="btn-entregado" id="t-btn-entregado" type="button" onclick="confirmarEntregado()">Entregado</button>
+            </div>
+            <?php endif; ?>
 
         </div>
     </div>
