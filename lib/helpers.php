@@ -93,3 +93,39 @@ function cleanup_inactive_drivers(int $inactiveMinutes = 15): int
     ", "i", [$inactiveMinutes]);
 }
 
+/**
+ * Sincroniza y expira automáticamente suscripciones vencidas en la base de datos (Repartidores & Comercios).
+ * Desconecta repartidores vencidos (is_online = 0) y marca su estado como 'expired'.
+ */
+function sync_all_expired_subscriptions(): void
+{
+    static $synced = false;
+    if ($synced) return;
+    $synced = true;
+
+    try {
+        // Expirar repartidores cuya fecha de vencimiento sea NULL o menor/igual a la hora actual
+        app_exec("
+            UPDATE users 
+            SET subscription_status = 'expired', 
+                is_online = 0, 
+                updated_at = NOW() 
+            WHERE role = 'repartidor' 
+              AND (subscription_status = 'active' OR subscription_status IS NULL)
+              AND (subscription_expires_at IS NULL OR subscription_expires_at <= NOW())
+        ");
+
+        // Expirar comercios cuya fecha de vencimiento sea NULL o menor/igual a la hora actual
+        app_exec("
+            UPDATE users 
+            SET subscription_status = 'expired', 
+                updated_at = NOW() 
+            WHERE role = 'local' 
+              AND (subscription_status = 'active' OR subscription_status IS NULL)
+              AND (subscription_expires_at IS NULL OR subscription_expires_at <= NOW())
+        ");
+    } catch (\Throwable) {
+        // Ignorar silenciosamente si la BD aún no está disponible
+    }
+}
+

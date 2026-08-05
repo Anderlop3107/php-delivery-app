@@ -25,7 +25,8 @@ if ($isOnline === 1) {
                $driverCheck['status_doc_cedula_verde'] === 'approved');
                
     $isExpired = ($driverCheck['subscription_status'] === 'expired' || 
-                  (!empty($driverCheck['subscription_expires_at']) && strtotime($driverCheck['subscription_expires_at']) <= time()));
+                  empty($driverCheck['subscription_expires_at']) || 
+                  strtotime($driverCheck['subscription_expires_at']) <= time());
 
     if (!$docsOk) {
         app_exec("UPDATE users SET is_online = 0 WHERE id = ?", 'i', [$driverId]);
