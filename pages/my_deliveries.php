@@ -937,26 +937,55 @@ require __DIR__ . '/_header.php';
         if (payPanelReset) { payPanelReset.classList.remove('visible'); payPanelReset.style.display = 'none'; }
         if (sheetReset) sheetReset.classList.remove('expanded');
 
-        // Poblar panel de pago según si el delivery pagó o no en el local
+        // Determinar escenario de cobro según delivery_fee_payer y driver_pays_local
         const deliveryCost = parseFloat(order.delivery_cost || 0);
         const orderAmount  = parseFloat(order.amount || 0);
         const driverPaid   = parseInt(order.driver_pays_local || 0) === 1;
+        const feePayer     = (order.delivery_fee_payer || 'cliente').toLowerCase();
+        const localPaysFee = (feePayer === 'local');
 
+        // Guardar en el order para usarlo al presionar Llegada
+        order._localPaysFee = localPaysFee;
+        order._driverPaid   = driverPaid;
+
+        const elRecibirRow   = document.getElementById('t-pay-row-recibir');
+        const elRecibirLabel = elRecibirRow ? elRecibirRow.querySelector('.pay-row-label') : null;
         const elDeliveryCost = document.getElementById('t-payment-delivery-cost');
         const elCobrarRow    = document.getElementById('t-pay-row-cobrar');
         const elCobrarVal    = document.getElementById('t-payment-cobrar');
 
-        if (elDeliveryCost) {
-            elDeliveryCost.innerText = deliveryCost > 0 ? `Gs. ${deliveryCost.toLocaleString('es-PY')}` : 'Sin cobro';
-        }
-        if (elCobrarRow && elCobrarVal) {
-            if (driverPaid && orderAmount > 0) {
-                elCobrarVal.innerText = `Gs. ${orderAmount.toLocaleString('es-PY')}`;
-                elCobrarRow.style.display = 'flex';
-            } else {
-                elCobrarRow.style.display = 'none';
+        // --- Escenario A: cliente paga delivery, driver NO pagó en local ---
+        // Recibir: delivery_cost. Sin cobrar.
+        // --- Escenario B: cliente paga delivery, driver SÍ pagó en local ---
+        // Recibir: delivery_cost + Cobrar: amount.
+        // --- Escenario C: local paga delivery, driver SÍ pagó en local ---
+        // Recibir: amount (recuperar lo que pagó en el local).
+        // --- Escenario D: local paga delivery, driver NO pagó en local ---
+        // Sin panel, solo botón Entregado.
+
+        if (!localPaysFee) {
+            // Escenarios A y B
+            if (elRecibirLabel) elRecibirLabel.innerText = 'Recibir (delivery)';
+            if (elDeliveryCost) elDeliveryCost.innerText = deliveryCost > 0 ? `Gs. ${deliveryCost.toLocaleString('es-PY')}` : 'Sin cobro';
+            if (elRecibirRow) elRecibirRow.style.display = 'flex';
+            if (elCobrarRow && elCobrarVal) {
+                if (driverPaid && orderAmount > 0) {
+                    // Escenario B
+                    elCobrarVal.innerText = `Gs. ${orderAmount.toLocaleString('es-PY')}`;
+                    elCobrarRow.style.display = 'flex';
+                } else {
+                    // Escenario A
+                    elCobrarRow.style.display = 'none';
+                }
             }
+        } else if (driverPaid) {
+            // Escenario C: solo mostrar lo que debe recibir (lo que pagó por el producto)
+            if (elRecibirLabel) elRecibirLabel.innerText = 'Recibir del cliente';
+            if (elDeliveryCost) elDeliveryCost.innerText = orderAmount > 0 ? `Gs. ${orderAmount.toLocaleString('es-PY')}` : 'Sin cobro';
+            if (elRecibirRow) elRecibirRow.style.display = 'flex';
+            if (elCobrarRow) elCobrarRow.style.display = 'none';
         }
+        // Escenario D: no hay nada que configurar en el panel (no se mostrará)
 
         const nameEl = document.getElementById('t-driver-name');
         const avatarEl = document.getElementById('t-driver-avatar-container');
@@ -1091,16 +1120,24 @@ require __DIR__ . '/_header.php';
                 }
 
                 if (targetStatus === 'llegada') {
-                    // Llegada: expandir la tarjeta + mostrar panel de pago + cambiar boton flotante a Entregado (verde)
+                    // Llegada: comportamiento según escenario de cobro
                     floatingBtn.onclick = () => {
-                        const sheet = document.querySelector('.tracking-bottom-sheet');
-                        const payPanel = document.getElementById('t-payment-panel');
-                        if (sheet) sheet.classList.add('expanded');
-                        if (payPanel) {
-                            payPanel.style.display = 'block';
-                            requestAnimationFrame(() => payPanel.classList.add('visible'));
+                        const localPaysFee = !!order._localPaysFee;
+                        const driverPaid   = !!order._driverPaid;
+                        const needsPanel   = !localPaysFee || driverPaid; // Escenarios A, B, C
+
+                        if (needsPanel) {
+                            // Escenarios A, B, C: expandir tarjeta + panel de cobro
+                            const sheet = document.querySelector('.tracking-bottom-sheet');
+                            const payPanel = document.getElementById('t-payment-panel');
+                            if (sheet) sheet.classList.add('expanded');
+                            if (payPanel) {
+                                payPanel.style.display = 'block';
+                                requestAnimationFrame(() => payPanel.classList.add('visible'));
+                            }
+                            if (sheet) setTimeout(() => sheet.scrollTo({ top: sheet.scrollHeight, behavior: 'smooth' }), 200);
                         }
-                        // Transformar el boton flotante a Entregado (verde)
+                        // Todos los escenarios: convertir botón flotante a Entregado verde
                         floatingBtn.innerText = 'Entregado';
                         floatingBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
                         floatingBtn.style.boxShadow = '0 12px 28px rgba(16,185,129,0.38), 0 4px 12px rgba(0,0,0,0.12)';
@@ -1112,8 +1149,6 @@ require __DIR__ . '/_header.php';
                             floatingBtn.innerText = 'Cargando...';
                             await confirmarEntregado();
                         };
-                        // Scroll al fondo de la tarjeta para mostrar el panel
-                        if (sheet) setTimeout(() => sheet.scrollTo({ top: sheet.scrollHeight, behavior: 'smooth' }), 200);
                     };
                 } else {
                     floatingBtn.onclick = async () => {
