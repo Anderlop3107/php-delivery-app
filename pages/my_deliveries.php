@@ -425,7 +425,7 @@ require __DIR__ . '/_header.php';
     }
 
     .driver-profile-header {
-        display: flex; align-items: center; justify-content: space-between; gap: 12px;
+        display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
     }
     .driver-profile-info {
         display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0;
@@ -1097,19 +1097,20 @@ require __DIR__ . '/_header.php';
                     <b class="driver-name-title">
                         <span id="t-driver-name">Conductor</span>
                         <span class="verified-badge-mini" id="t-header-verified-badge" title="Conductor Verificado" style="background: var(--primary, #2563eb); color: #fff; width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; flex-shrink: 0; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35); border: 1.5px solid #ffffff;">✓</span>
-                        <!-- BOTÓN UBICACIÓN GPS EN LA MISMA LÍNEA DEL NOMBRE DEL LOCAL PUSHED TO THE FAR RIGHT -->
-                        <a id="t-header-gps-btn" href="#" target="_blank" class="gps-link-btn" title="Abrir ubicación en Google Maps GPS">
-                            <svg style="width:28px; height:28px; color:var(--primary, #2563eb);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                            </svg>
-                        </a>
                     </b>
                     <span class="driver-status-subtitle" id="t-header-subtitle">
                         <span class="live-pulse-dot"></span> Asignado
                     </span>
                 </div>
             </div>
+
+            <!-- BOTÓN UBICACIÓN GPS EN EL EXTREMO DERECHO ALINEADO EN LA LÍNEA SUPERIOR DEL NOMBRE -->
+            <a id="t-header-gps-btn" href="#" target="_blank" class="gps-link-btn" title="Abrir ubicación en Google Maps GPS" style="margin-top: -2px;">
+                <svg style="width:28px; height:28px; color:var(--primary, #2563eb);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                </svg>
+            </a>
         </div>
 
         <hr class="sheet-divider">
