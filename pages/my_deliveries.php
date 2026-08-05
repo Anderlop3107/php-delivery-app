@@ -281,17 +281,34 @@ require __DIR__ . '/_header.php';
     .call-link-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(59, 130, 246, 0.35); }
     .call-link-btn:active { transform: scale(0.92); }
     
-    .gps-link-btn { 
-        background: transparent; color: var(--primary, #2563eb); width: 44px; height: 44px; border-radius: 50%; 
-        display: inline-flex; align-items: center; justify-content: center; text-decoration: none; 
-        box-shadow: none; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        border: none; cursor: pointer; flex-shrink: 0; padding: 0; margin-left: auto;
+    .gps-link-btn-wrapper { 
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        text-decoration: none; border: none; cursor: pointer; flex-shrink: 0; padding: 0;
+        gap: 2px; transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1); margin-top: -2px;
     }
-    .gps-link-btn:hover { transform: scale(1.15); background: rgba(37, 99, 235, 0.08); }
-    .gps-link-btn:active { transform: scale(0.92); }
+    .gps-link-btn-wrapper:hover { transform: scale(1.1); }
+    .gps-link-btn-wrapper:active { transform: scale(0.94); }
+
+    .gps-icon-circle {
+        width: 36px; height: 36px; border-radius: 50%;
+        display: flex; align-items: center; justify-content: center;
+        background: rgba(37, 99, 235, 0.08); transition: background 0.2s;
+    }
+    .gps-link-btn-wrapper:hover .gps-icon-circle {
+        background: rgba(37, 99, 235, 0.16);
+    }
+
+    .gps-btn-label {
+        font-size: 11px; font-weight: 800; color: var(--primary, #2563eb);
+        letter-spacing: 0.5px; text-transform: uppercase; line-height: 1;
+    }
 
     .wa-link-btn svg, .call-link-btn svg {
         color: #fff !important;
+        opacity: 1 !important;
+    }
+    .gps-link-btn-wrapper svg {
+        color: var(--primary, #2563eb) !important;
         opacity: 1 !important;
     }
     .gps-link-btn svg {
@@ -1104,12 +1121,15 @@ require __DIR__ . '/_header.php';
                 </div>
             </div>
 
-            <!-- BOTÓN UBICACIÓN GPS EN EL EXTREMO DERECHO ALINEADO EN LA LÍNEA SUPERIOR DEL NOMBRE -->
-            <a id="t-header-gps-btn" href="#" target="_blank" class="gps-link-btn" title="Abrir ubicación en Google Maps GPS" style="margin-top: -2px;">
-                <svg style="width:28px; height:28px; color:var(--primary, #2563eb);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                </svg>
+            <!-- BOTÓN UBICACIÓN GPS EN EL EXTREMO DERECHO CON TEXTO "Ir" DEBAJO -->
+            <a id="t-header-gps-btn" href="#" target="_blank" class="gps-link-btn-wrapper" title="Abrir ubicación en Google Maps GPS">
+                <div class="gps-icon-circle">
+                    <svg style="width:22px; height:22px; color:var(--primary, #2563eb);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                    </svg>
+                </div>
+                <span class="gps-btn-label">Ir</span>
             </a>
         </div>
 
