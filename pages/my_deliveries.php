@@ -1096,7 +1096,7 @@ require __DIR__ . '/_header.php';
                 }
 
                 if (targetStatus === 'llegada') {
-                    // Llegada: solo expandir la tarjeta y mostrar panel de pago, sin cambiar estado en BD
+                    // Llegada: expandir la tarjeta + mostrar panel de pago + cambiar boton flotante a Entregado (verde)
                     floatingBtn.onclick = () => {
                         const sheet = document.querySelector('.tracking-bottom-sheet');
                         const payPanel = document.getElementById('t-payment-panel');
@@ -1105,9 +1105,18 @@ require __DIR__ . '/_header.php';
                             payPanel.style.display = 'block';
                             requestAnimationFrame(() => payPanel.classList.add('visible'));
                         }
-                        // Ocultar el botón flotante para que el usuario use el botón en la tarjeta
-                        floatingBar.style.display = 'none';
-                        document.body.classList.remove('has-floating-action');
+                        // Transformar el boton flotante a Entregado (verde)
+                        floatingBtn.innerText = 'Entregado';
+                        floatingBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                        floatingBtn.style.boxShadow = '0 12px 28px rgba(16,185,129,0.38), 0 4px 12px rgba(0,0,0,0.12)';
+                        floatingBtn.disabled = false;
+                        floatingBar.style.display = 'block';
+                        document.body.classList.add('has-floating-action');
+                        floatingBtn.onclick = async () => {
+                            floatingBtn.disabled = true;
+                            floatingBtn.innerText = 'Cargando...';
+                            await confirmarEntregado();
+                        };
                         // Scroll al fondo de la tarjeta para mostrar el panel
                         if (sheet) setTimeout(() => sheet.scrollTo({ top: sheet.scrollHeight, behavior: 'smooth' }), 200);
                     };
@@ -1492,8 +1501,7 @@ require __DIR__ . '/_header.php';
                     <span class="payment-label">Monto a cobrar</span>
                     <span class="payment-value" id="t-payment-amount">—</span>
                 </div>
-                <p class="payment-note" id="t-payment-note">Recibí el pago y luego confirma la entrega</p>
-                <button class="btn-entregado" id="t-btn-entregado" type="button" onclick="confirmarEntregado()">Entregado</button>
+                <p class="payment-note" id="t-payment-note">Recibí el pago y luego presiona Entregado</p>
             </div>
             <?php endif; ?>
 
