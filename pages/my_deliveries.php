@@ -810,6 +810,28 @@ require __DIR__ . '/_header.php';
             document.getElementById('t-step-local').innerText = 'Esperando';
         }
 
+        const actionsContainer = document.getElementById('t-driver-actions-container');
+        if (actionsContainer) {
+            let btnsHtml = '';
+            const s = (order.status || '').toLowerCase();
+            if (s === 'aceptado') {
+                btnsHtml = `
+                    <button type="button" onclick="window.open('https://www.google.com/maps/search/?api=1&query=${order.local_lat},${order.local_lng}')" class="btn-action-gps">🗺️ Abrir GPS al Local</button>
+                    <button type="button" onclick="updateStatus(${order.id}, 'repartidor_en_local')" class="btn-action-main">📍 Llegué al Local</button>
+                `;
+            } else if (s === 'repartidor_en_local') {
+                btnsHtml = `
+                    <button type="button" onclick="updateStatus(${order.id}, 'en_puerta')" class="btn-action-main">Confirmar Retiro</button>
+                `;
+            } else if (s === 'en_puerta' || s === 'en_camino_al_cliente') {
+                btnsHtml = `
+                    <button type="button" onclick="window.open('https://www.google.com/maps/search/?api=1&query=${order.delivery_latitude},${order.delivery_longitude}')" class="btn-action-gps">🗺️ Abrir GPS al Cliente</button>
+                    <button type="button" onclick="updateStatus(${order.id}, 'entregado')" class="btn-action-main" style="background:#10b981;">✅ Confirmar Pedido Entregado</button>
+                `;
+            }
+            actionsContainer.innerHTML = btnsHtml;
+        }
+
         document.getElementById('tracking-sheet-modal').style.display = 'flex';
 
         // Manejo del botón atrás del celular
@@ -1076,6 +1098,11 @@ require __DIR__ . '/_header.php';
                     </div>
                 </div>
             </div>
+
+            <!-- ACCIONES RÁPIDAS DEL CONDUCTOR DENTRO DEL TRACKING SHEET -->
+            <?php if ($isDriver): ?>
+                <div id="t-driver-actions-container" class="driver-actions" style="margin-top: 14px;"></div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -1213,5 +1240,29 @@ require __DIR__ . '/_header.php';
         });
     </script>
 <?php endif; ?>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const openOrderId = urlParams.get('open_order');
+        const activeOrders = <?= json_encode(array_values($activeRows ?? [])) ?>;
+
+        if (openOrderId && activeOrders.length > 0) {
+            const target = activeOrders.find(o => parseInt(o.id) === parseInt(openOrderId)) || activeOrders[0];
+            if (target && typeof openTrackingSheetModal === 'function') {
+                openTrackingSheetModal(target);
+            }
+        } else if (activeOrders.length >= 1 && <?= $isDriver ? 'true' : 'false' ?>) {
+            // Auto-abrir el mapa en pantalla completa para el repartidor si tiene pedido activo
+            if (typeof openTrackingSheetModal === 'function') {
+                openTrackingSheetModal(activeOrders[0]);
+            }
+        }
+    } catch (e) {
+        console.error("Error al auto-abrir modal de seguimiento:", e);
+    }
+});
+</script>
 
 <?php require __DIR__ . '/_footer.php'; ?>

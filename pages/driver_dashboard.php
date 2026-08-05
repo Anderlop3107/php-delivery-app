@@ -1312,9 +1312,8 @@ function showToast(message) {
 
     let acceptTimeout = null;
 
-    async function showAcceptSuccessModal() {
-        // Limpiar el broadcast ID INMEDIATAMENTE para que el polling
-        // no confunda al conductor que aceptó con uno que perdió el pedido
+    async function showAcceptSuccessModal(acceptedId) {
+        const orderIdToOpen = acceptedId || currentBroadcastId || '';
         currentBroadcastId = null;
 
         stopBroadcastSound();
@@ -1324,25 +1323,11 @@ function showToast(message) {
         const successAudio = new Audio('<?= esc(delivery_app_url("uploads/sounds/success.mp3")) ?>');
         successAudio.play().catch(err => console.log("Audio play blocked:", err));
 
-        // Verificar cuántos pedidos activos tiene el conductor
-        try {
-            const activeResp = await fetch('api_driver_active_count.php?_t=' + Date.now());
-            const activeData = await activeResp.json();
-            const activeCount = activeData.count ?? 0;
+        showToast('🚀 ¡Pedido aceptado! Abriendo mapa de seguimiento...', 'success');
 
-            if (activeCount >= 2) {
-                // Conductor lleno — mostrar modal y redirigir a hoja de ruta
-                const modal = document.getElementById('accept-success-modal');
-                if (modal) modal.style.display = 'flex';
-                acceptTimeout = setTimeout(() => { window.location.href = 'my_deliveries.php'; }, 4000);
-            } else {
-                // Conductor puede tomar otro pedido — toast y seguir en radar
-                showToast('✅ ¡Pedido aceptado! Puedes tomar otro más.', 'success');
-                resetSlider();
-            }
-        } catch(e) {
-            window.location.href = 'my_deliveries.php';
-        }
+        setTimeout(() => {
+            window.location.href = 'my_deliveries.php?open_order=' + orderIdToOpen;
+        }, 500);
     }
 
     function closeAcceptSuccessModal() {
@@ -1364,6 +1349,7 @@ function showToast(message) {
 
     async function acceptBroadcastedOrder() {
         if (!currentBroadcastId) return;
+        const targetBroadcastId = currentBroadcastId;
         
         stopBroadcastSound();
         
@@ -1373,13 +1359,13 @@ function showToast(message) {
         if (text) text.innerText = 'PROCESANDO...';
 
         const formData = new FormData();
-        formData.append('order_id', currentBroadcastId);
+        formData.append('order_id', targetBroadcastId);
 
         try {
             const resp = await fetch('api_accept_order.php', { method: 'POST', body: formData });
             const res = await resp.json();
             if (res.success) {
-                showAcceptSuccessModal();
+                showAcceptSuccessModal(res.order_id || targetBroadcastId);
             } else {
                 // Pedido tomado por otro — mostrar modal con sonido
                 closeBroadcast();
