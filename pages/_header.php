@@ -703,7 +703,15 @@ $user = current_user();
                     if (statusChanged && !playCompletedSound) {
                         const onTrackingPage = window.location.pathname.indexOf('my_deliveries.php') !== -1;
                         if (onTrackingPage) {
-                            if (document.visibilityState === 'visible') {
+                            // Si el modal de seguimiento está abierto, NO recargar: 
+                            // el live polling del modal (cada 3s) ya actualiza los datos en vivo.
+                            const trackingModal = document.getElementById('tracking-sheet-modal');
+                            const isTrackingModalOpen = trackingModal && trackingModal.style.display !== 'none';
+                            
+                            if (isTrackingModalOpen) {
+                                // No recargar — el polling en vivo del modal se encargará
+                                console.log('[Header] Status changed but tracking modal is open, skipping reload.');
+                            } else if (document.visibilityState === 'visible') {
                                 if (soundPlayed) {
                                     setTimeout(() => {
                                         window.location.reload();
@@ -739,7 +747,12 @@ $user = current_user();
 
                     if (onTrackingPage && sessionStorage.getItem('needs_reload') === 'true') {
                         sessionStorage.removeItem('needs_reload');
-                        if (sessionStorage.getItem('needs_redirect_dashboard') === 'true') {
+                        // Si el modal de seguimiento está abierto, no recargar
+                        const trackingModal2 = document.getElementById('tracking-sheet-modal');
+                        const isModalOpen2 = trackingModal2 && trackingModal2.style.display !== 'none';
+                        if (isModalOpen2) {
+                            console.log('[Header] Visibility restored but tracking modal is open, skipping reload.');
+                        } else if (sessionStorage.getItem('needs_redirect_dashboard') === 'true') {
                             sessionStorage.removeItem('needs_redirect_dashboard');
                             window.location.href = '<?= esc(delivery_app_url("dashboard.php")) ?>';
                         } else {
