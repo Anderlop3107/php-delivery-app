@@ -920,7 +920,7 @@ require __DIR__ . '/_header.php';
             document.getElementById('t-step-local').innerText = 'Esperando entrega';
         } else if (order.status === 'repartidor_en_local') {
             document.getElementById('t-step-driver').innerText = 'En el local';
-            document.getElementById('t-step-local').innerText = 'En el local';
+            document.getElementById('t-step-local').innerText = 'Entregando';
         } else {
             document.getElementById('t-step-driver').innerText = 'Camino al local';
             document.getElementById('t-step-local').innerText = 'Esperando';
@@ -1068,7 +1068,7 @@ require __DIR__ . '/_header.php';
                                     if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> En camino al cliente';
                                 } else if (res.status === 'repartidor_en_local') {
                                     document.getElementById('t-step-driver').innerText = 'En el local';
-                                    document.getElementById('t-step-local').innerText = 'En el local';
+                                    document.getElementById('t-step-local').innerText = 'Entregando';
                                     if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> En el local / Retirando';
                                 } else {
                                     document.getElementById('t-step-driver').innerText = 'Camino al local';
