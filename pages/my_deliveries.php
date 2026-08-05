@@ -1694,13 +1694,15 @@ document.addEventListener("DOMContentLoaded", () => {
         const openOrderId = urlParams.get('open_order');
         const activeOrders = <?= json_encode(array_values($activeRows ?? [])) ?>;
 
+        const isDriver = <?= $isDriver ? 'true' : 'false' ?>;
+
         if (openOrderId && activeOrders.length > 0) {
             const target = activeOrders.find(o => parseInt(o.id) === parseInt(openOrderId)) || activeOrders[0];
             if (target && typeof openTrackingSheetModal === 'function') {
                 openTrackingSheetModal(target);
             }
-        } else if (activeOrders.length >= 1) {
-            // Auto-abrir el mapa en pantalla completa si hay pedido activo (para Repartidor y Comercio)
+        } else if (activeOrders.length >= 1 && isDriver) {
+            // Auto-abrir el mapa en pantalla completa solo para el Repartidor cuando tiene pedido activo
             if (typeof openTrackingSheetModal === 'function') {
                 openTrackingSheetModal(activeOrders[0]);
             }
