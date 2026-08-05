@@ -955,7 +955,7 @@ require __DIR__ . '/_header.php';
                 btnText = 'Llegué al Local';
             } else if (s === 'repartidor_en_local') {
                 targetStatus = 'en_puerta';
-                btnText = '🛍️ Confirmar Retiro';
+                btnText = 'Confirmar Retiro';
             } else if (s === 'en_puerta' || s === 'en_camino_al_cliente') {
                 targetStatus = 'entregado';
                 btnText = '✅ Confirmar Pedido Entregado';
