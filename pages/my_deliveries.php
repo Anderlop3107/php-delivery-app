@@ -448,55 +448,44 @@ require __DIR__ . '/_header.php';
         transform: translateY(0);
     }
     .payment-panel-title {
-        font-size: 11px;
+        font-size: 10px;
         font-weight: 700;
         letter-spacing: 0.8px;
-        color: #6b7280;
+        color: #9ca3af;
         text-transform: uppercase;
-        margin-bottom: 10px;
+        margin-bottom: 8px;
     }
-    .payment-amount-row {
+    .payment-rows-compact {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .payment-row-item {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
-        border-radius: 14px;
-        padding: 14px 18px;
-        margin-bottom: 12px;
-        border: 1.5px solid rgba(37,99,235,0.12);
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 9px 14px;
+        border: 1px solid #e2e8f0;
     }
-    .payment-label {
-        font-size: 12px;
+    .pay-row-cobrar {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 40%);
+        border-color: rgba(234,179,8,0.25);
+    }
+    .pay-row-label {
+        font-size: 11px;
         color: #6b7280;
         font-weight: 600;
     }
-    .payment-value {
-        font-size: 20px;
-        font-weight: 900;
+    .pay-row-value {
+        font-size: 14px;
+        font-weight: 800;
         color: #1d4ed8;
     }
-    .payment-note {
-        font-size: 11px;
-        color: #9ca3af;
-        text-align: center;
-        margin-bottom: 12px;
+    .pay-row-cobrar-val {
+        color: #92400e;
     }
-    .btn-entregado {
-        width: 100%;
-        height: 54px;
-        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-        color: #fff;
-        border: none;
-        border-radius: 28px;
-        font-size: 15px;
-        font-weight: 800;
-        letter-spacing: 0.5px;
-        cursor: pointer;
-        box-shadow: 0 10px 24px rgba(16,185,129,0.35), 0 4px 10px rgba(0,0,0,0.1);
-        transition: all 0.22s ease;
-    }
-    .btn-entregado:active { transform: scale(0.97); }
-    .btn-entregado:disabled { opacity: 0.6; cursor: not-allowed; }
 
     body.has-floating-action .tracking-bottom-sheet {
         bottom: 86px !important;
@@ -948,18 +937,24 @@ require __DIR__ . '/_header.php';
         if (payPanelReset) { payPanelReset.classList.remove('visible'); payPanelReset.style.display = 'none'; }
         if (sheetReset) sheetReset.classList.remove('expanded');
 
-        // Poblar monto a cobrar en el panel de pago
-        const payAmountEl = document.getElementById('t-payment-amount');
-        if (payAmountEl) {
-            const cost = parseFloat(order.delivery_cost || 0);
-            const amount = parseFloat(order.amount || 0);
-            const total = cost + amount;
-            if (total > 0) {
-                payAmountEl.innerText = `Gs. ${total.toLocaleString('es-PY')}`;
+        // Poblar panel de pago según si el delivery pagó o no en el local
+        const deliveryCost = parseFloat(order.delivery_cost || 0);
+        const orderAmount  = parseFloat(order.amount || 0);
+        const driverPaid   = parseInt(order.driver_pays_local || 0) === 1;
+
+        const elDeliveryCost = document.getElementById('t-payment-delivery-cost');
+        const elCobrarRow    = document.getElementById('t-pay-row-cobrar');
+        const elCobrarVal    = document.getElementById('t-payment-cobrar');
+
+        if (elDeliveryCost) {
+            elDeliveryCost.innerText = deliveryCost > 0 ? `Gs. ${deliveryCost.toLocaleString('es-PY')}` : 'Sin cobro';
+        }
+        if (elCobrarRow && elCobrarVal) {
+            if (driverPaid && orderAmount > 0) {
+                elCobrarVal.innerText = `Gs. ${orderAmount.toLocaleString('es-PY')}`;
+                elCobrarRow.style.display = 'flex';
             } else {
-                payAmountEl.innerText = '—';
-                const noteEl = document.getElementById('t-payment-note');
-                if (noteEl) noteEl.innerText = 'Sin cobro al cliente';
+                elCobrarRow.style.display = 'none';
             }
         }
 
@@ -1496,12 +1491,19 @@ require __DIR__ . '/_header.php';
             <!-- PANEL DE PAGO: visible solo para repartidor tras presionar Llegada -->
             <?php if ($isDriver): ?>
             <div id="t-payment-panel">
-                <p class="payment-panel-title">Cobro al cliente</p>
-                <div class="payment-amount-row">
-                    <span class="payment-label">Monto a cobrar</span>
-                    <span class="payment-value" id="t-payment-amount">—</span>
+                <p class="payment-panel-title">Resumen de cobro</p>
+                <div class="payment-rows-compact">
+                    <!-- Fila: Recibir (siempre visible) -->
+                    <div class="payment-row-item" id="t-pay-row-recibir">
+                        <span class="pay-row-label">Recibir (delivery)</span>
+                        <span class="pay-row-value" id="t-payment-delivery-cost">—</span>
+                    </div>
+                    <!-- Fila: Cobrar al cliente (solo si el delivery pagó en el local) -->
+                    <div class="payment-row-item pay-row-cobrar" id="t-pay-row-cobrar" style="display:none;">
+                        <span class="pay-row-label">Cobrar al cliente</span>
+                        <span class="pay-row-value pay-row-cobrar-val" id="t-payment-cobrar">—</span>
+                    </div>
                 </div>
-                <p class="payment-note" id="t-payment-note">Recibí el pago y luego presiona Entregado</p>
             </div>
             <?php endif; ?>
 
