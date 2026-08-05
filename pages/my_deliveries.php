@@ -1214,16 +1214,18 @@ require __DIR__ . '/_header.php';
                 </div>
             </div>
 
-            <!-- BOTÓN UBICACIÓN GPS EN EL EXTREMO DERECHO CON TEXTO "Ir" DEBAJO -->
-            <a id="t-header-gps-btn" href="#" target="_blank" class="gps-link-btn-wrapper" title="Abrir ubicación en Google Maps GPS">
-                <div class="gps-icon-circle">
-                    <svg style="width:22px; height:22px; color:var(--primary, #2563eb);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                    </svg>
-                </div>
-                <span class="gps-btn-label">Ir</span>
-            </a>
+            <!-- BOTÓN UBICACIÓN GPS EN EL EXTREMO DERECHO CON TEXTO "Ir" DEBAJO (SOLO PARA REPARTIDORES) -->
+            <?php if ($isDriver): ?>
+                <a id="t-header-gps-btn" href="#" target="_blank" class="gps-link-btn-wrapper" title="Abrir ubicación en Google Maps GPS">
+                    <div class="gps-icon-circle">
+                        <svg style="width:22px; height:22px; color:var(--primary, #2563eb);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                        </svg>
+                    </div>
+                    <span class="gps-btn-label">Ir</span>
+                </a>
+            <?php endif; ?>
         </div>
 
         <hr class="sheet-divider">
