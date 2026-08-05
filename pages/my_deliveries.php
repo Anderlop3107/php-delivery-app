@@ -881,13 +881,19 @@ require __DIR__ . '/_header.php';
                 nameEl.innerText = order.customer_name || 'Cliente';
                 if (subtitleEl) subtitleEl.innerHTML = '<span class="live-pulse-dot"></span> Punto de entrega / Cliente';
                 if (verifiedBadge) verifiedBadge.style.display = 'none';
-                avatarEl.innerHTML = '👤';
+                avatarEl.style.background = 'transparent';
+                avatarEl.style.border = 'none';
+                avatarEl.style.boxShadow = 'none';
+                avatarEl.innerHTML = '<span style="font-size: 26px;">👤</span>';
                 phone = order.customer_phone || '';
 
                 const localNameEl = document.getElementById('t-local-name');
                 if (localNameEl) localNameEl.innerText = order.customer_name || 'Cliente';
             } else {
                 // ETAPA 1: En camino o en el local -> Mostrar datos del LOCAL / COMERCIO
+                avatarEl.style.background = '';
+                avatarEl.style.border = '';
+                avatarEl.style.boxShadow = '';
                 nameEl.innerText = order.local_name || 'Local / Comercio';
                 if (subtitleEl) subtitleEl.innerHTML = '<span class="live-pulse-dot"></span> Punto de retiro / Local';
                 if (verifiedBadge) verifiedBadge.style.display = 'none';
@@ -1092,7 +1098,12 @@ require __DIR__ . '/_header.php';
                                         if (nameEl) nameEl.innerText = order.customer_name || 'Cliente';
                                         if (localNameEl) localNameEl.innerText = order.customer_name || 'Cliente';
                                         if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> Punto de entrega / Cliente';
-                                        if (avatarEl && !avatarEl.querySelector('img')) avatarEl.innerHTML = '👤';
+                                        if (avatarEl && !avatarEl.querySelector('img')) {
+                                            avatarEl.style.background = 'transparent';
+                                            avatarEl.style.border = 'none';
+                                            avatarEl.style.boxShadow = 'none';
+                                            avatarEl.innerHTML = '<span style="font-size: 26px;">👤</span>';
+                                        }
 
                                         let custPhone = (order.customer_phone || '').replace(/[^0-9]/g, '');
                                         if (custPhone.startsWith('0')) custPhone = '595' + custPhone.substring(1);
