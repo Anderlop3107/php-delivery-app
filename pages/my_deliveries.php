@@ -874,7 +874,7 @@ require __DIR__ . '/_header.php';
         if (isUserDriver) {
             // El Repartidor está viendo el mapa -> Mostrar información del LOCAL / COMERCIO
             nameEl.innerText = order.local_name || 'Local / Comercio';
-            if (subtitleEl) subtitleEl.innerHTML = '<span class="live-pulse-dot"></span> Entregando';
+            if (subtitleEl) subtitleEl.innerHTML = '<span class="live-pulse-dot"></span> Punto de retiro / Local';
             if (verifiedBadge) verifiedBadge.style.display = 'none';
 
             if (order.local_logo) {
@@ -1062,22 +1062,18 @@ require __DIR__ . '/_header.php';
 
                             if (res.status) {
                                 const subEl = document.getElementById('t-header-subtitle');
-                                if (isUserDriver) {
-                                    if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> Entregando';
+                                if (res.status === 'en_puerta' || res.status === 'en_camino_al_cliente') {
+                                    document.getElementById('t-step-driver').innerText = 'Camino al cliente';
+                                    document.getElementById('t-step-local').innerText = 'Esperando entrega';
+                                    if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> En camino al cliente';
+                                } else if (res.status === 'repartidor_en_local') {
+                                    document.getElementById('t-step-driver').innerText = 'En el local';
+                                    document.getElementById('t-step-local').innerText = 'En el local';
+                                    if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> En el local / Retirando';
                                 } else {
-                                    if (res.status === 'en_puerta' || res.status === 'en_camino_al_cliente') {
-                                        document.getElementById('t-step-driver').innerText = 'Camino al cliente';
-                                        document.getElementById('t-step-local').innerText = 'Esperando entrega';
-                                        if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> En camino al cliente';
-                                    } else if (res.status === 'repartidor_en_local') {
-                                        document.getElementById('t-step-driver').innerText = 'En el local';
-                                        document.getElementById('t-step-local').innerText = 'En el local';
-                                        if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> En el local / Retirando';
-                                    } else {
-                                        document.getElementById('t-step-driver').innerText = 'Camino al local';
-                                        document.getElementById('t-step-local').innerText = 'Esperando';
-                                        if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> Conductor Asignado';
-                                    }
+                                    document.getElementById('t-step-driver').innerText = 'Camino al local';
+                                    document.getElementById('t-step-local').innerText = 'Esperando';
+                                    if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> Asignado';
                                 }
 
                                 if (res.status === 'entregado') {
