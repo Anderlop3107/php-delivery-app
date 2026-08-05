@@ -282,16 +282,20 @@ require __DIR__ . '/_header.php';
     .call-link-btn:active { transform: scale(0.92); }
     
     .gps-link-btn { 
-        background: #10b981; color: #ffffff; width: 40px; height: 40px; border-radius: 50%; 
+        background: transparent; color: var(--primary, #2563eb); width: 36px; height: 36px; border-radius: 50%; 
         display: flex; align-items: center; justify-content: center; text-decoration: none; 
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3); transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        border: none; cursor: pointer; flex-shrink: 0;
+        box-shadow: none; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        border: none; cursor: pointer; flex-shrink: 0; padding: 0;
     }
-    .gps-link-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(16, 185, 129, 0.4); }
+    .gps-link-btn:hover { transform: scale(1.12); background: rgba(37, 99, 235, 0.08); }
     .gps-link-btn:active { transform: scale(0.92); }
 
-    .wa-link-btn svg, .call-link-btn svg, .gps-link-btn svg {
+    .wa-link-btn svg, .call-link-btn svg {
         color: #fff !important;
+        opacity: 1 !important;
+    }
+    .gps-link-btn svg {
+        color: var(--primary, #2563eb) !important;
         opacity: 1 !important;
     }
     
@@ -1103,7 +1107,7 @@ require __DIR__ . '/_header.php';
             <!-- BOTÓN UBICACIÓN GPS EN LA PARTE DERECHA DE LA CABECERA (DELANTE DE AVATAR Y NOMBRE) -->
             <div class="driver-contact-capsule">
                 <a id="t-header-gps-btn" href="#" target="_blank" class="gps-link-btn" title="Abrir ubicación en Google Maps GPS">
-                    <svg style="width:20px; height:20px; color:#ffffff;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
+                    <svg style="width:22px; height:22px; color:var(--primary, #2563eb);" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.5">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
                     </svg>
