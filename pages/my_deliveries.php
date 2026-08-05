@@ -1048,26 +1048,36 @@ require __DIR__ . '/_header.php';
                     .extend([localLng, localLat]);
                 trackingSheetMap.fitBounds(bounds, { padding: { top: 70, bottom: 280, left: 50, right: 50 }, maxZoom: 15 });
 
-                // Polling en tiempo real cada 3 segundos para mover suavemente el marcador del conductor
+                // Polling en tiempo real cada 3 segundos para mover suavemente el marcador del conductor y refrescar el estado
                 trackingLiveInterval = setInterval(async () => {
                     try {
                         const resp = await fetch(`api_get_order_live_location.php?order_id=${order.id}`);
                         const res = await resp.json();
-                        if (res.success && res.driver_lat && res.driver_lng && trackingDriverMarker) {
-                            const liveLng = parseFloat(res.driver_lng);
-                            const liveLat = parseFloat(res.driver_lat);
-                            trackingDriverMarker.setLngLat([liveLng, liveLat]);
+                        if (res.success && trackingDriverMarker) {
+                            if (res.driver_lat && res.driver_lng) {
+                                const liveLng = parseFloat(res.driver_lng);
+                                const liveLat = parseFloat(res.driver_lat);
+                                trackingDriverMarker.setLngLat([liveLng, liveLat]);
+                            }
 
                             if (res.status) {
+                                const subEl = document.getElementById('t-header-subtitle');
                                 if (res.status === 'en_puerta' || res.status === 'en_camino_al_cliente') {
                                     document.getElementById('t-step-driver').innerText = 'Camino al cliente';
                                     document.getElementById('t-step-local').innerText = 'Esperando entrega';
+                                    if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> En camino al cliente';
                                 } else if (res.status === 'repartidor_en_local') {
                                     document.getElementById('t-step-driver').innerText = 'En el local';
                                     document.getElementById('t-step-local').innerText = 'En el local';
+                                    if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> En el local / Retirando';
                                 } else {
                                     document.getElementById('t-step-driver').innerText = 'Camino al local';
                                     document.getElementById('t-step-local').innerText = 'Esperando';
+                                    if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> Asignado';
+                                }
+
+                                if (res.status === 'entregado') {
+                                    showSuccessModal();
                                 }
                             }
                         }
@@ -1426,8 +1436,8 @@ document.addEventListener("DOMContentLoaded", () => {
             if (target && typeof openTrackingSheetModal === 'function') {
                 openTrackingSheetModal(target);
             }
-        } else if (activeOrders.length >= 1 && <?= $isDriver ? 'true' : 'false' ?>) {
-            // Auto-abrir el mapa en pantalla completa para el repartidor si tiene pedido activo
+        } else if (activeOrders.length >= 1) {
+            // Auto-abrir el mapa en pantalla completa si hay pedido activo (para Repartidor y Comercio)
             if (typeof openTrackingSheetModal === 'function') {
                 openTrackingSheetModal(activeOrders[0]);
             }
