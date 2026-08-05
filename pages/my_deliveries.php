@@ -417,19 +417,127 @@ require __DIR__ . '/_header.php';
     }
 
     .tracking-bottom-sheet {
-        position: fixed !important; bottom: 50px !important; top: auto !important; left: 25px !important; right: 25px !important;
-        width: auto !important; height: auto !important; max-height: 70vh;
+        position: fixed !important; bottom: 25px !important; top: auto !important; left: 20px !important; right: 20px !important;
+        width: auto !important; height: auto !important; max-height: 52vh;
         background: #ffffff;
         border-radius: 24px !important;
         box-shadow: 0 16px 48px rgba(15, 23, 42, 0.22), 0 4px 12px rgba(0,0,0,0.08);
         border: 1.5px solid rgba(255, 255, 255, 0.9);
-        padding: 16px 20px 25px 20px; display: flex; flex-direction: column; gap: 10px;
+        padding: 16px 20px 20px 20px; display: flex; flex-direction: column; gap: 10px;
         overflow-y: auto; z-index: 100;
-        transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        transition: bottom 0.3s cubic-bezier(0.16, 1, 0.3, 1), max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
         touch-action: pan-y;
     }
     .tracking-bottom-sheet.expanded {
         max-height: 75vh;
+    }
+
+    body.has-floating-swipe .tracking-bottom-sheet {
+        bottom: 88px !important;
+    }
+
+    /* CONTENEDOR FLOTANTE EN LA PARTE INFERIOR SOBRE EL MAPA */
+    .tracking-floating-swipe-bar {
+        position: fixed !important;
+        bottom: 18px !important;
+        left: 20px !important;
+        right: 20px !important;
+        z-index: 10005 !important;
+        display: none;
+        animation: slideUpFloating 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes slideUpFloating {
+        from { transform: translateY(50px); opacity: 0; }
+        to { transform: translateY(0); opacity: 1; }
+    }
+
+    /* Estilos del slider Deslizar en la vista de seguimiento */
+    .tracking-floating-swipe-bar .swipe-track {
+        position: relative;
+        width: 100%;
+        height: 58px;
+        background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%);
+        border: none;
+        border-radius: 29px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.35), 0 4px 12px rgba(37, 99, 235, 0.25);
+        user-select: none;
+    }
+    .tracking-floating-swipe-bar .swipe-track::after {
+        content: '';
+        position: absolute;
+        top: 0; left: -100%;
+        width: 60%; height: 100%;
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+        transform: skewX(-20deg);
+        pointer-events: none;
+        animation: shimmerSweep 3.5s infinite;
+        z-index: 2;
+    }
+    .tracking-floating-swipe-bar .swipe-bg-fill {
+        position: absolute;
+        left: 0;
+        top: 0;
+        height: 100%;
+        width: 0;
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        border-radius: 29px;
+        z-index: 1;
+    }
+    .tracking-floating-swipe-bar .swipe-text {
+        position: absolute;
+        width: 100%;
+        text-align: center;
+        font-weight: 800;
+        font-size: 11.5px;
+        color: #fff;
+        opacity: 0.95;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        z-index: 2;
+        pointer-events: none;
+        transition: all 0.2s;
+    }
+    .tracking-floating-swipe-bar .swipe-handle {
+        position: absolute;
+        left: 4px;
+        top: 4px;
+        width: 50px;
+        height: 50px;
+        background: #fff;
+        color: var(--primary);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: grab;
+        z-index: 3;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+        transition: background-color 0.2s, color 0.2s;
+    }
+    .tracking-floating-swipe-bar .swipe-handle:active {
+        cursor: grabbing;
+    }
+    .tracking-floating-swipe-bar .swipe-handle svg {
+        color: var(--primary) !important;
+        opacity: 1 !important;
+        transition: transform 0.2s;
+        animation: chevronSlide 1.4s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+    }
+    .tracking-floating-swipe-bar .swipe-track.processing .swipe-text {
+        color: #fff;
+        opacity: 1;
+    }
+    .tracking-floating-swipe-bar .swipe-track.processing .swipe-handle {
+        background: #10b981;
+        color: #fff;
+    }
+    .tracking-floating-swipe-bar .swipe-track.processing .swipe-handle svg {
+        color: #fff !important;
+        transform: rotate(360deg);
     }
 
     .sheet-drag-handle {
@@ -888,24 +996,47 @@ require __DIR__ . '/_header.php';
             }
         }
 
-        const actionsContainer = document.getElementById('t-driver-actions-container');
-        if (actionsContainer) {
-            let btnsHtml = '';
+        // Configurar botón deslizable flotante sobre el mapa para el conductor
+        const floatingBar = document.getElementById('tracking-floating-swipe-bar');
+        if (isUserDriver && floatingBar) {
             const s = (order.status || '').toLowerCase();
+            let targetStatus = null;
+            let swipeLabelText = '';
+
             if (s === 'aceptado') {
-                btnsHtml = `
-                    <button type="button" onclick="updateStatus(${order.id}, 'repartidor_en_local')" class="btn-action-main">📍 Llegué al Local</button>
-                `;
+                targetStatus = 'repartidor_en_local';
+                swipeLabelText = 'DESLIZAR: LLEGUÉ AL LOCAL';
             } else if (s === 'repartidor_en_local') {
-                btnsHtml = `
-                    <button type="button" onclick="updateStatus(${order.id}, 'en_puerta')" class="btn-action-main">Confirmar Retiro</button>
-                `;
+                targetStatus = 'en_puerta';
+                swipeLabelText = 'DESLIZAR: CONFIRMAR RETIRO';
             } else if (s === 'en_puerta' || s === 'en_camino_al_cliente') {
-                btnsHtml = `
-                    <button type="button" onclick="updateStatus(${order.id}, 'entregado')" class="btn-action-main" style="background:#10b981;">✅ Confirmar Pedido Entregado</button>
-                `;
+                targetStatus = 'entregado';
+                swipeLabelText = 'DESLIZAR: CONFIRMAR ENTREGA';
             }
-            actionsContainer.innerHTML = btnsHtml;
+
+            if (targetStatus) {
+                currentTrackingOrder = order;
+                currentTrackingTargetStatus = targetStatus;
+
+                const textEl = document.getElementById('t-swipe-text');
+                const trackEl = document.getElementById('t-swipe-container');
+                const handleEl = document.getElementById('t-swipe-handle');
+                const fillEl = document.getElementById('t-swipe-bg-fill');
+
+                if (textEl) textEl.innerText = swipeLabelText;
+                if (trackEl) trackEl.classList.remove('processing');
+                if (handleEl) handleEl.style.transform = 'translateX(0px)';
+                if (fillEl) fillEl.style.width = '0%';
+
+                floatingBar.style.display = 'block';
+                document.body.classList.add('has-floating-swipe');
+            } else {
+                floatingBar.style.display = 'none';
+                document.body.classList.remove('has-floating-swipe');
+            }
+        } else if (floatingBar) {
+            floatingBar.style.display = 'none';
+            document.body.classList.remove('has-floating-swipe');
         }
 
         document.getElementById('tracking-sheet-modal').style.display = 'flex';
@@ -1004,6 +1135,10 @@ require __DIR__ . '/_header.php';
             trackingLiveInterval = null;
         }
         document.getElementById('tracking-sheet-modal').style.display = 'none';
+        const floatingBar = document.getElementById('tracking-floating-swipe-bar');
+        if (floatingBar) floatingBar.style.display = 'none';
+        document.body.classList.remove('has-floating-swipe');
+
         if (trackingSheetMap) {
             trackingSheetMap.remove();
             trackingSheetMap = null;
@@ -1020,6 +1155,81 @@ require __DIR__ . '/_header.php';
         } else if (fromPopState) {
             isTrackingModalHistoryPushed = false;
         }
+    }
+
+    let currentTrackingOrder = null;
+    let currentTrackingTargetStatus = null;
+
+    function setupTrackingSwipeController() {
+        const handle = document.getElementById('t-swipe-handle');
+        const track = document.getElementById('t-swipe-container');
+        const bgFill = document.getElementById('t-swipe-bg-fill');
+        const text = document.getElementById('t-swipe-text');
+
+        if (!handle || !track) return;
+
+        let isDragging = false;
+        let startX = 0;
+        let maxTranslate = 0;
+        let currentTranslate = 0;
+
+        function updateDimensions() {
+            maxTranslate = track.clientWidth - handle.clientWidth - 8;
+        }
+
+        const dragStart = (e) => {
+            if (track.classList.contains('processing')) return;
+            isDragging = true;
+            updateDimensions();
+            startX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
+            handle.style.transition = 'none';
+            if (bgFill) bgFill.style.transition = 'none';
+        };
+
+        const dragMove = (e) => {
+            if (!isDragging) return;
+            const currentX = e.type.startsWith('touch') ? e.touches[0].clientX : e.clientX;
+            let diff = currentX - startX;
+            if (diff < 0) diff = 0;
+            if (diff > maxTranslate) diff = maxTranslate;
+            currentTranslate = diff;
+
+            handle.style.transform = `translateX(${currentTranslate}px)`;
+            const pct = (currentTranslate / maxTranslate) * 100;
+            if (bgFill) bgFill.style.width = `${pct}%`;
+            if (e.cancelable) e.preventDefault();
+        };
+
+        const dragEnd = async () => {
+            if (!isDragging) return;
+            isDragging = false;
+
+            handle.style.transition = 'transform 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+            if (bgFill) bgFill.style.transition = 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1)';
+
+            if (currentTranslate >= maxTranslate * 0.85) {
+                track.classList.add('processing');
+                handle.style.transform = `translateX(${maxTranslate}px)`;
+                if (bgFill) bgFill.style.width = '100%';
+                if (text) text.innerText = 'PROCESANDO...';
+
+                if (currentTrackingOrder && currentTrackingTargetStatus) {
+                    await updateStatus(currentTrackingOrder.id, currentTrackingTargetStatus);
+                }
+            } else {
+                currentTranslate = 0;
+                handle.style.transform = 'translateX(0px)';
+                if (bgFill) bgFill.style.width = '0%';
+            }
+        };
+
+        handle.addEventListener('touchstart', dragStart, { passive: true });
+        window.addEventListener('touchmove', dragMove, { passive: false });
+        window.addEventListener('touchend', dragEnd);
+
+        handle.addEventListener('mousedown', dragStart);
+        window.addEventListener('mousemove', dragMove);
+        window.addEventListener('mouseup', dragEnd);
     }
 
     window.addEventListener('popstate', (e) => {
@@ -1186,10 +1396,17 @@ require __DIR__ . '/_header.php';
                 </div>
             </div>
 
-            <!-- ACCIONES RÁPIDAS DEL CONDUCTOR DENTRO DEL TRACKING SHEET -->
-            <?php if ($isDriver): ?>
-                <div id="t-driver-actions-container" class="driver-actions" style="margin-top: 14px;"></div>
-            <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- CONTENEDOR FLOTANTE EN LA PARTE INFERIOR SOBRE EL MAPA (SLIDER DESLIZABLE) -->
+    <div id="tracking-floating-swipe-bar" class="tracking-floating-swipe-bar">
+        <div id="t-swipe-container" class="swipe-track">
+            <div id="t-swipe-bg-fill" class="swipe-bg-fill"></div>
+            <div id="t-swipe-text" class="swipe-text">DESLIZAR PARA CONFIRMAR</div>
+            <div id="t-swipe-handle" class="swipe-handle">
+                <svg style="width:20px; height:20px;" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2.8"><path stroke-linecap="round" stroke-linejoin="round" d="M13 5l7 7-7 7M5 5l7 7-7 7"></path></svg>
+            </div>
         </div>
     </div>
 </div>
@@ -1330,6 +1547,9 @@ require __DIR__ . '/_header.php';
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
+    if (typeof setupTrackingSwipeController === 'function') {
+        setupTrackingSwipeController();
+    }
     try {
         const urlParams = new URLSearchParams(window.location.search);
         const openOrderId = urlParams.get('open_order');
