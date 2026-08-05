@@ -470,8 +470,8 @@ require __DIR__ . '/_header.php';
         border: 1px solid #e2e8f0;
     }
     .pay-row-cobrar {
-        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 40%);
-        border-color: rgba(234,179,8,0.25);
+        background: #f8fafc;
+        border-color: #e2e8f0;
     }
     .pay-row-label {
         font-size: 11px;
@@ -484,7 +484,7 @@ require __DIR__ . '/_header.php';
         color: #1d4ed8;
     }
     .pay-row-cobrar-val {
-        color: #92400e;
+        color: #1d4ed8;
     }
 
     body.has-floating-action .tracking-bottom-sheet {
