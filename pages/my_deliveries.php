@@ -783,7 +783,7 @@ require __DIR__ . '/_header.php';
                             <button onclick="window.open('https://www.google.com/maps/search/?api=1&query=<?= $row['local_lat'] ?>,<?= $row['local_lng'] ?>')" class="btn-action-gps">🗺️ Abrir GPS al Local</button>
                             <button onclick="updateStatus(<?= $row['id'] ?>, 'repartidor_en_local')" class="btn-action-main">Llegué al Local</button>
                         <?php elseif ($s === 'repartidor_en_local'): ?>
-                            <button onclick="updateStatus(<?= $row['id'] ?>, 'en_puerta')" class="btn-action-main">Confirmar Retiro</button>
+                            <button onclick="updateStatus(<?= $row['id'] ?>, 'en_puerta')" class="btn-action-main">Ir al cliente</button>
                         <?php elseif ($s === 'en_puerta' || $s === 'en_camino_al_cliente'): ?>
                             <button onclick="window.open('https://www.google.com/maps/search/?api=1&query=<?= $row['delivery_latitude'] ?>,<?= $row['delivery_longitude'] ?>')" class="btn-action-gps">🗺️ Abrir GPS al Cliente</button>
                             <button onclick="updateStatus(<?= $row['id'] ?>, 'entregado')" class="btn-action-main" style="background:#10b981;">✅ Confirmar Pedido Entregado</button>
@@ -955,7 +955,7 @@ require __DIR__ . '/_header.php';
                 btnText = 'Llegué al Local';
             } else if (s === 'repartidor_en_local') {
                 targetStatus = 'en_puerta';
-                btnText = 'Confirmar Retiro';
+                btnText = 'Ir al cliente';
             } else if (s === 'en_puerta' || s === 'en_camino_al_cliente') {
                 targetStatus = 'entregado';
                 btnText = '✅ Confirmar Pedido Entregado';
