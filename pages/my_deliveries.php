@@ -11,7 +11,9 @@ $isDriver = ($user['role'] === 'repartidor');
 if ($isLocal) {
     // Incluir entregas que cambiaron de estado recientemente (último minuto) para poder notificar por audio en tiempo real
     $rows = app_all(
-        "SELECT d.*, r.name AS repartidor_name, r.phone AS repartidor_phone, r.logo_path AS repartidor_avatar, r.latitude as repartidor_lat, r.longitude as repartidor_lng, u_local.latitude as local_lat, u_local.longitude as local_lng
+        "SELECT d.*, 
+                r.name AS repartidor_name, r.phone AS repartidor_phone, r.logo_path AS repartidor_avatar, r.latitude as repartidor_lat, r.longitude as repartidor_lng,
+                u_local.business_name as local_name, u_local.logo_path as local_logo, u_local.phone as local_phone, u_local.latitude as local_lat, u_local.longitude as local_lng
          FROM deliveries d
          LEFT JOIN users r ON r.id = d.repartidor_user_id
          JOIN users u_local ON d.local_user_id = u_local.id
@@ -22,9 +24,12 @@ if ($isLocal) {
     );
 } else {
     $rows = app_all(
-        "SELECT d.*, u.business_name as local_name, u.phone as local_phone, u.address as local_address, u.latitude as local_lat, u.longitude as local_lng, u.logo_path as local_logo
+        "SELECT d.*, 
+                u.business_name as local_name, u.phone as local_phone, u.address as local_address, u.latitude as local_lat, u.longitude as local_lng, u.logo_path as local_logo,
+                r.name AS repartidor_name, r.phone AS repartidor_phone, r.logo_path AS repartidor_avatar, r.latitude as repartidor_lat, r.longitude as repartidor_lng
          FROM deliveries d
          JOIN users u ON d.local_user_id = u.id
+         LEFT JOIN users r ON d.repartidor_user_id = r.id
          WHERE d.repartidor_user_id = ? AND d.status NOT IN ('entregado', 'cancelado', 'rechazado')
          ORDER BY d.created_at DESC",
         'i',
@@ -774,17 +779,45 @@ require __DIR__ . '/_header.php';
             trackingLiveInterval = null;
         }
 
-        document.getElementById('t-driver-name').innerText = order.repartidor_name || 'Conductor';
-        
+        const isUserDriver = <?= $isDriver ? 'true' : 'false' ?>;
+
+        const nameEl = document.getElementById('t-driver-name');
         const avatarEl = document.getElementById('t-driver-avatar-container');
-        if (order.repartidor_avatar) {
-            const baseUrl = '<?= esc(delivery_app_url()) ?>/';
-            avatarEl.innerHTML = `<img src="${baseUrl}${order.repartidor_avatar}" alt="Avatar">`;
+        const subtitleEl = document.getElementById('t-header-subtitle');
+        const verifiedBadge = document.getElementById('t-header-verified-badge');
+
+        let phone = '';
+
+        if (isUserDriver) {
+            // El Repartidor está viendo el mapa -> Mostrar información del LOCAL / COMERCIO
+            nameEl.innerText = order.local_name || 'Local / Comercio';
+            if (subtitleEl) subtitleEl.innerHTML = '<span class="live-pulse-dot"></span> Punto de retiro / Local';
+            if (verifiedBadge) verifiedBadge.style.display = 'none';
+
+            if (order.local_logo) {
+                const baseUrl = '<?= esc(delivery_app_url()) ?>/';
+                avatarEl.innerHTML = `<img src="${baseUrl}${order.local_logo}" alt="Logo Local">`;
+            } else {
+                avatarEl.innerHTML = '🏪';
+            }
+
+            phone = order.local_phone || '';
         } else {
-            avatarEl.innerHTML = '🛵';
+            // El Comercio está viendo el mapa -> Mostrar información del REPARTIDOR
+            nameEl.innerText = order.repartidor_name || 'Conductor';
+            if (subtitleEl) subtitleEl.innerHTML = '<span class="live-pulse-dot"></span> Conductor Asignado';
+            if (verifiedBadge) verifiedBadge.style.display = 'inline-flex';
+
+            if (order.repartidor_avatar) {
+                const baseUrl = '<?= esc(delivery_app_url()) ?>/';
+                avatarEl.innerHTML = `<img src="${baseUrl}${order.repartidor_avatar}" alt="Avatar Repartidor">`;
+            } else {
+                avatarEl.innerHTML = '🛵';
+            }
+
+            phone = order.repartidor_phone || '';
         }
 
-        const phone = order.repartidor_phone || '';
         let cleanPhone = phone.replace(/[^0-9]/g, '');
         if (cleanPhone.startsWith('0')) cleanPhone = '595' + cleanPhone.substring(1);
         else if (cleanPhone !== '' && !cleanPhone.startsWith('595')) cleanPhone = '595' + cleanPhone;
@@ -1037,9 +1070,9 @@ require __DIR__ . '/_header.php';
                 <div class="driver-name-block">
                     <b class="driver-name-title">
                         <span id="t-driver-name">Conductor</span>
-                        <span class="verified-badge-mini" title="Conductor Verificado" style="background: var(--primary, #2563eb); color: #fff; width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; flex-shrink: 0; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35); border: 1.5px solid #ffffff;">✓</span>
+                        <span class="verified-badge-mini" id="t-header-verified-badge" title="Conductor Verificado" style="background: var(--primary, #2563eb); color: #fff; width: 16px; height: 16px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 800; flex-shrink: 0; box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35); border: 1.5px solid #ffffff;">✓</span>
                     </b>
-                    <span class="driver-status-subtitle">
+                    <span class="driver-status-subtitle" id="t-header-subtitle">
                         <span class="live-pulse-dot"></span> Asignado
                     </span>
                 </div>
