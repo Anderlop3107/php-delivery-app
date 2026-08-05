@@ -53,7 +53,7 @@ function obtener_pedidos_disponibles_para_repartidor(int $repartidorId): array
     // Verificar si la suscripción está vencida
     $subscriptionExpired = true;
     if ($driver['subscription_status'] === 'active') {
-        if (empty($driver['subscription_expires_at']) || strtotime($driver['subscription_expires_at']) >= time()) {
+        if (!empty($driver['subscription_expires_at']) && strtotime($driver['subscription_expires_at']) >= time()) {
             $subscriptionExpired = false;
         }
     }

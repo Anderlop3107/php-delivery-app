@@ -1402,7 +1402,10 @@ $maxChartCount = max(5, max($chartCounts));
                     <div style="text-align:center; padding: 40px; color:var(--text-muted);">No hay repartidores registrados.</div>
                 <?php else: ?>
                     <?php foreach ($activeDrivers as $d): ?>
-                        <?php $dStatus = $d['subscription_status'] ?? 'pending'; ?>
+                        <?php 
+                            $isExpiredByDate = empty($d['subscription_expires_at']) || (strtotime($d['subscription_expires_at']) <= time());
+                            $dStatus = ($d['subscription_status'] === 'active' && $isExpiredByDate) ? 'expired' : ($d['subscription_status'] ?? 'pending'); 
+                        ?>
                         <div class="table-row-item row-<?= esc($dStatus) ?>" data-driver-id="<?= (int)$d['id']; ?>" onclick="if (event.target.tagName !== 'SELECT' && event.target.tagName !== 'OPTION') window.location.href='admin_driver_detail.php?id=<?= (int)$d['id']; ?>'" style="cursor:pointer; position:relative; padding-right:50px;">
                             <div class="driver-mini-info">
                                 <div class="driver-mini-avatar" style="position:relative;">
