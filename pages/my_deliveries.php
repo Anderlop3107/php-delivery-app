@@ -884,7 +884,7 @@ require __DIR__ . '/_header.php';
                 avatarEl.style.background = 'transparent';
                 avatarEl.style.border = 'none';
                 avatarEl.style.boxShadow = 'none';
-                avatarEl.innerHTML = '<span style="font-size: 26px;">👤</span>';
+                avatarEl.innerHTML = '<span style="font-size: 26px; display:block; margin-bottom: 6px;">👤</span>';
                 phone = order.customer_phone || '';
 
                 const localNameEl = document.getElementById('t-local-name');
@@ -1102,7 +1102,7 @@ require __DIR__ . '/_header.php';
                                             avatarEl.style.background = 'transparent';
                                             avatarEl.style.border = 'none';
                                             avatarEl.style.boxShadow = 'none';
-                                            avatarEl.innerHTML = '<span style="font-size: 26px;">👤</span>';
+                                            avatarEl.innerHTML = '<span style="font-size: 26px; display:block; margin-bottom: 6px;">👤</span>';
                                         }
 
                                         let custPhone = (order.customer_phone || '').replace(/[^0-9]/g, '');
