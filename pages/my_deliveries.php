@@ -1233,10 +1233,10 @@ require __DIR__ . '/_header.php';
                 // Polling en tiempo real cada 3 segundos para mover suavemente el marcador del conductor y refrescar el estado
                 trackingLiveInterval = setInterval(async () => {
                     try {
-                        const resp = await fetch(`api_get_order_live_location.php?order_id=${order.id}`);
+                        const resp = await fetch(`api_get_order_live_location.php?order_id=${order.id}&_t=${Date.now()}`);
                         const res = await resp.json();
-                        if (res.success && trackingDriverMarker) {
-                            if (res.driver_lat && res.driver_lng) {
+                        if (res.success) {
+                            if (res.driver_lat && res.driver_lng && trackingDriverMarker) {
                                 const liveLng = parseFloat(res.driver_lng);
                                 const liveLat = parseFloat(res.driver_lat);
                                 trackingDriverMarker.setLngLat([liveLng, liveLat]);
@@ -1250,7 +1250,9 @@ require __DIR__ . '/_header.php';
                                 const gpsBtn = document.getElementById('t-header-gps-btn');
                                 const s = (res.status || '').toLowerCase();
 
-                                if (isUserDriver) {
+                                if (s === 'entregado') {
+                                    showSuccessModal('¡Pedido Entregado!', isUserDriver ? '¡Buen trabajo! Has completado la entrega.' : 'El pedido ha sido completado con éxito.');
+                                } else if (isUserDriver) {
                                     if (s === 'en_puerta' || s === 'en_camino_al_cliente') {
                                         if (nameEl) nameEl.innerText = order.customer_name || 'Cliente';
                                         if (localNameEl) localNameEl.innerText = order.customer_name || 'Cliente';
@@ -1287,23 +1289,32 @@ require __DIR__ . '/_header.php';
                                         if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> Punto de retiro / Local';
                                     }
                                 } else {
+                                    // Vista del Comercio/Local — sincronizada exactamente con la App del Delivery
+                                    if (nameEl && order.repartidor_name) nameEl.innerText = order.repartidor_name;
+                                    if (avatarEl && !avatarEl.querySelector('img')) {
+                                        avatarEl.style.background = '';
+                                        avatarEl.style.border = '';
+                                        avatarEl.style.boxShadow = '';
+                                        if (order.repartidor_avatar) {
+                                            const baseUrl = '<?= esc(delivery_app_url()) ?>/';
+                                            avatarEl.innerHTML = `<img src="${baseUrl}${order.repartidor_avatar}" alt="Avatar Repartidor">`;
+                                        } else {
+                                            avatarEl.innerHTML = '🛵';
+                                        }
+                                    }
                                     if (s === 'en_puerta' || s === 'en_camino_al_cliente') {
                                         document.getElementById('t-step-driver').innerText = 'Camino al cliente';
                                         document.getElementById('t-step-local').innerText = 'Esperando entrega';
                                         if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> En camino al cliente';
                                     } else if (s === 'repartidor_en_local') {
                                         document.getElementById('t-step-driver').innerText = 'En el local';
-                                        document.getElementById('t-step-local').innerText = 'En el local';
-                                        if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> En el local / Retirando';
+                                        document.getElementById('t-step-local').innerText = 'Entregando';
+                                        if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> En el local / Entregando';
                                     } else {
                                         document.getElementById('t-step-driver').innerText = 'Camino al local';
                                         document.getElementById('t-step-local').innerText = 'Esperando';
                                         if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> Conductor Asignado';
                                     }
-                                }
-
-                                if (res.status === 'entregado') {
-                                    showSuccessModal();
                                 }
                             }
                         }

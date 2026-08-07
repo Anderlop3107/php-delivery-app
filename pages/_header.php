@@ -591,6 +591,52 @@ $user = current_user();
                     const currentStatuses = {};
                     data.forEach(order => {
                         currentStatuses[order.id] = order.status;
+
+                        // Actualizar en vivo la tarjeta en pantalla si existe el elemento en el DOM
+                        const cardEl = document.getElementById('card-' + order.id);
+                        if (cardEl) {
+                            const s = (order.status || '').toLowerCase();
+                            const pill = cardEl.querySelector('.status-pill-tech');
+                            let pText = 'Procesando...';
+                            let pClass = 'status-local';
+                            let cClass = 'state-local';
+
+                            if (s === 'en_puerta' || s === 'en_camino_al_cliente') {
+                                pText = 'Camino al Cliente';
+                                pClass = 'status-transit';
+                                cClass = 'state-transit';
+                            } else if (s === 'repartidor_en_local') {
+                                pText = 'En el Local';
+                                pClass = 'status-local';
+                                cClass = 'state-local';
+                            } else if (s === 'aceptado') {
+                                pText = 'Camino al Local';
+                                pClass = 'status-local';
+                                cClass = 'state-local';
+                            } else if (s === 'pendiente') {
+                                pText = 'Buscando Repartidor';
+                                pClass = 'status-pendiente';
+                                cClass = 'state-pendiente';
+                            } else if (s === 'entregado') {
+                                pText = '¡Pedido Entregado!';
+                                pClass = 'status-entregado';
+                                cClass = 'state-entregado';
+                            }
+
+                            cardEl.className = 'status-card ' + cClass;
+                            if (pill) {
+                                pill.className = 'status-pill-tech ' + pClass;
+                                pill.innerHTML = (s === 'pendiente' || s === 'aceptado' || s === 'repartidor_en_local' || s === 'en_puerta' || s === 'en_camino_al_cliente')
+                                    ? '<span style="width: 4.5px; height: 4.5px; background: var(--primary, #2563eb); border-radius: 50%; display: inline-block; box-shadow: 0 0 5px var(--primary, #2563eb); animation: pulse-dot 1.5s infinite;"></span> ' + pText
+                                    : pText;
+                            }
+
+                            // Actualizar el dataset.order en la tarjeta para que si el usuario hace clic tenga el nuevo status
+                            const infoLocalEl = document.getElementById('info-local-' + order.id);
+                            if (infoLocalEl) {
+                                infoLocalEl.dataset.order = btoa(JSON.stringify(order));
+                            }
+                        }
                     });
 
                     // Cargar historial de notificaciones enviadas
