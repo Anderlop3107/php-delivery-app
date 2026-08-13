@@ -1041,6 +1041,9 @@ require __DIR__ . '/_header.php';
 
         // Guardar referencia global al pedido activo
         currentTrackingOrder = order;
+        try {
+            sessionStorage.setItem('active_tracking_order_id', order.id);
+        } catch(e) {}
 
         // Reset panel de pago (ocultar si estaba visible de sesión anterior)
         const payPanelReset = document.getElementById('t-payment-panel');
@@ -1411,6 +1414,10 @@ require __DIR__ . '/_header.php';
         }
         trackingDriverMarker = null;
 
+        try {
+            sessionStorage.removeItem('active_tracking_order_id');
+        } catch(e) {}
+
         if (isTrackingModalHistoryPushed && !fromPopState) {
             isTrackingModalHistoryPushed = false;
             try {
@@ -1774,19 +1781,26 @@ document.addEventListener("DOMContentLoaded", () => {
     try {
         const urlParams = new URLSearchParams(window.location.search);
         const openOrderId = urlParams.get('open_order');
+        const savedOrderId = sessionStorage.getItem('active_tracking_order_id');
         const activeOrders = <?= json_encode(array_values($activeRows ?? [])) ?>;
-
         const isDriver = <?= $isDriver ? 'true' : 'false' ?>;
 
-        if (openOrderId && activeOrders.length > 0) {
-            const target = activeOrders.find(o => parseInt(o.id) === parseInt(openOrderId)) || activeOrders[0];
-            if (target && typeof openTrackingSheetModal === 'function') {
-                openTrackingSheetModal(target);
-            }
-        } else if (activeOrders.length >= 1 && isDriver) {
-            // Auto-abrir el mapa en pantalla completa solo para el Repartidor cuando tiene pedido activo
-            if (typeof openTrackingSheetModal === 'function') {
-                openTrackingSheetModal(activeOrders[0]);
+        if (activeOrders.length > 0) {
+            // Prioridad 1: parametro URL ?open_order=X
+            // Prioridad 2: ID guardado en sessionStorage antes de recargar
+            // Prioridad 3: Para el driver en su primer ingreso sin haber cerrado el modal previa
+            const targetId = openOrderId || savedOrderId;
+            
+            if (targetId) {
+                const target = activeOrders.find(o => parseInt(o.id) === parseInt(targetId));
+                if (target && typeof openTrackingSheetModal === 'function') {
+                    openTrackingSheetModal(target);
+                }
+            } else if (isDriver && savedOrderId === null && activeOrders.length >= 1) {
+                // Auto-abrir primer pedido solo para el repartidor si NO ha cerrado previamente el modal (savedOrderId !== null)
+                if (typeof openTrackingSheetModal === 'function') {
+                    openTrackingSheetModal(activeOrders[0]);
+                }
             }
         }
     } catch (e) {
