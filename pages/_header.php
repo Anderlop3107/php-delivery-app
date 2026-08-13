@@ -755,8 +755,20 @@ $user = current_user();
                             const isTrackingModalOpen = trackingModal && trackingModal.style.display !== 'none';
                             
                             if (isTrackingModalOpen) {
-                                // No recargar — el polling en vivo del modal se encargará
-                                console.log('[Header] Status changed but tracking modal is open, skipping reload.');
+                                console.log('[Header] Status changed while tracking modal is open, refreshing tracking modal data...');
+                                if (window.currentTrackingOrder) {
+                                    // Actualizar el estado en el objeto global y re-invocar la vista del modal
+                                    window.currentTrackingOrder.status = currentStatuses[window.currentTrackingOrder.id] || window.currentTrackingOrder.status;
+                                    // Volver a solicitar datos actualizados del pedido para re-renderizar el modal
+                                    fetch('<?= esc(delivery_app_url("pages/api_get_active_deliveries.php")) ?>?_t=' + Date.now())
+                                        .then(r => r.json())
+                                        .then(orders => {
+                                            const updated = orders.find(o => parseInt(o.id) === parseInt(window.currentTrackingOrder.id));
+                                            if (updated && typeof openTrackingSheetModal === 'function') {
+                                                openTrackingSheetModal(updated);
+                                            }
+                                        }).catch(e => console.error(e));
+                                }
                             } else if (document.visibilityState === 'visible') {
                                 if (soundPlayed) {
                                     setTimeout(() => {
