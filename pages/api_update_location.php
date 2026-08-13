@@ -1,5 +1,8 @@
 <?php
+ob_start();
 require_once __DIR__ . '/../bootstrap.php';
+
+ob_clean();
 header('Content-Type: application/json');
 
 $user = current_user();

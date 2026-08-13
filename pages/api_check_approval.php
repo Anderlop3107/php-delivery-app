@@ -1,4 +1,5 @@
 <?php
+ob_start();
 require_once __DIR__ . '/../bootstrap.php';
 require_login();
 
@@ -40,6 +41,8 @@ if ($user['role'] === 'repartidor') {
 
 $approved = ($docsApproved && !$subscriptionExpired);
 
+ob_clean();
+header('Content-Type: application/json');
 echo json_encode([
     'success' => true,
     'approved' => $approved,
