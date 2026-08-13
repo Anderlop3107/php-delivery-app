@@ -778,46 +778,11 @@ $user = current_user();
                         soundPlayed = true;
                     }
 
-                    // Recargar pantalla si hubo CUALQUIER cambio de estado
-                    if (statusChanged && !playCompletedSound) {
-                        const onTrackingPage = window.location.pathname.indexOf('my_deliveries.php') !== -1;
-                        if (onTrackingPage) {
-                            // Si el modal de seguimiento está abierto, NO recargar: 
-                            // el live polling del modal (cada 3s) ya actualiza los datos en vivo.
-                            const trackingModal = document.getElementById('tracking-sheet-modal');
-                            const isTrackingModalOpen = trackingModal && trackingModal.style.display !== 'none';
-                            
-                            if (isTrackingModalOpen) {
-                                console.log('[Header] Status changed while tracking modal is open — updating in-memory state...');
-                                if (window.currentTrackingOrder) {
-                                    const newStatus = currentStatuses[window.currentTrackingOrder.id];
-                                    if (newStatus && newStatus !== window.currentTrackingOrder.status) {
-                                        // Actualizar en memoria: el polling propio del modal (3s) ya
-                                        // se encarga de los textos; solo refrescamos el botón flotante.
-                                        window.currentTrackingOrder.status = newStatus;
-                                        if (typeof refreshFloatingActionButton === 'function') {
-                                            refreshFloatingActionButton(window.currentTrackingOrder);
-                                        }
-                                    }
-                                }
-                            } else if (document.visibilityState === 'visible') {
-                                // Guardar los estados YA actualizados en sessionStorage antes
-                                // del reload para que la primera ejecución post-reload sepa
-                                // que estos estados ya fueron procesados y no silenciar alertas futuras.
-                                sessionStorage.setItem(storageKey, JSON.stringify(currentStatuses));
-                                sessionStorage.setItem(notifiedKey, JSON.stringify(notified));
-
-                                if (soundPlayed) {
-                                    setTimeout(() => {
-                                        window.location.reload();
-                                    }, 2000);
-                                } else {
-                                    window.location.reload();
-                                }
-                            } else {
-                                sessionStorage.setItem('needs_reload', 'true');
-                            }
-                        }
+                    // Sincronización in-place silenciosa (100% Reactiva / SPA) sin recargar la página
+                    if (statusChanged) {
+                        sessionStorage.setItem(storageKey, JSON.stringify(currentStatuses));
+                        sessionStorage.setItem(notifiedKey, JSON.stringify(notified));
+                        console.log('[Header] Estado de entregas actualizado en vivo (sin recarga de página)');
                     }
                 } catch (e) {
                     console.error("Error global background update check:", e);
