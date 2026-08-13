@@ -1,9 +1,13 @@
 <?php
+ob_start();
 require_once __DIR__ . '/../bootstrap.php';
 require_login();
 require_role(['local']);
 
 $user = current_user();
+
+ob_clean();
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 
 // Obtener entregas activas más las completadas recientemente (último minuto)
 $rows = app_all(

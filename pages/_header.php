@@ -827,16 +827,16 @@ $user = current_user();
                 const workerCode = `
                     setInterval(() => {
                         postMessage('tick');
-                    }, 5000);
+                    }, 2500);
                 `;
                 const blob = new Blob([workerCode], {type: 'application/javascript'});
                 const worker = new Worker(URL.createObjectURL(blob));
                 worker.onmessage = function() {
                     checkUpdates();
                 };
-                setTimeout(checkUpdates, 1000);
+                setTimeout(checkUpdates, 500);
             } catch (e) {
-                setInterval(checkUpdates, 5000);
+                setInterval(checkUpdates, 2500);
             }
 
             function checkSystemNotifications() {
