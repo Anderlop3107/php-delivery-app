@@ -636,6 +636,39 @@ $user = current_user();
                             if (infoLocalEl) {
                                 infoLocalEl.dataset.order = btoa(JSON.stringify(order));
                             }
+
+                            // ✅ SINCRONIZAR MODAL ABIERTO — si el modal pertenece a este pedido, inyectar los mismos textos
+                            const trackingModal = document.getElementById('tracking-sheet-modal');
+                            const isModalOpen = trackingModal && trackingModal.style.display !== 'none';
+                            const isThisOrder = window.currentTrackingOrder && parseInt(window.currentTrackingOrder.id) === parseInt(order.id);
+
+                            if (isModalOpen && isThisOrder) {
+                                const subEl      = document.getElementById('t-header-subtitle');
+                                const driverStep = document.getElementById('t-step-driver');
+                                const localStep  = document.getElementById('t-step-local');
+
+                                if (s === 'en_puerta' || s === 'en_camino_al_cliente') {
+                                    if (driverStep) driverStep.innerText = 'Camino al cliente';
+                                    if (localStep)  localStep.innerText  = 'Esperando entrega';
+                                    if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> En camino al cliente';
+                                } else if (s === 'repartidor_en_local' || s === 'en_local') {
+                                    if (driverStep) driverStep.innerText = 'En el local';
+                                    if (localStep)  localStep.innerText  = 'Entregando';
+                                    if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> En el local / Entregando';
+                                } else if (s === 'aceptado') {
+                                    if (driverStep) driverStep.innerText = 'Camino al local';
+                                    if (localStep)  localStep.innerText  = 'Esperando';
+                                    if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> Conductor Asignado';
+                                } else if (s === 'entregado') {
+                                    if (driverStep) driverStep.innerText = 'Entregado';
+                                    if (localStep)  localStep.innerText  = 'Completado';
+                                    if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> Pedido Completado';
+                                }
+
+                                // Sincronizar el objeto global en memoria
+                                window.currentTrackingOrder.status = order.status;
+                                console.log(`[Header→Modal] Pedido #${order.id} | Modal actualizado a: ${s}`);
+                            }
                         }
                     });
 
