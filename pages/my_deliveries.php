@@ -1243,12 +1243,13 @@ require __DIR__ . '/_header.php';
                             }
 
                             if (res.status) {
+                                order.status = res.status; // Actualizar el estado global del pedido
                                 const subEl = document.getElementById('t-header-subtitle');
                                 const nameEl = document.getElementById('t-driver-name');
                                 const localNameEl = document.getElementById('t-local-name');
                                 const avatarEl = document.getElementById('t-driver-avatar-container');
                                 const gpsBtn = document.getElementById('t-header-gps-btn');
-                                const s = (res.status || '').toLowerCase();
+                                const s = (res.status || '').toLowerCase().trim();
 
                                 if (s === 'entregado') {
                                     showSuccessModal('¡Pedido Entregado!', isUserDriver ? '¡Buen trabajo! Has completado la entrega.' : 'El pedido ha sido completado con éxito.');
@@ -1279,7 +1280,7 @@ require __DIR__ . '/_header.php';
 
                                         document.getElementById('t-step-driver').innerText = 'Camino al cliente';
                                         document.getElementById('t-step-local').innerText = 'Esperando entrega';
-                                    } else if (s === 'repartidor_en_local') {
+                                    } else if (s === 'repartidor_en_local' || s === 'en_local') {
                                         document.getElementById('t-step-driver').innerText = 'En el local';
                                         document.getElementById('t-step-local').innerText = 'Entregando';
                                         if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> Punto de retiro / Local';
@@ -1306,7 +1307,7 @@ require __DIR__ . '/_header.php';
                                         document.getElementById('t-step-driver').innerText = 'Camino al cliente';
                                         document.getElementById('t-step-local').innerText = 'Esperando entrega';
                                         if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> En camino al cliente';
-                                    } else if (s === 'repartidor_en_local') {
+                                    } else if (s === 'repartidor_en_local' || s === 'en_local') {
                                         document.getElementById('t-step-driver').innerText = 'En el local';
                                         document.getElementById('t-step-local').innerText = 'Entregando';
                                         if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> En el local / Entregando';
