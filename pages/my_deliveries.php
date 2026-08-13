@@ -851,6 +851,9 @@ require __DIR__ . '/_header.php';
 </div>
 
 <script>
+    // ─── Scope de módulo: constante PHP renderizada una vez ──────────────
+    const isUserDriver = <?= $isDriver ? 'true' : 'false' ?>;
+
     async function updateStatus(orderId, newStatus) {
         const formData = new FormData();
         formData.append('order_id', orderId);
@@ -866,11 +869,119 @@ require __DIR__ . '/_header.php';
             if (res.success) {
                 if (newStatus === 'entregado') {
                     showSuccessModal();
+                } else if (window.currentTrackingOrder && parseInt(window.currentTrackingOrder.id) === parseInt(orderId)) {
+                    // ✅ Actualizar en memoria sin recargar la página
+                    window.currentTrackingOrder.status = newStatus;
+
+                    // Refrescar botón flotante con el nuevo estado
+                    refreshFloatingActionButton(window.currentTrackingOrder);
+
+                    // Refrescar textos del modal inmediatamente
+                    const s = newStatus.toLowerCase();
+                    const subEl      = document.getElementById('t-header-subtitle');
+                    const driverStep = document.getElementById('t-step-driver');
+                    const localStep  = document.getElementById('t-step-local');
+
+                    if (s === 'repartidor_en_local' || s === 'en_local') {
+                        if (driverStep) driverStep.innerText = isUserDriver ? 'En el local'       : 'En el local';
+                        if (localStep)  localStep.innerText  = isUserDriver ? 'Entregando'        : 'Entregando';
+                        if (subEl)      subEl.innerHTML      = isUserDriver
+                            ? '<span class="live-pulse-dot"></span> Punto de retiro / Local'
+                            : '<span class="live-pulse-dot"></span> En el local / Entregando';
+                    } else if (s === 'en_puerta' || s === 'en_camino_al_cliente') {
+                        if (driverStep) driverStep.innerText = 'Camino al cliente';
+                        if (localStep)  localStep.innerText  = 'Esperando entrega';
+                        if (subEl)      subEl.innerHTML      = isUserDriver
+                            ? '<span class="live-pulse-dot"></span> Punto de entrega / Cliente'
+                            : '<span class="live-pulse-dot"></span> En camino al cliente';
+                    }
+
+                    // Actualizar tarjeta externa en la lista (pill)
+                    const cardPill = document.querySelector(`#card-${orderId} .status-pill-tech`);
+                    if (cardPill) {
+                        const dot = '<span style="width:4.5px;height:4.5px;background:var(--primary,#2563eb);border-radius:50%;display:inline-block;box-shadow:0 0 5px var(--primary,#2563eb);animation:pulse-dot 1.5s infinite;"></span>';
+                        if (s === 'repartidor_en_local') cardPill.innerHTML = dot + ' En el Local';
+                        else if (s === 'en_puerta' || s === 'en_camino_al_cliente') cardPill.innerHTML = dot + ' Camino al Cliente';
+                    }
+
+                    console.log(`[updateStatus] Pedido #${orderId} → ${newStatus} (sin recarga)`);
                 } else {
+                    // Fallback: si el modal no está abierto, recargar normalmente
                     window.location.reload();
                 }
             } else { alert(res.message); }
         } catch (e) { console.error(e); }
+    }
+
+    // ─── Refresca el botón flotante del conductor según order.status ──────
+    function refreshFloatingActionButton(order) {
+        const floatingBar = document.getElementById('tracking-floating-action-bar');
+        const floatingBtn = document.getElementById('t-floating-action-btn');
+        if (!isUserDriver || !floatingBar || !floatingBtn) return;
+
+        const s = (order.status || '').toLowerCase();
+        let targetStatus = null;
+        let btnText = '';
+
+        if (s === 'aceptado') {
+            targetStatus = 'repartidor_en_local';
+            btnText = 'Llegué al Local';
+        } else if (s === 'repartidor_en_local') {
+            targetStatus = 'en_puerta';
+            btnText = 'Ir al cliente';
+        } else if (s === 'en_puerta' || s === 'en_camino_al_cliente') {
+            targetStatus = 'llegada';
+            btnText = 'Llegada';
+        }
+
+        if (targetStatus) {
+            floatingBtn.disabled = false;
+            floatingBtn.style.background = '';
+            floatingBtn.style.boxShadow  = '';
+            floatingBtn.classList.remove('btn-success');
+            floatingBtn.innerText = btnText;
+
+            if (targetStatus === 'llegada') {
+                floatingBtn.onclick = () => {
+                    const localPaysFee = !!order._localPaysFee;
+                    const driverPaid   = !!order._driverPaid;
+                    const needsPanel   = !localPaysFee || driverPaid;
+                    if (needsPanel) {
+                        const sheet = document.querySelector('.tracking-bottom-sheet');
+                        const payPanel = document.getElementById('t-payment-panel');
+                        if (sheet) sheet.classList.add('expanded');
+                        if (payPanel) {
+                            payPanel.style.display = 'block';
+                            requestAnimationFrame(() => payPanel.classList.add('visible'));
+                        }
+                        if (sheet) setTimeout(() => sheet.scrollTo({ top: sheet.scrollHeight, behavior: 'smooth' }), 200);
+                    }
+                    floatingBtn.innerText = 'Entregado';
+                    floatingBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
+                    floatingBtn.style.boxShadow = '0 12px 28px rgba(16,185,129,0.38), 0 4px 12px rgba(0,0,0,0.12)';
+                    floatingBtn.disabled = false;
+                    floatingBar.style.display = 'block';
+                    document.body.classList.add('has-floating-action');
+                    floatingBtn.onclick = async () => {
+                        floatingBtn.disabled = true;
+                        floatingBtn.innerText = 'Cargando...';
+                        await confirmarEntregado();
+                    };
+                };
+            } else {
+                floatingBtn.onclick = async () => {
+                    floatingBtn.disabled = true;
+                    floatingBtn.innerText = 'Cargando...';
+                    await updateStatus(order.id, targetStatus);
+                };
+            }
+
+            floatingBar.style.display = 'block';
+            document.body.classList.add('has-floating-action');
+        } else {
+            floatingBar.style.display = 'none';
+            document.body.classList.remove('has-floating-action');
+        }
     }
 
     let deliveredTimeout = null;
@@ -926,7 +1037,7 @@ require __DIR__ . '/_header.php';
             trackingLiveInterval = null;
         }
 
-        const isUserDriver = <?= $isDriver ? 'true' : 'false' ?>;
+        // isUserDriver ya está definido en scope de módulo (línea ~854)
 
         // Guardar referencia global al pedido activo
         currentTrackingOrder = order;
@@ -1102,83 +1213,11 @@ require __DIR__ . '/_header.php';
             }
         }
 
-        // Configurar botón flotante sobre el mapa para el conductor
-        const floatingBar = document.getElementById('tracking-floating-action-bar');
-        const floatingBtn = document.getElementById('t-floating-action-btn');
-        if (isUserDriver && floatingBar && floatingBtn) {
-            const s = (order.status || '').toLowerCase();
-            let targetStatus = null;
-            let btnText = '';
-            let isSuccessBtn = false;
-
-            if (s === 'aceptado') {
-                targetStatus = 'repartidor_en_local';
-                btnText = 'Llegué al Local';
-            } else if (s === 'repartidor_en_local') {
-                targetStatus = 'en_puerta';
-                btnText = 'Ir al cliente';
-            } else if (s === 'en_puerta' || s === 'en_camino_al_cliente') {
-                targetStatus = 'llegada'; // pseudo-status local, no actualiza BD
-                btnText = 'Llegada';
-                isSuccessBtn = false;
-            }
-
-            if (targetStatus) {
-                floatingBtn.disabled = false;
-                floatingBtn.innerText = btnText;
-                if (isSuccessBtn) {
-                    floatingBtn.classList.add('btn-success');
-                } else {
-                    floatingBtn.classList.remove('btn-success');
-                }
-
-                if (targetStatus === 'llegada') {
-                    // Llegada: comportamiento según escenario de cobro
-                    floatingBtn.onclick = () => {
-                        const localPaysFee = !!order._localPaysFee;
-                        const driverPaid   = !!order._driverPaid;
-                        const needsPanel   = !localPaysFee || driverPaid; // Escenarios A, B, C
-
-                        if (needsPanel) {
-                            // Escenarios A, B, C: expandir tarjeta + panel de cobro
-                            const sheet = document.querySelector('.tracking-bottom-sheet');
-                            const payPanel = document.getElementById('t-payment-panel');
-                            if (sheet) sheet.classList.add('expanded');
-                            if (payPanel) {
-                                payPanel.style.display = 'block';
-                                requestAnimationFrame(() => payPanel.classList.add('visible'));
-                            }
-                            if (sheet) setTimeout(() => sheet.scrollTo({ top: sheet.scrollHeight, behavior: 'smooth' }), 200);
-                        }
-                        // Todos los escenarios: convertir botón flotante a Entregado verde
-                        floatingBtn.innerText = 'Entregado';
-                        floatingBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
-                        floatingBtn.style.boxShadow = '0 12px 28px rgba(16,185,129,0.38), 0 4px 12px rgba(0,0,0,0.12)';
-                        floatingBtn.disabled = false;
-                        floatingBar.style.display = 'block';
-                        document.body.classList.add('has-floating-action');
-                        floatingBtn.onclick = async () => {
-                            floatingBtn.disabled = true;
-                            floatingBtn.innerText = 'Cargando...';
-                            await confirmarEntregado();
-                        };
-                    };
-                } else {
-                    floatingBtn.onclick = async () => {
-                        floatingBtn.disabled = true;
-                        floatingBtn.innerText = 'Cargando...';
-                        await updateStatus(order.id, targetStatus);
-                    };
-                }
-
-                floatingBar.style.display = 'block';
-                document.body.classList.add('has-floating-action');
-            } else {
-                floatingBar.style.display = 'none';
-                document.body.classList.remove('has-floating-action');
-            }
-        } else if (floatingBar) {
-            floatingBar.style.display = 'none';
+        // Configurar botón flotante — delegado a refreshFloatingActionButton()
+        refreshFloatingActionButton(order);
+        const floatingBarLocal = document.getElementById('tracking-floating-action-bar');
+        if (!isUserDriver && floatingBarLocal) {
+            floatingBarLocal.style.display = 'none';
             document.body.classList.remove('has-floating-action');
         }
 
