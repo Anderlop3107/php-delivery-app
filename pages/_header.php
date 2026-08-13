@@ -788,21 +788,25 @@ $user = current_user();
                             const isTrackingModalOpen = trackingModal && trackingModal.style.display !== 'none';
                             
                             if (isTrackingModalOpen) {
-                                console.log('[Header] Status changed while tracking modal is open, refreshing tracking modal data...');
+                                console.log('[Header] Status changed while tracking modal is open — updating in-memory state...');
                                 if (window.currentTrackingOrder) {
-                                    // Actualizar el estado en el objeto global y re-invocar la vista del modal
-                                    window.currentTrackingOrder.status = currentStatuses[window.currentTrackingOrder.id] || window.currentTrackingOrder.status;
-                                    // Volver a solicitar datos actualizados del pedido para re-renderizar el modal
-                                    fetch('<?= esc(delivery_app_url("pages/api_get_active_deliveries.php")) ?>?_t=' + Date.now())
-                                        .then(r => r.json())
-                                        .then(orders => {
-                                            const updated = orders.find(o => parseInt(o.id) === parseInt(window.currentTrackingOrder.id));
-                                            if (updated && typeof openTrackingSheetModal === 'function') {
-                                                openTrackingSheetModal(updated);
-                                            }
-                                        }).catch(e => console.error(e));
+                                    const newStatus = currentStatuses[window.currentTrackingOrder.id];
+                                    if (newStatus && newStatus !== window.currentTrackingOrder.status) {
+                                        // Actualizar en memoria: el polling propio del modal (3s) ya
+                                        // se encarga de los textos; solo refrescamos el botón flotante.
+                                        window.currentTrackingOrder.status = newStatus;
+                                        if (typeof refreshFloatingActionButton === 'function') {
+                                            refreshFloatingActionButton(window.currentTrackingOrder);
+                                        }
+                                    }
                                 }
                             } else if (document.visibilityState === 'visible') {
+                                // Guardar los estados YA actualizados en sessionStorage antes
+                                // del reload para que la primera ejecución post-reload sepa
+                                // que estos estados ya fueron procesados y no silenciar alertas futuras.
+                                sessionStorage.setItem(storageKey, JSON.stringify(currentStatuses));
+                                sessionStorage.setItem(notifiedKey, JSON.stringify(notified));
+
                                 if (soundPlayed) {
                                     setTimeout(() => {
                                         window.location.reload();
