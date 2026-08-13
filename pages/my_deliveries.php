@@ -1243,18 +1243,24 @@ require __DIR__ . '/_header.php';
                             }
 
                             if (res.status) {
-                                order.status = res.status; // Actualizar el estado global del pedido
-                                const subEl = document.getElementById('t-header-subtitle');
-                                const nameEl = document.getElementById('t-driver-name');
-                                const localNameEl = document.getElementById('t-local-name');
-                                const avatarEl = document.getElementById('t-driver-avatar-container');
-                                const gpsBtn = document.getElementById('t-header-gps-btn');
-                                const s = (res.status || '').toLowerCase().trim();
+                                const nuevoEstado = res.status.toLowerCase().trim();
+                                const estadoAnterior = (order.status || '').toLowerCase().trim();
 
-                                if (s === 'entregado') {
+                                // 🟢 LOG DE CONTROL PARA F12
+                                console.log(`[Polling Live] Pedido #${order.id} | Estado en BD: ${nuevoEstado} | EsDriver: ${isUserDriver}`);
+
+                                order.status = res.status; // Actualizar el estado global del pedido
+
+                                if (nuevoEstado === 'entregado') {
                                     showSuccessModal('¡Pedido Entregado!', isUserDriver ? '¡Buen trabajo! Has completado la entrega.' : 'El pedido ha sido completado con éxito.');
                                 } else if (isUserDriver) {
-                                    if (s === 'en_puerta' || s === 'en_camino_al_cliente') {
+                                    const subEl = document.getElementById('t-header-subtitle');
+                                    const nameEl = document.getElementById('t-driver-name');
+                                    const localNameEl = document.getElementById('t-local-name');
+                                    const avatarEl = document.getElementById('t-driver-avatar-container');
+                                    const gpsBtn = document.getElementById('t-header-gps-btn');
+
+                                    if (nuevoEstado === 'en_puerta' || nuevoEstado === 'en_camino_al_cliente') {
                                         if (nameEl) nameEl.innerText = order.customer_name || 'Cliente';
                                         if (localNameEl) localNameEl.innerText = order.customer_name || 'Cliente';
                                         if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> Punto de entrega / Cliente';
@@ -1280,7 +1286,7 @@ require __DIR__ . '/_header.php';
 
                                         document.getElementById('t-step-driver').innerText = 'Camino al cliente';
                                         document.getElementById('t-step-local').innerText = 'Esperando entrega';
-                                    } else if (s === 'repartidor_en_local' || s === 'en_local') {
+                                    } else if (nuevoEstado === 'repartidor_en_local' || nuevoEstado === 'en_local') {
                                         document.getElementById('t-step-driver').innerText = 'En el local';
                                         document.getElementById('t-step-local').innerText = 'Entregando';
                                         if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> Punto de retiro / Local';
@@ -1290,7 +1296,13 @@ require __DIR__ . '/_header.php';
                                         if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> Punto de retiro / Local';
                                     }
                                 } else {
-                                    // Vista del Comercio/Local — sincronizada exactamente con la App del Delivery
+                                    // 1. Vista del Comercio / Local
+                                    const driverStep = document.getElementById('t-step-driver');
+                                    const localStep = document.getElementById('t-step-local');
+                                    const subEl = document.getElementById('t-header-subtitle');
+                                    const nameEl = document.getElementById('t-driver-name');
+                                    const avatarEl = document.getElementById('t-driver-avatar-container');
+
                                     if (nameEl && order.repartidor_name) nameEl.innerText = order.repartidor_name;
                                     if (avatarEl && !avatarEl.querySelector('img')) {
                                         avatarEl.style.background = '';
@@ -1303,23 +1315,32 @@ require __DIR__ . '/_header.php';
                                             avatarEl.innerHTML = '🛵';
                                         }
                                     }
-                                    if (s === 'en_puerta' || s === 'en_camino_al_cliente') {
-                                        document.getElementById('t-step-driver').innerText = 'Camino al cliente';
-                                        document.getElementById('t-step-local').innerText = 'Esperando entrega';
-                                        if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> En camino al cliente';
-                                    } else if (s === 'repartidor_en_local' || s === 'en_local') {
-                                        document.getElementById('t-step-driver').innerText = 'En el local';
-                                        document.getElementById('t-step-local').innerText = 'Entregando';
+
+                                    if (nuevoEstado === 'repartidor_en_local' || nuevoEstado === 'en_local') {
+                                        if (driverStep) driverStep.innerText = 'En el local';
+                                        if (localStep) localStep.innerText = 'Entregando';
                                         if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> En el local / Entregando';
+                                    } else if (nuevoEstado === 'en_puerta' || nuevoEstado === 'en_camino_al_cliente') {
+                                        if (driverStep) driverStep.innerText = 'Camino al cliente';
+                                        if (localStep) localStep.innerText = 'Esperando entrega';
+                                        if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> En camino al cliente';
                                     } else {
-                                        document.getElementById('t-step-driver').innerText = 'Camino al local';
-                                        document.getElementById('t-step-local').innerText = 'Esperando';
+                                        if (driverStep) driverStep.innerText = 'Camino al local';
+                                        if (localStep) localStep.innerText = 'Esperando';
                                         if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> Conductor Asignado';
+                                    }
+
+                                    // 2. Si hubo cambio de estado mientras el modal estaba abierto, forzar actualización de datos completos
+                                    if (nuevoEstado !== estadoAnterior && typeof openTrackingSheetModal === 'function') {
+                                        console.log(`[Polling Live] Cambio de estado detectado en Local (${estadoAnterior} -> ${nuevoEstado}). Re-renderizando modal...`);
+                                        openTrackingSheetModal(order);
                                     }
                                 }
                             }
                         }
-                    } catch (e) {}
+                    } catch (e) {
+                        console.error("Error en Polling:", e);
+                    }
                 }, 3000);
             });
         }, 150);
