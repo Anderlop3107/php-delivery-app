@@ -29,41 +29,81 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($subscriptionExpired) {
         $errors[] = 'Tu suscripción mensual ha vencido o requiere verificación. Por favor, sube tu comprobante de pago.';
     }
-    $cName = trim((string)($_POST['customer_name'] ?? ''));
-    $cPhone = trim((string)($_POST['customer_phone'] ?? ''));
-    $address = trim((string)($_POST['delivery_address'] ?? ''));
-    $deliveryCost = (float)($_POST['delivery_cost'] ?? 0);
-    $productAmount = (float)($_POST['product_amount'] ?? 0);
-    $driverPays = ($_POST['driver_pays'] ?? 'no') === 'yes' ? 1 : 0;
-    $feePayer = $_POST['fee_payer'] ?? 'cliente';
-    
-    $destLat = $_POST['delivery_latitude'] !== '' ? (float) $_POST['delivery_latitude'] : null;
-    $destLng = $_POST['delivery_longitude'] !== '' ? (float) $_POST['delivery_longitude'] : null;
-    $originLat = $_POST['origin_latitude'] !== '' ? (float) $_POST['origin_latitude'] : (float)$localData['latitude'];
-    $originLng = $_POST['origin_longitude'] !== '' ? (float) $_POST['origin_longitude'] : (float)$localData['longitude'];
 
-    if ($cName === '' || $address === '' || $deliveryCost <= 0) {
-        $errors[] = 'Todos los campos son obligatorios.';
+    $cName        = trim((string)($_POST['customer_name']       ?? ''));
+    $cPhone       = trim((string)($_POST['customer_phone']      ?? ''));
+    $address      = trim((string)($_POST['delivery_address']    ?? ''));
+    $orderDesc    = trim((string)($_POST['order_description']   ?? ''));
+    $deliveryCost = (float)($_POST['delivery_cost']   ?? 0);
+    $productAmount= (float)($_POST['product_amount']  ?? 0);
+    $driverPays   = ($_POST['driver_pays'] ?? 'no') === 'yes' ? 1 : 0;
+
+    // ── Validación server-side de delivery_fee_payer ──────────────────────
+    $allowedFeePayers = ['local', 'cliente'];
+    $rawFeePayer = $_POST['fee_payer'] ?? '';
+    $feePayer    = in_array($rawFeePayer, $allowedFeePayers, true) ? $rawFeePayer : 'cliente';
+
+    // ── Coordenadas ───────────────────────────────────────────────────────
+    $destLat   = isset($_POST['delivery_latitude'])  && $_POST['delivery_latitude']  !== '' ? (float)$_POST['delivery_latitude']  : null;
+    $destLng   = isset($_POST['delivery_longitude']) && $_POST['delivery_longitude'] !== '' ? (float)$_POST['delivery_longitude'] : null;
+    $originLat = isset($_POST['origin_latitude'])    && $_POST['origin_latitude']    !== '' ? (float)$_POST['origin_latitude']    : (float)$localData['latitude'];
+    $originLng = isset($_POST['origin_longitude'])   && $_POST['origin_longitude']   !== '' ? (float)$_POST['origin_longitude']   : (float)$localData['longitude'];
+
+    // ── Validaciones ──────────────────────────────────────────────────────
+    if ($cName === '') {
+        $errors[] = 'El nombre del cliente es obligatorio.';
+    }
+    if ($address === '') {
+        $errors[] = 'La dirección de entrega es obligatoria.';
+    }
+    if ($deliveryCost < 1) {
+        $errors[] = 'El costo de envío debe ser mayor a 0.';
+    }
+    if ($destLat === null || $destLng === null) {
+        $errors[] = 'Seleccioná la ubicación de entrega en el mapa antes de confirmar.';
+    }
+    if ($destLat !== null && ($destLat < -90 || $destLat > 90)) {
+        $errors[] = 'Latitud de destino inválida.';
+    }
+    if ($destLng !== null && ($destLng < -180 || $destLng > 180)) {
+        $errors[] = 'Longitud de destino inválida.';
+    }
+
+    // ── Guard anti-duplicado (mismo local + cliente + dirección en los últimos 30s) ──
+    if (empty($errors)) {
+        $dup = app_one(
+            "SELECT id FROM deliveries
+             WHERE local_user_id = ?
+               AND customer_name = ?
+               AND delivery_address = ?
+               AND created_at >= DATE_SUB(NOW(), INTERVAL 30 SECOND)",
+            'iss',
+            [(int)$user['id'], $cName, $address]
+        );
+        if ($dup) {
+            $errors[] = 'Este pedido ya fue enviado recientemente. Esperá unos segundos antes de intentarlo de nuevo.';
+        }
     }
 
     if (empty($errors)) {
         app_exec(
             "INSERT INTO deliveries (
-                local_user_id, customer_name, customer_phone, delivery_address, 
+                local_user_id, customer_name, customer_phone, delivery_address,
                 order_description, amount, delivery_cost, driver_pays_local, delivery_fee_payer,
-                pickup_latitude, pickup_longitude, delivery_latitude, delivery_longitude, 
+                pickup_latitude, pickup_longitude, delivery_latitude, delivery_longitude,
                 status, created_at
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'pendiente', NOW())",
             'issssddisdddd',
             [
-                (int)$user['id'], $cName, $cPhone, $address, 
-                trim((string)$_POST['order_description']), $productAmount, $deliveryCost, $driverPays, $feePayer,
+                (int)$user['id'], $cName, $cPhone, $address,
+                $orderDesc, $productAmount, $deliveryCost, $driverPays, $feePayer,
                 $originLat, $originLng, $destLat, $destLng
             ]
         );
         header('Location: create_delivery.php?success=1'); exit;
     }
 }
+
 
 $title = 'Nuevo Pedido';
 require __DIR__ . '/_header.php';
