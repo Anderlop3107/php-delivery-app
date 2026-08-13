@@ -1231,15 +1231,124 @@ require __DIR__ . '/_header.php';
             } catch(e) {}
         }
 
+        // Actualiza textos, pills y sincroniza estado en cada tick de 3 segundos.
+        trackingLiveInterval = setInterval(async () => {
+            try {
+                const resp = await fetch(`api_get_order_live_location.php?order_id=${order.id}&_t=${Date.now()}`);
+                const res = await resp.json();
+                if (res.success) {
+                    // Mover marcador GPS si el mapa ya cargó
+                    if (res.driver_lat && res.driver_lng && trackingDriverMarker) {
+                        const liveLng = parseFloat(res.driver_lng);
+                        const liveLat = parseFloat(res.driver_lat);
+                        trackingDriverMarker.setLngLat([liveLng, liveLat]);
+                    }
 
-        // Inicializar mapa de seguimiento
+                    if (res.status) {
+                        const nuevoEstado = res.status.toLowerCase().trim();
+
+                        // 🟢 LOG DE CONTROL PARA F12
+                        console.log(`[Polling Live] Pedido #${order.id} | BD: ${nuevoEstado} | EsDriver: ${isUserDriver}`);
+
+                        order.status = res.status; // Actualizar objeto base
+
+                        // 1. REFRESCAR ELEMENTOS INTERNOS DEL MODAL FLOTANTE (siempre, no solo al cambiar)
+                        const subEl = document.getElementById('t-header-subtitle');
+                        const driverStep = document.getElementById('t-step-driver');
+                        const localStep = document.getElementById('t-step-local');
+
+                        if (!isUserDriver) {
+                            // 🏪 VISTA DEL COMERCIO / LOCAL — actualizar textos y avatar en cada tick
+                            const nameEl = document.getElementById('t-driver-name');
+                            const avatarEl = document.getElementById('t-driver-avatar-container');
+                            if (nameEl && order.repartidor_name) nameEl.innerText = order.repartidor_name;
+                            if (avatarEl && !avatarEl.querySelector('img')) {
+                                avatarEl.style.background = '';
+                                avatarEl.style.border = '';
+                                avatarEl.style.boxShadow = '';
+                                if (order.repartidor_avatar) {
+                                    const baseUrl = '<?= esc(delivery_app_url()) ?>/'
+                                    avatarEl.innerHTML = `<img src="${baseUrl}${order.repartidor_avatar}" alt="Avatar Repartidor">`;
+                                } else {
+                                    avatarEl.innerHTML = '🛵';
+                                }
+                            }
+
+                            // Textos del modal según estado (vista Local)
+                            if (nuevoEstado === 'en_puerta' || nuevoEstado === 'en_camino_al_cliente') {
+                                if (driverStep) driverStep.innerText = 'Camino al cliente';
+                                if (localStep)  localStep.innerText  = 'Esperando entrega';
+                                if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> En camino al cliente';
+                            } else if (nuevoEstado === 'repartidor_en_local' || nuevoEstado === 'en_local') {
+                                if (driverStep) driverStep.innerText = 'En el local';
+                                if (localStep)  localStep.innerText  = 'Entregando';
+                                if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> En el local / Entregando';
+                            } else if (nuevoEstado === 'entregado') {
+                                if (driverStep) driverStep.innerText = 'Entregado';
+                                if (localStep)  localStep.innerText  = 'Completado';
+                                if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> Pedido Completado';
+                                showSuccessModal('¡Pedido Entregado!', 'El pedido ha sido completado con éxito.');
+                            } else {
+                                // Estado: aceptado / en_camino_al_local (Etapa 1)
+                                if (driverStep) driverStep.innerText = 'Camino al local';
+                                if (localStep)  localStep.innerText  = 'Esperando';
+                                if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> Conductor Asignado';
+                            }
+
+                        } else {
+                            // 🛵 VISTA DEL REPARTIDOR
+                            if (nuevoEstado === 'repartidor_en_local' || nuevoEstado === 'en_local') {
+                                if (driverStep) driverStep.innerText = 'En el local';
+                                if (localStep)  localStep.innerText  = 'Entregando';
+                                if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> Punto de retiro / Local';
+                            } else if (nuevoEstado === 'en_puerta' || nuevoEstado === 'en_camino_al_cliente') {
+                                if (driverStep) driverStep.innerText = 'Camino al cliente';
+                                if (localStep)  localStep.innerText  = 'Esperando entrega';
+                                if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> Punto de entrega / Cliente';
+                            } else if (nuevoEstado === 'entregado') {
+                                if (driverStep) driverStep.innerText = 'Entregado';
+                                if (localStep)  localStep.innerText  = 'Completado';
+                                if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> Pedido Completado';
+                                showSuccessModal('¡Pedido Entregado!', '¡Buen trabajo! Has completado la entrega.');
+                            }
+                            // También refrescar el botón flotante si el driver ya no está en la etapa correcta
+                            if (window.currentTrackingOrder && window.currentTrackingOrder.status !== res.status) {
+                                refreshFloatingActionButton(window.currentTrackingOrder);
+                            }
+                        }
+
+                        // 2. ACTUALIZAR EL OBJETO EN MEMORIA DEL MODAL ABIERTO
+                        if (window.currentTrackingOrder && window.currentTrackingOrder.id == order.id) {
+                            window.currentTrackingOrder.status = res.status;
+                        }
+
+                        // 3. RE-RENDERIZAR LA TARJETA EXTERNA DE LA LISTA
+                        const cardPill = document.querySelector(`#card-${order.id} .status-pill-tech`);
+                        if (cardPill) {
+                            if (nuevoEstado === 'repartidor_en_local' || nuevoEstado === 'en_local') {
+                                cardPill.innerHTML = '<span style="width: 4.5px; height: 4.5px; background: var(--primary, #2563eb); border-radius: 50%; display: inline-block; box-shadow: 0 0 5px var(--primary, #2563eb); animation: pulse-dot 1.5s infinite;"></span> En el Local';
+                            } else if (nuevoEstado === 'en_puerta' || nuevoEstado === 'en_camino_al_cliente') {
+                                cardPill.innerHTML = '<span style="width: 4.5px; height: 4.5px; background: var(--primary, #2563eb); border-radius: 50%; display: inline-block; box-shadow: 0 0 5px var(--primary, #2563eb); animation: pulse-dot 1.5s infinite;"></span> Camino al Cliente';
+                            } else if (nuevoEstado === 'entregado') {
+                                cardPill.innerHTML = '<span style="width: 4.5px; height: 4.5px; background: #10b981; border-radius: 50%; display: inline-block;"></span> Entregado';
+                            }
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error("Error en Polling:", e);
+            }
+        }, 3000);
+
+        // ─── MAPA DE SEGUIMIENTO — independiente del polling ────────────────
+        // Solo se inicializa para visualización GPS; el estado ya está cubierto arriba.
         setTimeout(() => {
             mapboxgl.accessToken = 'pk.eyJ1IjoiYW5kZXJsb3AiLCJhIjoiY21uMGJ1ZXhzMGkxMDJycHRuYzEwcmp4NCJ9.Jn4uXN5yX4DFIImQjw_R4w';
-            
+
             const driverLng = parseFloat(order.repartidor_lng || order.local_lng - 0.005);
             const driverLat = parseFloat(order.repartidor_lat || order.local_lat - 0.005);
-            const localLng = parseFloat(order.local_lng);
-            const localLat = parseFloat(order.local_lat);
+            const localLng  = parseFloat(order.local_lng);
+            const localLat  = parseFloat(order.local_lat);
 
             if (trackingSheetMap) {
                 trackingSheetMap.remove();
@@ -1253,14 +1362,14 @@ require __DIR__ . '/_header.php';
                 zoom: 13
             });
 
-            trackingSheetMap.on('load', async () => {
+            trackingSheetMap.on('load', () => {
                 trackingSheetMap.resize();
 
                 // Marcador Conductor (Avatar Foto de Perfil)
                 const driverPin = document.createElement('div');
                 let avatarContent = '';
                 if (order.repartidor_avatar) {
-                    const baseUrl = '<?= esc(delivery_app_url()) ?>/';
+                    const baseUrl = '<?= esc(delivery_app_url()) ?>/'
                     avatarContent = `<img src="${baseUrl}${order.repartidor_avatar}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
                 } else {
                     avatarContent = `<span style="font-size: 20px;">🛵</span>`;
@@ -1276,118 +1385,15 @@ require __DIR__ . '/_header.php';
                 // Marcador Local (Verde)
                 new mapboxgl.Marker({ color: '#10b981' }).setLngLat([localLng, localLat]).addTo(trackingSheetMap);
 
-                // Ajustar encuadre priorizando el 60% superior del mapa sobre el BottomSheet inferior
+                // Ajustar encuadre
                 const bounds = new mapboxgl.LngLatBounds()
                     .extend([driverLng, driverLat])
                     .extend([localLng, localLat]);
                 trackingSheetMap.fitBounds(bounds, { padding: { top: 70, bottom: 280, left: 50, right: 50 }, maxZoom: 15 });
-
-                // Polling en tiempo real cada 3 segundos para mover suavemente el marcador del conductor y refrescar el estado
-                trackingLiveInterval = setInterval(async () => {
-                    try {
-                        const resp = await fetch(`api_get_order_live_location.php?order_id=${order.id}&_t=${Date.now()}`);
-                        const res = await resp.json();
-                        if (res.success) {
-                            if (res.driver_lat && res.driver_lng && trackingDriverMarker) {
-                                const liveLng = parseFloat(res.driver_lng);
-                                const liveLat = parseFloat(res.driver_lat);
-                                trackingDriverMarker.setLngLat([liveLng, liveLat]);
-                            }
-
-                            if (res.status) {
-                                const nuevoEstado = res.status.toLowerCase().trim();
-
-                                // 🟢 LOG DE CONTROL PARA F12
-                                console.log(`[Polling Live] Pedido #${order.id} | BD: ${nuevoEstado} | EsDriver: ${isUserDriver}`);
-
-                                order.status = res.status; // Actualizar objeto base
-
-                                // 1. REFRESCAR ELEMENTOS INTERNOS DEL MODAL FLOTANTE (siempre, no solo al cambiar)
-                                const subEl = document.getElementById('t-header-subtitle');
-                                const driverStep = document.getElementById('t-step-driver');
-                                const localStep = document.getElementById('t-step-local');
-
-                                if (!isUserDriver) {
-                                    // 🏪 VISTA DEL COMERCIO / LOCAL — actualizar textos y avatar en cada tick
-                                    const nameEl = document.getElementById('t-driver-name');
-                                    const avatarEl = document.getElementById('t-driver-avatar-container');
-                                    if (nameEl && order.repartidor_name) nameEl.innerText = order.repartidor_name;
-                                    if (avatarEl && !avatarEl.querySelector('img')) {
-                                        avatarEl.style.background = '';
-                                        avatarEl.style.border = '';
-                                        avatarEl.style.boxShadow = '';
-                                        if (order.repartidor_avatar) {
-                                            const baseUrl = '<?= esc(delivery_app_url()) ?>/';
-                                            avatarEl.innerHTML = `<img src="${baseUrl}${order.repartidor_avatar}" alt="Avatar Repartidor">`;
-                                        } else {
-                                            avatarEl.innerHTML = '🛵';
-                                        }
-                                    }
-
-                                    // Textos del modal según estado (vista Local)
-                                    if (nuevoEstado === 'en_puerta' || nuevoEstado === 'en_camino_al_cliente') {
-                                        if (driverStep) driverStep.innerText = 'Camino al cliente';
-                                        if (localStep)  localStep.innerText  = 'Esperando entrega';
-                                        if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> En camino al cliente';
-                                    } else if (nuevoEstado === 'repartidor_en_local' || nuevoEstado === 'en_local') {
-                                        if (driverStep) driverStep.innerText = 'En el local';
-                                        if (localStep)  localStep.innerText  = 'Entregando';
-                                        if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> En el local / Entregando';
-                                    } else if (nuevoEstado === 'entregado') {
-                                        if (driverStep) driverStep.innerText = 'Entregado';
-                                        if (localStep)  localStep.innerText  = 'Completado';
-                                        if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> Pedido Completado';
-                                        showSuccessModal('¡Pedido Entregado!', 'El pedido ha sido completado con éxito.');
-                                    } else {
-                                        // Estado: aceptado / en_camino_al_local (Etapa 1)
-                                        if (driverStep) driverStep.innerText = 'Camino al local';
-                                        if (localStep)  localStep.innerText  = 'Esperando';
-                                        if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> Conductor Asignado';
-                                    }
-
-                                } else {
-                                    // 🛵 VISTA DEL REPARTIDOR
-                                    if (nuevoEstado === 'repartidor_en_local' || nuevoEstado === 'en_local') {
-                                        if (driverStep) driverStep.innerText = 'En el local';
-                                        if (localStep)  localStep.innerText  = 'Entregando';
-                                        if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> Punto de retiro / Local';
-                                    } else if (nuevoEstado === 'en_puerta' || nuevoEstado === 'en_camino_al_cliente') {
-                                        if (driverStep) driverStep.innerText = 'Camino al cliente';
-                                        if (localStep)  localStep.innerText  = 'Esperando entrega';
-                                        if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> Punto de entrega / Cliente';
-                                    } else if (nuevoEstado === 'entregado') {
-                                        if (driverStep) driverStep.innerText = 'Entregado';
-                                        if (localStep)  localStep.innerText  = 'Completado';
-                                        if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> Pedido Completado';
-                                        showSuccessModal('¡Pedido Entregado!', '¡Buen trabajo! Has completado la entrega.');
-                                    }
-                                }
-
-                                // 2. ACTUALIZAR EL OBJETO EN MEMORIA DEL MODAL ABIERTO
-                                if (window.currentTrackingOrder && window.currentTrackingOrder.id == order.id) {
-                                    window.currentTrackingOrder.status = res.status;
-                                }
-
-                                // 3. RE-RENDERIZAR LA TARJETA EXTERNA DE LA LISTA
-                                const cardPill = document.querySelector(`#card-${order.id} .status-pill-tech`);
-                                if (cardPill) {
-                                    if (nuevoEstado === 'repartidor_en_local' || nuevoEstado === 'en_local') {
-                                        cardPill.innerHTML = '<span style="width: 4.5px; height: 4.5px; background: var(--primary, #2563eb); border-radius: 50%; display: inline-block; box-shadow: 0 0 5px var(--primary, #2563eb); animation: pulse-dot 1.5s infinite;"></span> En el Local';
-                                    } else if (nuevoEstado === 'en_puerta' || nuevoEstado === 'en_camino_al_cliente') {
-                                        cardPill.innerHTML = '<span style="width: 4.5px; height: 4.5px; background: var(--primary, #2563eb); border-radius: 50%; display: inline-block; box-shadow: 0 0 5px var(--primary, #2563eb); animation: pulse-dot 1.5s infinite;"></span> Camino al Cliente';
-                                    } else if (nuevoEstado === 'entregado') {
-                                        cardPill.innerHTML = '<span style="width: 4.5px; height: 4.5px; background: #10b981; border-radius: 50%; display: inline-block;"></span> Entregado';
-                                    }
-                                }
-                            }
-                        }
-                    } catch (e) {
-                        console.error("Error en Polling:", e);
-                    }
-                }, 3000);
             });
         }, 150);
     }
+
 
     function closeTrackingSheetModal(fromPopState = false) {
         if (trackingLiveInterval) {
