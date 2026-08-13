@@ -1036,8 +1036,21 @@ require __DIR__ . '/_header.php';
         } else {
             // El Comercio está viendo el mapa -> Mostrar información del REPARTIDOR
             nameEl.innerText = order.repartidor_name || 'Conductor';
-            if (subtitleEl) subtitleEl.innerHTML = '<span class="live-pulse-dot"></span> Conductor Asignado';
             if (verifiedBadge) verifiedBadge.style.display = 'inline-flex';
+
+            // Inicializar subtítulo del Local según el estado real del pedido
+            const sLocal = (order.status || '').toLowerCase().trim();
+            if (subtitleEl) {
+                if (sLocal === 'en_puerta' || sLocal === 'en_camino_al_cliente') {
+                    subtitleEl.innerHTML = '<span class="live-pulse-dot"></span> En camino al cliente';
+                } else if (sLocal === 'repartidor_en_local' || sLocal === 'en_local') {
+                    subtitleEl.innerHTML = '<span class="live-pulse-dot"></span> En el local / Entregando';
+                } else if (sLocal === 'entregado') {
+                    subtitleEl.innerHTML = '<span class="live-pulse-dot"></span> Pedido Completado';
+                } else {
+                    subtitleEl.innerHTML = '<span class="live-pulse-dot"></span> Conductor Asignado';
+                }
+            }
 
             if (order.repartidor_avatar) {
                 const baseUrl = '<?= esc(delivery_app_url()) ?>/';
@@ -1244,19 +1257,19 @@ require __DIR__ . '/_header.php';
 
                             if (res.status) {
                                 const nuevoEstado = res.status.toLowerCase().trim();
-                                const estadoAnterior = (order.status || '').toLowerCase().trim();
 
                                 // 🟢 LOG DE CONTROL PARA F12
-                                console.log(`[Polling Live] Pedido #${order.id} | Estado en BD: ${nuevoEstado} | EsDriver: ${isUserDriver}`);
+                                console.log(`[Polling Live] Pedido #${order.id} | BD: ${nuevoEstado} | EsDriver: ${isUserDriver}`);
 
                                 order.status = res.status; // Actualizar objeto base
 
-                                // 1. REFRESCAR ELEMENTOS INTERNOS DEL MODAL FLOTANTE
+                                // 1. REFRESCAR ELEMENTOS INTERNOS DEL MODAL FLOTANTE (siempre, no solo al cambiar)
                                 const subEl = document.getElementById('t-header-subtitle');
                                 const driverStep = document.getElementById('t-step-driver');
                                 const localStep = document.getElementById('t-step-local');
 
                                 if (!isUserDriver) {
+                                    // 🏪 VISTA DEL COMERCIO / LOCAL — actualizar textos y avatar en cada tick
                                     const nameEl = document.getElementById('t-driver-name');
                                     const avatarEl = document.getElementById('t-driver-avatar-container');
                                     if (nameEl && order.repartidor_name) nameEl.innerText = order.repartidor_name;
@@ -1271,21 +1284,44 @@ require __DIR__ . '/_header.php';
                                             avatarEl.innerHTML = '🛵';
                                         }
                                     }
-                                }
 
-                                if (nuevoEstado === 'repartidor_en_local' || nuevoEstado === 'en_local') {
-                                    if (driverStep) driverStep.innerText = 'En el local';
-                                    if (localStep) localStep.innerText = 'Entregando';
-                                    if (subEl) subEl.innerHTML = isUserDriver ? '<span class="live-pulse-dot"></span> Punto de retiro / Local' : '<span class="live-pulse-dot"></span> En el local / Entregando';
-                                } else if (nuevoEstado === 'en_puerta' || nuevoEstado === 'en_camino_al_cliente') {
-                                    if (driverStep) driverStep.innerText = 'Camino al cliente';
-                                    if (localStep) localStep.innerText = 'Esperando entrega';
-                                    if (subEl) subEl.innerHTML = isUserDriver ? '<span class="live-pulse-dot"></span> Punto de entrega / Cliente' : '<span class="live-pulse-dot"></span> En camino al cliente';
-                                } else if (nuevoEstado === 'entregado') {
-                                    if (driverStep) driverStep.innerText = 'Entregado';
-                                    if (localStep) localStep.innerText = 'Completado';
-                                    if (subEl) subEl.innerHTML = '<span class="live-pulse-dot"></span> Pedido Completado';
-                                    showSuccessModal('¡Pedido Entregado!', isUserDriver ? '¡Buen trabajo! Has completado la entrega.' : 'El pedido ha sido completado con éxito.');
+                                    // Textos del modal según estado (vista Local)
+                                    if (nuevoEstado === 'en_puerta' || nuevoEstado === 'en_camino_al_cliente') {
+                                        if (driverStep) driverStep.innerText = 'Camino al cliente';
+                                        if (localStep)  localStep.innerText  = 'Esperando entrega';
+                                        if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> En camino al cliente';
+                                    } else if (nuevoEstado === 'repartidor_en_local' || nuevoEstado === 'en_local') {
+                                        if (driverStep) driverStep.innerText = 'En el local';
+                                        if (localStep)  localStep.innerText  = 'Entregando';
+                                        if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> En el local / Entregando';
+                                    } else if (nuevoEstado === 'entregado') {
+                                        if (driverStep) driverStep.innerText = 'Entregado';
+                                        if (localStep)  localStep.innerText  = 'Completado';
+                                        if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> Pedido Completado';
+                                        showSuccessModal('¡Pedido Entregado!', 'El pedido ha sido completado con éxito.');
+                                    } else {
+                                        // Estado: aceptado / en_camino_al_local (Etapa 1)
+                                        if (driverStep) driverStep.innerText = 'Camino al local';
+                                        if (localStep)  localStep.innerText  = 'Esperando';
+                                        if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> Conductor Asignado';
+                                    }
+
+                                } else {
+                                    // 🛵 VISTA DEL REPARTIDOR
+                                    if (nuevoEstado === 'repartidor_en_local' || nuevoEstado === 'en_local') {
+                                        if (driverStep) driverStep.innerText = 'En el local';
+                                        if (localStep)  localStep.innerText  = 'Entregando';
+                                        if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> Punto de retiro / Local';
+                                    } else if (nuevoEstado === 'en_puerta' || nuevoEstado === 'en_camino_al_cliente') {
+                                        if (driverStep) driverStep.innerText = 'Camino al cliente';
+                                        if (localStep)  localStep.innerText  = 'Esperando entrega';
+                                        if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> Punto de entrega / Cliente';
+                                    } else if (nuevoEstado === 'entregado') {
+                                        if (driverStep) driverStep.innerText = 'Entregado';
+                                        if (localStep)  localStep.innerText  = 'Completado';
+                                        if (subEl)      subEl.innerHTML      = '<span class="live-pulse-dot"></span> Pedido Completado';
+                                        showSuccessModal('¡Pedido Entregado!', '¡Buen trabajo! Has completado la entrega.');
+                                    }
                                 }
 
                                 // 2. ACTUALIZAR EL OBJETO EN MEMORIA DEL MODAL ABIERTO
@@ -1300,6 +1336,8 @@ require __DIR__ . '/_header.php';
                                         cardPill.innerHTML = '<span style="width: 4.5px; height: 4.5px; background: var(--primary, #2563eb); border-radius: 50%; display: inline-block; box-shadow: 0 0 5px var(--primary, #2563eb); animation: pulse-dot 1.5s infinite;"></span> En el Local';
                                     } else if (nuevoEstado === 'en_puerta' || nuevoEstado === 'en_camino_al_cliente') {
                                         cardPill.innerHTML = '<span style="width: 4.5px; height: 4.5px; background: var(--primary, #2563eb); border-radius: 50%; display: inline-block; box-shadow: 0 0 5px var(--primary, #2563eb); animation: pulse-dot 1.5s infinite;"></span> Camino al Cliente';
+                                    } else if (nuevoEstado === 'entregado') {
+                                        cardPill.innerHTML = '<span style="width: 4.5px; height: 4.5px; background: #10b981; border-radius: 50%; display: inline-block;"></span> Entregado';
                                     }
                                 }
                             }
