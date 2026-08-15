@@ -9,10 +9,31 @@ $user = current_user();
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title><?= esc($title) ?></title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="csrf-token" content="<?= csrf_token() ?>">
+    <title><?= esc($title ?? 'Goo! - Dashboard') ?></title>
     <link rel="icon" href="data:,">
     <!-- Modern Sans Serif: Inter -->
+    <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
+    <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet" />
+
+    <!-- CSRF Global Fetch Interceptor -->
+    <script>
+        (function() {
+            const originalFetch = window.fetch;
+            window.fetch = async function() {
+                let [resource, config] = arguments;
+                if (config && config.method && config.method.toUpperCase() === 'POST') {
+                    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                    if (token) {
+                        config.headers = config.headers || {};
+                        config.headers['X-CSRF-TOKEN'] = token;
+                    }
+                }
+                return originalFetch(resource, config);
+            };
+        })();
+    </script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         :root {

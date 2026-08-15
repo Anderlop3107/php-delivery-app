@@ -26,6 +26,7 @@ $errors = [];
 $ok = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_require();
     if ($subscriptionExpired) {
         $errors[] = 'Tu suscripción mensual ha vencido o requiere verificación. Por favor, sube tu comprobante de pago.';
     }
@@ -441,6 +442,7 @@ require __DIR__ . '/_header.php';
     </div>
 
     <form method="post" id="order-form">
+        <?= csrf_field() ?>
     <!-- PASO 1: INFORMACIÓN -->
     <div class="form-step active" id="step-1">
         <div class="card" style="border:none; box-shadow: 0 4px 20px rgba(0,0,0,0.03);">

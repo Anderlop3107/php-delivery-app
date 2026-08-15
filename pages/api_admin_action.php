@@ -414,7 +414,14 @@ if ($action === 'verify_driver_payment') {
                 echo json_encode(['new' => true, 'payments' => $newPayments]);
             } else {
                 header('Content-Type: application/json');
-                if (ob_get_level()) { ob_end_clean(); }
+                
+// --- SEGURIDAD ---
+if (!rate_limit_check('api_admin_action.php', 120, 60)) {
+    rate_limit_deny();
+}
+csrf_require();
+// -----------------
+if (ob_get_level()) { ob_end_clean(); }
                 echo json_encode(['new' => false]);
             }
             exit;

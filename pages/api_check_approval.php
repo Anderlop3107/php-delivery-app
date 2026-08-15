@@ -43,6 +43,12 @@ $approved = ($docsApproved && !$subscriptionExpired);
 
 ob_clean();
 header('Content-Type: application/json');
+
+// --- SEGURIDAD ---
+if (!rate_limit_check('api_check_approval.php', 120, 60)) {
+    rate_limit_deny();
+}
+// -----------------
 echo json_encode([
     'success' => true,
     'approved' => $approved,
