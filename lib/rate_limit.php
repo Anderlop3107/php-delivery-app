@@ -9,6 +9,20 @@ declare(strict_types=1);
 function rate_limit_check(string $endpoint, int $maxAttempts = 60, int $windowSeconds = 60): bool
 {
     $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
+
+    // Lista blanca: Ignorar rate limit para endpoints de polling muy frecuentes
+    $polling_endpoints = [
+        'api_admin_action.php',
+        'api_check_new_orders.php',
+        'api_get_active_deliveries.php',
+        'api_get_order_live_location.php',
+        'api_driver_active_count.php',
+        'api_check_approval.php'
+    ];
+    if (in_array($endpoint, $polling_endpoints, true)) {
+        return true;
+    }
+
     
     // Limpiar entradas viejas (más de 1 hora)
     try {
