@@ -5,7 +5,8 @@ declare(strict_types=1);
 // Database configuration
 // --- DETECCIÓN DE ENTORNO (PRODUCCIÓN vs LOCAL) ---
 $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
-$is_production = (strpos($host, 'gooenvios.com') !== false);
+// Si el host NO es localhost ni 127.0.0.1, asumimos que es producción (Hostinger)
+$is_production = !in_array(explode(':', $host)[0], ['localhost', '127.0.0.1'], true);
 
 if ($is_production) {
     // 🌐 Credenciales de Hostinger
