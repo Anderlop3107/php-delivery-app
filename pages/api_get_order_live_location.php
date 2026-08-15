@@ -34,6 +34,19 @@ if (!$row) {
     exit;
 }
 
+// Verificar que el usuario es dueño o repartidor asignado del pedido
+$isOwner = (int)$row['repartidor_user_id'] === (int)$user['id'];
+$isLocal = false;
+if (!$isOwner) {
+    $delivery = app_one("SELECT local_user_id FROM deliveries WHERE id = ?", 'i', [$orderId]);
+    $isLocal = $delivery && (int)$delivery['local_user_id'] === (int)$user['id'];
+}
+if (!$isOwner && !$isLocal && ($user['role'] !== 'admin')) {
+    echo json_encode(['success' => false, 'message' => 'No autorizado para este pedido']);
+    exit;
+}
+
+
 echo json_encode([
     'success' => true,
     'status' => $row['status'],

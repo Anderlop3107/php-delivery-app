@@ -17,6 +17,8 @@ require_once __DIR__ . '/lib/db.php';
 require_once __DIR__ . '/lib/helpers.php';
 require_once __DIR__ . '/lib/auth.php';
 require_once __DIR__ . '/lib/deliveries.php';
+require_once __DIR__ . '/lib/csrf.php';
+require_once __DIR__ . '/lib/rate_limit.php';
 
 // Auto-sincronizar y expirar suscripciones vencidas en cada petición
 sync_all_expired_subscriptions();

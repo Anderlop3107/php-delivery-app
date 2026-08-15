@@ -6,12 +6,18 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim((string)($_POST['email'] ?? ''));
     $password = (string)($_POST['password'] ?? '');
+    $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
 
-    if (app_login($email, $password)) {
+    if (app_login($email, $password, $ip)) {
         header('Location: ' . delivery_app_url('dashboard.php'));
         exit;
     } else {
-        $error = 'Credenciales incorrectas.';
+        // Verificar si fue bloqueado por brute force
+        if (function_exists('check_login_attempts') && !check_login_attempts($ip)) {
+            $error = 'Demasiados intentos fallidos. Esperá 15 minutos antes de intentar de nuevo.';
+        } else {
+            $error = 'Credenciales incorrectas.';
+        }
     }
 }
 ?>

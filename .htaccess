@@ -1,0 +1,77 @@
+# Forzar HTTPS
+RewriteEngine On
+RewriteCond %{HTTPS} off
+RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+# ══════════════════════════════════════════════════════════════
+# BLOQUEO DE ARCHIVOS SENSIBLES
+# ══════════════════════════════════════════════════════════════
+
+# Bloquear archivos de configuración y datos
+<FilesMatch "\.(sql|md|json|txt|gitignore|log|env|bak|old|orig)$">
+    Require all denied
+</FilesMatch>
+
+# Bloquear config.php explícitamente (no debe ser accesible directamente)
+<Files "config.php">
+    Require all denied
+</Files>
+
+# Bloquear bootstrap.php
+<Files "bootstrap.php">
+    Require all denied
+</Files>
+
+# Bloquear archivos ocultos (.git, .env, etc.)
+<FilesMatch "^\.">
+    Require all denied
+</FilesMatch>
+
+# ══════════════════════════════════════════════════════════════
+# BLOQUEO DE DIRECTORIOS INTERNOS
+# ══════════════════════════════════════════════════════════════
+
+# Bloquear acceso directo a lib/ (solo se incluye desde PHP)
+RedirectMatch 403 ^/lib/.*$
+
+# Bloquear acceso directo a database/ (scripts de migración/seed)
+RedirectMatch 403 ^/database/.*$
+
+# Bloquear acceso directo a tests/
+RedirectMatch 403 ^/tests/.*$
+
+# Bloquear acceso directo a tool-outputs/
+RedirectMatch 403 ^/tool-outputs/.*$
+
+# Bloquear acceso directo a chats/
+RedirectMatch 403 ^/chats/.*$
+
+# Bloquear acceso directo a .git/
+RedirectMatch 403 ^/\.git/.*$
+
+# ══════════════════════════════════════════════════════════════
+# BLOQUEO DE EJECUCIÓN PHP EN UPLOADS
+# ══════════════════════════════════════════════════════════════
+
+# Impedir que archivos PHP se ejecuten dentro de uploads/
+<Directory "uploads">
+    <FilesMatch "\.php$">
+        Require all denied
+    </FilesMatch>
+</Directory>
+
+# ══════════════════════════════════════════════════════════════
+# HEADERS DE SEGURIDAD ADICIONALES
+# ══════════════════════════════════════════════════════════════
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "geolocation=(self), camera=(), microphone=()"
+</IfModule>
+
+# PHP configuración de errores (producción)
+php_flag display_errors Off
+php_flag log_errors On
