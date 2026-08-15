@@ -17,7 +17,8 @@ function rate_limit_check(string $endpoint, int $maxAttempts = 60, int $windowSe
         'api_get_active_deliveries.php',
         'api_get_order_live_location.php',
         'api_driver_active_count.php',
-        'api_check_approval.php'
+        'api_check_approval.php',
+        'api_update_location.php'
     ];
     if (in_array($endpoint, $polling_endpoints, true)) {
         return true;
