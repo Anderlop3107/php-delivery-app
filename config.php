@@ -14,8 +14,16 @@ if (!defined('DELIVERY_APP_BASE_PATH')) {
 }
 
 if (PHP_SAPI !== 'cli' && session_status() !== PHP_SESSION_ACTIVE) {
-    session_start();
+    session_start([
+        'cookie_httponly'  => true,
+        'cookie_secure'    => isset($_SERVER['HTTPS']),
+        'cookie_samesite'  => 'Lax',
+        'use_strict_mode'  => true,
+        'cookie_lifetime'  => 0,
+        'gc_maxlifetime'   => 7200,
+    ]);
 }
+
 
 function delivery_app_url(string $path = ''): string
 {

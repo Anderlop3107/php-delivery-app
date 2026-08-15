@@ -1,0 +1,9 @@
+# Bloquear ejecución de PHP dentro de uploads
+<FilesMatch "\.php$">
+    Require all denied
+</FilesMatch>
+
+# Bloquear acceso a archivos sensibles dentro de uploads
+<FilesMatch "\.(sql|sh|bash|py|rb|pl)$">
+    Require all denied
+</FilesMatch>

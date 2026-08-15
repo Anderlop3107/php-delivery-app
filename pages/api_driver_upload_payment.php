@@ -23,8 +23,25 @@ if (!isset($_FILES['payment_proof']) || $_FILES['payment_proof']['error'] !== UP
 
 $file = $_FILES['payment_proof'];
 $allowedTypes = ['image/jpeg', 'image/png', 'image/jpg'];
+$allowedExts  = ['jpg', 'jpeg', 'png'];
+
+// Validar MIME type del navegador
 if (!in_array($file['type'], $allowedTypes)) {
     echo json_encode(['success' => false, 'message' => 'Formato no permitido. Solo JPG, JPEG o PNG.']);
+    exit;
+}
+
+// Validar extensión real del archivo
+$ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+if (!in_array($ext, $allowedExts, true)) {
+    echo json_encode(['success' => false, 'message' => 'Extensión de archivo no permitida.']);
+    exit;
+}
+
+// Verificar que el contenido es realmente una imagen (no un PHP disfrazado)
+$imageInfo = @getimagesize($file['tmp_name']);
+if ($imageInfo === false || !in_array($imageInfo[2], [IMAGETYPE_JPEG, IMAGETYPE_PNG], true)) {
+    echo json_encode(['success' => false, 'message' => 'El archivo no es una imagen válida.']);
     exit;
 }
 
@@ -36,12 +53,13 @@ if ($file['size'] > 8 * 1024 * 1024) {
 
 $uploadDir = __DIR__ . '/../uploads/payments/';
 if (!is_dir($uploadDir)) {
-    mkdir($uploadDir, 0777, true);
+    mkdir($uploadDir, 0755, true);
 }
 
-$ext = pathinfo($file['name'], PATHINFO_EXTENSION);
-$filename = 'proof_' . $user['id'] . '_' . time() . '.' . $ext;
+// Nombre seguro: solo user_id + timestamp + extensión validada (sin input del usuario)
+$filename = 'proof_' . (int)$user['id'] . '_' . time() . '.' . $ext;
 $targetPath = $uploadDir . $filename;
+
 
 if (move_uploaded_file($file['tmp_name'], $targetPath)) {
     $dbPath = 'uploads/payments/' . $filename;
