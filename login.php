@@ -4,6 +4,7 @@ require_once __DIR__ . '/bootstrap.php';
 $error = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_require();
     $email = trim((string)($_POST['email'] ?? ''));
     $password = (string)($_POST['password'] ?? '');
     $ip = $_SERVER['REMOTE_ADDR'] ?? '0.0.0.0';
@@ -26,6 +27,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?= csrf_token() ?>">
     <title>Goo! - Iniciar Sesión</title>
     <!-- Google Fonts: Plus Jakarta Sans for modern clean UI -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -359,6 +361,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         <!-- Credentials Form -->
         <form method="post" autocomplete="on">
+            <?= csrf_field() ?>
             
             <!-- Email Input -->
             <div class="form-group-translucent">

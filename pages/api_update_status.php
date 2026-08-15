@@ -1,9 +1,18 @@
 <?php
+ob_start();
 require_once __DIR__ . '/../bootstrap.php';
 require_once __DIR__ . '/../lib/deliveries.php';
 
+ob_clean();
 header('Content-Type: application/json');
 
+
+// --- SEGURIDAD ---
+if (!rate_limit_check('api_update_status.php', 120, 60)) {
+    rate_limit_deny();
+}
+csrf_require();
+// -----------------
 $user = current_user();
 if (!$user) {
     echo json_encode(['success' => false, 'message' => 'No autorizado']);

@@ -9,6 +9,12 @@ header('Cache-Control: post-check=0, pre-check=0', false);
 header('Pragma: no-cache');
 header('Content-Type: application/json');
 
+
+// --- SEGURIDAD ---
+if (!rate_limit_check('api_check_new_orders.php', 120, 60)) {
+    rate_limit_deny();
+}
+// -----------------
 $user = current_user();
 if (!$user || $user['role'] !== 'repartidor') {
     echo json_encode(['has_orders' => false]);

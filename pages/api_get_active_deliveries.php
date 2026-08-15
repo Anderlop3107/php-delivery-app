@@ -21,5 +21,11 @@ header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Cache-Control: post-check=0, pre-check=0', false);
 header('Pragma: no-cache');
 header('Content-Type: application/json');
+
+// --- SEGURIDAD ---
+if (!rate_limit_check('api_get_active_deliveries.php', 120, 60)) {
+    rate_limit_deny();
+}
+// -----------------
 echo json_encode($rows);
 exit;

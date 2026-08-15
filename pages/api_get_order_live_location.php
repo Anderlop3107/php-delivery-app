@@ -8,6 +8,12 @@ header('Cache-Control: post-check=0, pre-check=0', false);
 header('Pragma: no-cache');
 header('Content-Type: application/json');
 
+
+// --- SEGURIDAD ---
+if (!rate_limit_check('api_get_order_live_location.php', 120, 60)) {
+    rate_limit_deny();
+}
+// -----------------
 $user = current_user();
 if (!$user) {
     echo json_encode(['success' => false, 'message' => 'No autorizado']);
