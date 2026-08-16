@@ -2,24 +2,30 @@
   "name": "Goo! Envíos",
   "short_name": "Goo!",
   "description": "Plataforma de logística y entregas rápidas.",
-  "start_url": "/login.php",
-  "scope": "/",
+  "start_url": "login.php",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#1d4ed8",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/assets/img/goologo.png",
+      "src": "assets/img/goologo.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
-      "src": "/assets/img/goologo.png",
+      "src": "assets/img/goologo.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "assets/img/goologo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ]
 }
