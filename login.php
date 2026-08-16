@@ -29,6 +29,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?= csrf_token() ?>">
     <title>Goo! - Iniciar Sesión</title>
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="<?= delivery_app_url('manifest.json') ?>">
+    <meta name="theme-color" content="#1d4ed8">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Goo! Envíos">
+    <link rel="icon" type="image/png" href="<?= delivery_app_url('assets/img/goologo.png') ?>">
+    <link rel="apple-touch-icon" href="<?= delivery_app_url('assets/img/goologo.png') ?>">
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('<?= delivery_app_url('sw.js') ?>');
+            });
+        }
+    </script>
     <!-- Google Fonts: Plus Jakarta Sans for modern clean UI -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
