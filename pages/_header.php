@@ -13,6 +13,25 @@ $user = current_user();
     <meta name="csrf-token" content="<?= csrf_token() ?>">
     <title><?= esc($title ?? 'Goo! - Dashboard') ?></title>
     <link rel="icon" href="data:,">
+    
+    <!-- PWA Meta Tags -->
+    <link rel="manifest" href="<?= delivery_app_url('manifest.json') ?>">
+    <meta name="theme-color" content="#1d4ed8">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Goo! Envíos">
+    <link rel="icon" type="image/png" href="<?= delivery_app_url('uploads/icons/icon-192x192.png') ?>">
+    <link rel="apple-touch-icon" href="<?= delivery_app_url('uploads/icons/icon-192x192.png') ?>">
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('<?= delivery_app_url('sw.js') ?>');
+            });
+        }
+    </script>
     <!-- Modern Sans Serif: Inter -->
     <script src="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js"></script>
     <link href="https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css" rel="stylesheet" />
