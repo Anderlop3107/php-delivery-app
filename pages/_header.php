@@ -21,8 +21,8 @@ $user = current_user();
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Goo! Envíos">
-    <link rel="icon" type="image/png" href="<?= delivery_app_url('uploads/icons/icon-192.png') ?>">
-    <link rel="apple-touch-icon" href="<?= delivery_app_url('uploads/icons/icon-512.png') ?>">
+    <link rel="icon" type="image/png" href="<?= delivery_app_url('assets/img/icon-192.png') ?>">
+    <link rel="apple-touch-icon" href="<?= delivery_app_url('assets/img/icon-512.png') ?>">
 
     <!-- Service Worker Registration -->
     <script>
