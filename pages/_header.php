@@ -108,6 +108,15 @@ $user = current_user();
             box-sizing: border-box;
             padding-bottom: calc(var(--sab) + 85px);
         }
+        /* Forzar ancho completo en vistas de página - evita que align-items: center encoja el contenido */
+        .driver-scanner-view,
+        .local-view,
+        .page-view,
+        body > div:not(.bottom-nav):not(.modal):not([style*="position: fixed"]) {
+            width: 100% !important;
+            max-width: 100% !important;
+            box-sizing: border-box !important;
+        }
         /* Microanimaciones y Accesibilidad PWA */
         button, a.btn, .touch-target {
             transition: transform 150ms ease-out;
