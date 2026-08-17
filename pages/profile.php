@@ -110,14 +110,15 @@ require __DIR__ . '/_header.php';
         background-color: #ffffff !important;
     }
 
-    /* Profile Hero Header */
+    /* Profile Hero Header - Extendido de borde a borde */
     .profile-hero {
         position: relative;
-        margin: -25px -20px 30px -20px;
-        padding: 50px 20px 20px;
+        margin: -16px -16px 20px -16px;
+        padding: 50px 16px 20px;
         text-align: center;
         overflow: hidden;
         background: #fff;
+        box-sizing: border-box;
     }
     
     .hero-cover {

@@ -69,14 +69,15 @@ require __DIR__ . '/pages/_header.php';
 ?>
 
 <style>
-    /* Profile Hero Header */
+    /* Profile Hero Header - Extendido de borde a borde */
     .profile-hero {
         position: relative;
-        margin: -20px -20px 30px -20px; /* Overlap wrap padding */
-        padding: 60px 20px 20px;
+        margin: -16px -16px 20px -16px;
+        padding: 50px 16px 20px;
         text-align: center;
         overflow: hidden;
         background: #fff;
+        box-sizing: border-box;
     }
     
     .hero-cover {
@@ -227,6 +228,7 @@ require __DIR__ . '/pages/_header.php';
         <p class="muted" style="font-weight: 600;">Panel de Gestión</p>
     </div>
 </div>
+
 
 
 <div class="bento-grid">
