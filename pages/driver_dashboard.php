@@ -147,7 +147,7 @@ require __DIR__ . '/_header.php';
         position: relative;
         width: 240px; height: 240px;
         display: flex; align-items: center; justify-content: center;
-        margin-bottom: 35px;
+        margin: 0 auto 35px auto;
         transition: all 0.5s ease;
     }
     .radar-wrapper.paused { filter: grayscale(1); opacity: 0.4; }
