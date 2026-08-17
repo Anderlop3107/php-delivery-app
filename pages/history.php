@@ -79,8 +79,9 @@ require __DIR__ . '/_header.php';
 
 <style>
     .history-header-bento { 
-        background: #fff; padding: 24px; border-radius: 0 0 32px 32px; 
-        box-shadow: var(--shadow); margin: -25px -20px 25px; border-bottom: 1px solid rgba(0,0,0,0.02);
+        background: #fff; padding: 20px 16px; border-radius: 0 0 28px 28px; 
+        box-shadow: var(--shadow); margin: -16px -16px 20px -16px; border-bottom: 1px solid rgba(0,0,0,0.02);
+        box-sizing: border-box;
     }
     
     .calendar-top-bento { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }

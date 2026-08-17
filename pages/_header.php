@@ -187,33 +187,41 @@ $user = current_user();
             width: 100%;
             max-width: 480px;
             margin: 0 auto;
-            padding: 20px 16px 110px;
+            padding: 16px 16px 110px;
             box-sizing: border-box;
+            flex: 1;
         }
         
         /* Modular Card System - Ancho completo sin márgenes laterales */
-        .card, .stat-card, .chart-card { 
+        .card, .stat-card, .chart-card, .status-card, .op-card { 
             background: var(--card); 
             border-radius: var(--card-radius); 
-            padding: 24px; 
+            padding: 20px; 
             margin-bottom: 16px;
-            margin-left: 0;
-            margin-right: 0;
-            width: 100%;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+            width: 100% !important;
             box-shadow: var(--shadow);
             border: 1px solid rgba(0,0,0,0.02);
-            box-sizing: border-box;
+            box-sizing: border-box !important;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .bento-grid {
+            width: 100% !important;
+            box-sizing: border-box !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
         }
 
         /* Header de fondo de borde a borde */
         .header-bg, .header-bg-gradient, .page-header {
-            width: 100%;
-            margin-left: 0;
-            margin-right: 0;
-            padding-left: 16px;
-            padding-right: 16px;
-            box-sizing: border-box;
+            width: calc(100% + 32px) !important;
+            margin-left: -16px !important;
+            margin-right: -16px !important;
+            padding-left: 16px !important;
+            padding-right: 16px !important;
+            box-sizing: border-box !important;
         }
         
         h1, h2, h3 { margin: 0; font-weight: 800; letter-spacing: -0.025em; color: var(--text); }
