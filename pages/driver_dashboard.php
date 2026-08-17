@@ -66,8 +66,10 @@ require __DIR__ . '/_header.php';
         min-height: calc(100vh - 120px);
         display: flex;
         flex-direction: column;
-        align-items: center;
+        align-items: stretch;
+        width: 100%;
         padding-top: 30px;
+        box-sizing: border-box;
     }
 
     /* PROFILE HEADER SECTION */
