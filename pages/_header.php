@@ -67,11 +67,18 @@ $user = current_user();
             --card-radius: 24px;
             --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.04), 0 4px 6px -2px rgba(0, 0, 0, 0.01);
             --glass: rgba(255, 255, 255, 0.8);
+            /* Safe Areas Globales PWA */
+            --sat: env(safe-area-inset-top, 0px);
+            --sab: env(safe-area-inset-bottom, 0px);
+            --sal: env(safe-area-inset-left, 0px);
+            --sar: env(safe-area-inset-right, 0px);
         }
         * { 
             box-sizing: border-box; 
             -webkit-font-smoothing: antialiased; 
             -moz-osx-font-smoothing: grayscale;
+            /* Estándares Táctiles PWA */
+            -webkit-tap-highlight-color: transparent;
         }
         body { 
             font-family: 'Inter', sans-serif; 
@@ -79,6 +86,27 @@ $user = current_user();
             background: var(--bg); 
             color: var(--text); 
             line-height: 1.5; 
+            /* App Shell PWA */
+            min-height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            padding-top: var(--sat);
+            padding-left: var(--sal);
+            padding-right: var(--sar);
+        }
+        /* Contenedor central PWA */
+        .app-container {
+            flex: 1;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: calc(var(--sab) + 85px); /* Espacio para el bottom nav */
+        }
+        /* Microanimaciones y Accesibilidad PWA */
+        button, a.btn, .touch-target {
+            transition: transform 150ms ease-out;
+        }
+        button:active, a.btn:active, .touch-target:active {
+            transform: scale(0.98);
         }
         
         /* High-Fidelity iOS Hybrid Navigation */

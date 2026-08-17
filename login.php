@@ -46,6 +46,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             --primary: #2563eb;
             --primary-hover: #1d4ed8;
             --bg-translucent: rgba(0, 0, 0, 0.45);
+            /* Safe Areas Globales PWA */
+            --sat: env(safe-area-inset-top, 0px);
+            --sab: env(safe-area-inset-bottom, 0px);
+            --sal: env(safe-area-inset-left, 0px);
+            --sar: env(safe-area-inset-right, 0px);
         }
 
         * {
@@ -53,11 +58,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             font-family: 'Plus Jakarta Sans', sans-serif;
             margin: 0;
             padding: 0;
+            /* Estándares Táctiles PWA */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Microanimaciones y Accesibilidad PWA */
+        button, a, .touch-target {
+            transition: transform 150ms ease-out;
+        }
+        button:active, a:active, .touch-target:active {
+            transform: scale(0.98);
         }
 
         body {
             display: flex;
             justify-content: center;
+            min-height: 100dvh;
+            padding-top: var(--sat);
+            padding-bottom: var(--sab);
+            padding-left: var(--sal);
+            padding-right: var(--sar);
             align-items: center;
             min-height: 100vh;
             background-color: #000;
