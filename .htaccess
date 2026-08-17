@@ -7,15 +7,23 @@ RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
 # BLOQUEO DE ARCHIVOS SENSIBLES
 # ══════════════════════════════════════════════════════════════
 
-# Excepción: permitir manifest.json para la PWA
+# Bloquear archivos de configuración y datos (excepto archivos PWA críticos)
+<FilesMatch "\.(sql|md|txt|gitignore|log|env|bak|old|orig)$">
+    Require all denied
+</FilesMatch>
+
+# Bloquear archivos JSON EXCEPTO manifest.json
+<FilesMatch "(?<!manifest)\.json$">
+    Require all denied
+</FilesMatch>
+
+# Excepción explícita: permitir manifest.json y sw.js para la PWA
 <Files "manifest.json">
     Require all granted
 </Files>
-
-# Bloquear archivos de configuración y datos
-<FilesMatch "\.(sql|md|json|txt|gitignore|log|env|bak|old|orig)$">
-    Require all denied
-</FilesMatch>
+<Files "sw.js">
+    Require all granted
+</Files>
 
 # Bloquear config.php explícitamente (no debe ser accesible directamente)
 <Files "config.php">
