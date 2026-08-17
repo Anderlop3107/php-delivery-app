@@ -94,12 +94,19 @@ $user = current_user();
             padding-left: var(--sal);
             padding-right: var(--sar);
         }
-        /* Contenedor central PWA */
-        .app-container {
+        /* Contenedor central PWA - Fluido de borde a borde en móvil */
+        .app-container, main {
             flex: 1;
             overflow-y: auto;
             -webkit-overflow-scrolling: touch;
-            padding-bottom: calc(var(--sab) + 85px); /* Espacio para el bottom nav */
+            width: 100%;
+            max-width: 480px;
+            margin-left: auto;
+            margin-right: auto;
+            padding-left: 16px;
+            padding-right: 16px;
+            box-sizing: border-box;
+            padding-bottom: calc(var(--sab) + 85px);
         }
         /* Microanimaciones y Accesibilidad PWA */
         button, a.btn, .touch-target {
@@ -166,18 +173,38 @@ $user = current_user();
         }
         .nav-item.add-btn svg { width: 28px; height: 28px; color: #fff; }
         
-        /* Bento Grid Wrapper */
-        .wrap { max-width: 500px; margin: 0 auto; padding: 20px 20px 110px; }
+        /* Bento Grid Wrapper - 16px padding estándar móvil */
+        .wrap {
+            width: 100%;
+            max-width: 480px;
+            margin: 0 auto;
+            padding: 20px 16px 110px;
+            box-sizing: border-box;
+        }
         
-        /* Modular Card System */
-        .card { 
+        /* Modular Card System - Ancho completo sin márgenes laterales */
+        .card, .stat-card, .chart-card { 
             background: var(--card); 
             border-radius: var(--card-radius); 
             padding: 24px; 
-            margin-bottom: 16px; 
+            margin-bottom: 16px;
+            margin-left: 0;
+            margin-right: 0;
+            width: 100%;
             box-shadow: var(--shadow);
             border: 1px solid rgba(0,0,0,0.02);
+            box-sizing: border-box;
             transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        /* Header de fondo de borde a borde */
+        .header-bg, .header-bg-gradient, .page-header {
+            width: 100%;
+            margin-left: 0;
+            margin-right: 0;
+            padding-left: 16px;
+            padding-right: 16px;
+            box-sizing: border-box;
         }
         
         h1, h2, h3 { margin: 0; font-weight: 800; letter-spacing: -0.025em; color: var(--text); }
