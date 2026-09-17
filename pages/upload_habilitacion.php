@@ -77,7 +77,7 @@ require __DIR__ . '/_header.php';
                 <input type="file" name="doc_habilitacion_front" id="file-front" accept="image/*" style="display: none;" onchange="previewImage(this, 'preview-front', 'placeholder-front')">
                 
                 <div class="preview-container" id="preview-front" style="display: <?= !empty($userData['doc_habilitacion_path']) ? 'block' : 'none' ?>; text-align: center;">
-                    <img src="<?= !empty($userData['doc_habilitacion_path']) ? esc(delivery_app_url($userData['doc_habilitacion_path'])) : '' ?>" style="width: 100%; max-height: 180px; object-fit: contain; border-radius: 16px; border: 1px solid var(--border); padding: 5px; background: #fafafa;">
+                    <img src="<?= !empty($userData['doc_habilitacion_path']) ? esc(protected_file_url($userData['doc_habilitacion_path'])) : '' ?>" style="width: 100%; max-height: 180px; object-fit: contain; border-radius: 16px; border: 1px solid var(--border); padding: 5px; background: #fafafa;">
                     <div style="font-size: 11px; color: var(--muted); font-weight: 700; margin-top: 8px;">Haz clic para cambiar la foto</div>
                 </div>
                 
@@ -96,7 +96,7 @@ require __DIR__ . '/_header.php';
                 <input type="file" name="doc_habilitacion_back" id="file-back" accept="image/*" style="display: none;" onchange="previewImage(this, 'preview-back', 'placeholder-back')">
                 
                 <div class="preview-container" id="preview-back" style="display: <?= !empty($userData['doc_habilitacion_back_path']) ? 'block' : 'none' ?>; text-align: center;">
-                    <img src="<?= !empty($userData['doc_habilitacion_back_path']) ? esc(delivery_app_url($userData['doc_habilitacion_back_path'])) : '' ?>" style="width: 100%; max-height: 180px; object-fit: contain; border-radius: 16px; border: 1px solid var(--border); padding: 5px; background: #fafafa;">
+                    <img src="<?= !empty($userData['doc_habilitacion_back_path']) ? esc(protected_file_url($userData['doc_habilitacion_back_path'])) : '' ?>" style="width: 100%; max-height: 180px; object-fit: contain; border-radius: 16px; border: 1px solid var(--border); padding: 5px; background: #fafafa;">
                     <div style="font-size: 11px; color: var(--muted); font-weight: 700; margin-top: 8px;">Haz clic para cambiar la foto</div>
                 </div>
                 

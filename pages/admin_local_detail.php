@@ -1153,7 +1153,7 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                                 <div style="display:flex; align-items:center; gap:12px;">
                                     <div class="doc-mini-preview" style="width: 40px; height: 30px; border-radius: 6px; overflow: hidden; background: #e2e8f0; border: 1px solid #cbd5e1; display: flex; align-items: center; justify-content: center;">
                                         <?php if ($localData['doc_ci_path']): ?>
-                                            <img src="<?= esc(delivery_app_url($localData['doc_ci_path'])) ?>" style="width:100%; height:100%; object-fit:cover;">
+                                            <img src="<?= esc(protected_file_url($localData['doc_ci_path'])) ?>" style="width:100%; height:100%; object-fit:cover;">
                                         <?php else: ?>
                                             <span style="font-size:12px;">📄</span>
                                         <?php endif; ?>
@@ -1215,7 +1215,7 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
                         <!-- Comprobante subido -->
                         <div class="sub-proof-preview" onclick="openReceiptLightbox()">
                             <?php if (!empty($latestPayment) && !empty($latestPayment['payment_proof_path'])): ?>
-                                <img src="<?= esc(delivery_app_url($latestPayment['payment_proof_path'])) ?>" alt="Comprobante">
+                                <img src="<?= esc(protected_file_url($latestPayment['payment_proof_path'])) ?>" alt="Comprobante">
                                 <div style="position:absolute; bottom:6px; right:6px; background:rgba(0,0,0,0.6); color:#fff; font-size:9px; padding:3px 6px; border-radius:4px; font-weight:700;">AMPLIAR</div>
                                 <button class="btn-delete-proof" style="position:absolute; top:6px; right:6px; background:#e11d48; color:#fff; border:none; border-radius:4px; padding:2px 6px; font-size:10px;" onclick="deleteReceipt(<?= $latestPayment['id'] ?>); event.stopPropagation();">Eliminar</button>
                             <?php else: ?>
@@ -2195,10 +2195,10 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
             
             const imgFront = document.getElementById('doc-modal-img-front');
             const imgBack = document.getElementById('doc-modal-img-back');
-            const baseUrl = '<?= delivery_app_url() ?>/';
+        const protectedFileUrl = path => '<?= delivery_app_url('secure_file.php?path=') ?>' + encodeURIComponent(path);
             
-            imgFront.src = pathFront ? baseUrl + pathFront : 'https://placehold.co/300x160/f1f5f9/cbd5e1?text=No+Cargado';
-            imgBack.src = pathBack ? baseUrl + pathBack : 'https://placehold.co/300x160/f1f5f9/cbd5e1?text=No+Cargado';
+        imgFront.src = pathFront ? protectedFileUrl(pathFront) : 'https://placehold.co/300x160/f1f5f9/cbd5e1?text=No+Cargado';
+        imgBack.src = pathBack ? protectedFileUrl(pathBack) : 'https://placehold.co/300x160/f1f5f9/cbd5e1?text=No+Cargado';
 
             const statusBadge = document.getElementById('doc-modal-status-badge');
             statusBadge.innerText = currentStatus;
