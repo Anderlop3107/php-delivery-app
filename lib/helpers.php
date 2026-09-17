@@ -7,6 +7,15 @@ function esc(?string $value): string
     return htmlspecialchars((string) $value, ENT_QUOTES, 'UTF-8');
 }
 
+function protected_file_url(?string $path): string
+{
+    if (!$path) {
+        return '';
+    }
+
+    return delivery_app_url('secure_file.php?path=' . rawurlencode($path));
+}
+
 function gs(float|int|string|null $amount): string
 {
     return 'Gs. ' . number_format((float) ($amount ?? 0), 0, ',', '.');

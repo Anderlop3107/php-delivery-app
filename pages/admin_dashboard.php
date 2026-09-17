@@ -1551,7 +1551,7 @@ $maxChartCount = max(5, max($chartCounts));
                         <!-- Imagen del comprobante de pago -->
                         <?php if (!empty($pv['payment_proof_path'])): ?>
                             <div class="payment-proof" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:10px; text-align:center;">
-                                <img src="<?= esc(delivery_app_url($pv['payment_proof_path'])); ?>" alt="Comprobante" style="max-width:100%; max-height:160px; object-fit:contain; border-radius:10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                                 <img src="<?= esc(protected_file_url($pv['payment_proof_path'])); ?>" alt="Comprobante" style="max-width:100%; max-height:160px; object-fit:contain; border-radius:10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
                                 <p style="margin:6px 0 0; font-size:11px; color:#64748b; font-weight:600;">
                                     Comprobante de pago <?= $isLocal ? 'del local' : 'del repartidor' ?> <?= esc($displayName); ?>
                                 </p>
@@ -1914,7 +1914,8 @@ $maxChartCount = max(5, max($chartCounts));
                 const targetUrl = isLocal ? `admin_local_detail.php?id=${pv.id}` : `admin_driver_detail.php?id=${pv.id}`;
                 const displayName = isLocal ? (pv.business_name || pv.name) : pv.name;
                 const avatarIcon = isLocal ? '🏢' : '👤';
-                const baseUrl = '<?= delivery_app_url() ?>/';
+             const baseUrl = '<?= delivery_app_url() ?>/';
+             const protectedFileUrl = path => '<?= delivery_app_url('secure_file.php?path=') ?>' + encodeURIComponent(path);
 
                 let avatarHtml = avatarIcon;
                 if (pv.avatar_path) {
@@ -1934,7 +1935,7 @@ $maxChartCount = max(5, max($chartCounts));
                 if (pv.payment_proof_path) {
                     proofHtml = `
                         <div class="payment-proof" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:14px; padding:10px; text-align:center;">
-                            <img src="${baseUrl}${pv.payment_proof_path}" alt="Comprobante" style="max-width:100%; max-height:160px; object-fit:contain; border-radius:10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
+                     <img src="${protectedFileUrl(pv.payment_proof_path)}" alt="Comprobante" style="max-width:100%; max-height:160px; object-fit:contain; border-radius:10px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
                             <p style="margin:6px 0 0; font-size:11px; color:#64748b; font-weight:600;">
                                 Comprobante de pago ${isLocal ? 'del local' : 'del repartidor'} ${displayName}
                             </p>
@@ -2351,8 +2352,8 @@ $maxChartCount = max(5, max($chartCounts));
                         <div style="font-size:11px;">${statusLabel}</div>
                     </div>
                     <div class="doc-images-flex">
-                        ${frontPath ? `<div class="doc-img-wrap" onclick="openLightbox('${frontPath}')"><img src="../${frontPath}"></div>` : '<div style="color:#94a3b8; font-size:11px; display:flex; align-items:center; justify-content:center; border:1px dashed #cbd5e1; border-radius:12px;">Sin frontal</div>'}
-                        ${backPath ? `<div class="doc-img-wrap" onclick="openLightbox('${backPath}')"><img src="../${backPath}"></div>` : '<div style="color:#94a3b8; font-size:11px; display:flex; align-items:center; justify-content:center; border:1px dashed #cbd5e1; border-radius:12px;">Sin posterior</div>'}
+                         ${frontPath ? `<div class="doc-img-wrap" onclick="openLightbox(protectedFileUrl('${frontPath}'))"><img src="${protectedFileUrl(frontPath)}"></div>` : '<div style="color:#94a3b8; font-size:11px; display:flex; align-items:center; justify-content:center; border:1px dashed #cbd5e1; border-radius:12px;">Sin frontal</div>'}
+                         ${backPath ? `<div class="doc-img-wrap" onclick="openLightbox(protectedFileUrl('${backPath}'))"><img src="${protectedFileUrl(backPath)}"></div>` : '<div style="color:#94a3b8; font-size:11px; display:flex; align-items:center; justify-content:center; border:1px dashed #cbd5e1; border-radius:12px;">Sin posterior</div>'}
                     </div>
                     <div class="doc-actions-admin">
                         <button class="btn-action-admin btn-approve-admin" onclick="verifyDocument(${driver.id}, '${doc.key}', 'approve')">Aprobar</button>
