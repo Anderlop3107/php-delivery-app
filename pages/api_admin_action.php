@@ -19,6 +19,12 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+// Todas las acciones administrativas deben incluir el token CSRF.
+if (!rate_limit_check('api_admin_action.php', 120, 60)) {
+    rate_limit_deny();
+}
+csrf_require();
+
 $action = $_POST['action'] ?? '';
 
 if ($action === 'get_live_active_deliveries') {
@@ -415,12 +421,6 @@ if ($action === 'verify_driver_payment') {
             } else {
                 header('Content-Type: application/json');
                 
-// --- SEGURIDAD ---
-if (!rate_limit_check('api_admin_action.php', 120, 60)) {
-    rate_limit_deny();
-}
-csrf_require();
-// -----------------
 if (ob_get_level()) { ob_end_clean(); }
                 echo json_encode(['new' => false]);
             }
