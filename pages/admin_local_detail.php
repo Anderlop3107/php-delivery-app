@@ -50,8 +50,26 @@ $activeCount = (int)($activeCountRow['count'] ?? 0);
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?= esc(csrf_token()) ?>">
     <link rel="icon" href="data:,">
     <title>Detalle de Local: <?= esc($localData['business_name'] ?: $localData['name']) ?></title>
+
+    <script>
+        (function() {
+            const originalFetch = window.fetch;
+            window.fetch = function(resource, config) {
+                config = config || {};
+                if (config.method && config.method.toUpperCase() === 'POST') {
+                    const token = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+                    if (token) {
+                        config.headers = config.headers || {};
+                        config.headers['X-CSRF-TOKEN'] = token;
+                    }
+                }
+                return originalFetch(resource, config);
+            };
+        })();
+    </script>
     
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
