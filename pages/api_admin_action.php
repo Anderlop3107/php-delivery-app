@@ -676,7 +676,7 @@ if ($action === 'delete_driver') {
         exit;
     }
 
-    $driver = app_one("SELECT id, name FROM users WHERE id = ? AND role = 'repartidor'", 'i', [$driverId]);
+    $driver = app_one("SELECT id, name, logo_path, avatar_path, doc_ci_path, doc_ci_back_path, doc_licencia_path, doc_licencia_back_path, doc_habilitacion_path, doc_habilitacion_back_path, doc_cedula_verde_path, doc_cedula_verde_back_path FROM users WHERE id = ? AND role = 'repartidor'", 'i', [$driverId]);
     if (!$driver) {
         http_response_code(404);
         echo json_encode(['error' => 'El repartidor no existe o ya fue eliminado.']);
@@ -684,21 +684,40 @@ if ($action === 'delete_driver') {
     }
 
     // 1. Desvincular entregas para mantener reportes de comercios
-    app_exec("UPDATE deliveries SET driver_user_id = NULL WHERE driver_user_id = ?", 'i', [$driverId]);
+    app_exec("UPDATE deliveries SET repartidor_user_id = NULL, reservado_para_repartidor_id = NULL WHERE repartidor_user_id = ? OR reservado_para_repartidor_id = ?", 'ii', [$driverId, $driverId]);
 
-    // 2. Eliminar comprobantes de pago de la base de datos
+    // 2. Eliminar referencias que impiden borrar al usuario
+    app_exec("DELETE FROM delivery_commissions WHERE repartidor_user_id = ?", 'i', [$driverId]);
+    app_exec("DELETE FROM subscription_payments WHERE repartidor_user_id = ?", 'i', [$driverId]);
+
+    // 3. Eliminar comprobantes de pago de la base de datos
     app_exec("DELETE FROM driver_payments WHERE driver_user_id = ?", 'i', [$driverId]);
 
-    // 3. Eliminar notificaciones push del repartidor
+    // 4. Eliminar notificaciones y tokens del repartidor
     app_exec("DELETE FROM app_notifications WHERE user_id = ?", 'i', [$driverId]);
+    app_exec("DELETE FROM mobile_push_tokens WHERE user_id = ?", 'i', [$driverId]);
 
-    // 4. Eliminar ubicaciones en vivo
+    // 5. Eliminar sesiones, ubicaciones y registros de actividad
+    app_exec("DELETE FROM driver_sessions WHERE driver_user_id = ?", 'i', [$driverId]);
+    app_exec("DELETE FROM delivery_logs WHERE user_id = ?", 'i', [$driverId]);
     try {
         app_exec("DELETE FROM driver_locations WHERE driver_user_id = ?", 'i', [$driverId]);
     } catch (Throwable $e) {}
 
-    // 5. Eliminar la cuenta del usuario repartidor definitivamente
+    // 6. Eliminar la cuenta del usuario repartidor definitivamente
     app_exec("DELETE FROM users WHERE id = ? AND role = 'repartidor'", 'i', [$driverId]);
+
+    // 7. Eliminar archivos privados asociados, sin aceptar rutas fuera de uploads.
+    foreach ([$driver['logo_path'], $driver['avatar_path'], $driver['doc_ci_path'], $driver['doc_ci_back_path'], $driver['doc_licencia_path'], $driver['doc_licencia_back_path'], $driver['doc_habilitacion_path'], $driver['doc_habilitacion_back_path'], $driver['doc_cedula_verde_path'], $driver['doc_cedula_verde_back_path']] as $relativePath) {
+        if (!is_string($relativePath) || !str_starts_with($relativePath, 'uploads/')) {
+            continue;
+        }
+        $absolutePath = realpath(__DIR__ . '/../' . $relativePath);
+        $uploadsRoot = realpath(__DIR__ . '/../uploads');
+        if ($absolutePath && $uploadsRoot && str_starts_with($absolutePath, $uploadsRoot . DIRECTORY_SEPARATOR)) {
+            @unlink($absolutePath);
+        }
+    }
 
     echo json_encode([
         'success' => true,
