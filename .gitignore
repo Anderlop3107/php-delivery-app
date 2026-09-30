@@ -5,7 +5,16 @@ logs.json
 .DS_Store
 Thumbs.db
 /uploads/payments/
+/uploads/documents/*
+!/uploads/documents/.htaccess
+/uploads/logos/*
+!/uploads/logos/.gitkeep
 admin_cookie.txt
 driver_cookie.txt
 .agy/
+*.sql
+*.zip
+*.pdf
+resize.php
+config.php
 
