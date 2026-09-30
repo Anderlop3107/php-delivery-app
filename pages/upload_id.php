@@ -14,6 +14,7 @@ $errors = [];
 $success = false;
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_require();
     $uploadDir = __DIR__ . '/../uploads/documents/';
     if (!is_dir($uploadDir)) {
         mkdir($uploadDir, 0777, true);
@@ -22,7 +23,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $uploadedAny = false;
     // Subir Parte Frontal
     if (!empty($_FILES['doc_ci_front']['name'])) {
-        $ext = pathinfo($_FILES['doc_ci_front']['name'], PATHINFO_EXTENSION);
+        $ext = validated_image_extension($_FILES['doc_ci_front']);
+        if ($ext === null) {
+            header('Location: profile.php?toast=doc_ci&tab=documentos');
+            exit;
+        }
         $fileNameFront = 'doc_ci_front_' . $user['id'] . '_' . time() . '.' . $ext;
         if (move_uploaded_file($_FILES['doc_ci_front']['tmp_name'], $uploadDir . $fileNameFront)) {
             app_exec("UPDATE users SET doc_ci_path = ? WHERE id = ?", 'si', ['uploads/documents/' . $fileNameFront, (int)$user['id']]);
@@ -32,7 +37,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Subir Parte Posterior
     if (!empty($_FILES['doc_ci_back']['name'])) {
-        $ext = pathinfo($_FILES['doc_ci_back']['name'], PATHINFO_EXTENSION);
+        $ext = validated_image_extension($_FILES['doc_ci_back']);
+        if ($ext === null) {
+            header('Location: profile.php?toast=doc_ci&tab=documentos');
+            exit;
+        }
         $fileNameBack = 'doc_ci_back_' . $user['id'] . '_' . time() . '.' . $ext;
         if (move_uploaded_file($_FILES['doc_ci_back']['tmp_name'], $uploadDir . $fileNameBack)) {
             app_exec("UPDATE users SET doc_ci_back_path = ? WHERE id = ?", 'si', ['uploads/documents/' . $fileNameBack, (int)$user['id']]);
@@ -70,6 +79,7 @@ require __DIR__ . '/_header.php';
     </p>
 
     <form method="post" enctype="multipart/form-data">
+        <?= csrf_field() ?>
         <!-- Parte Frontal -->
         <div class="form-group" style="margin-bottom: 24px;">
             <label style="display: block; font-weight: 800; font-size: 11px; text-transform: uppercase; color: var(--muted); letter-spacing: 0.5px; margin-bottom: 10px;">Parte Frontal (Adelante)</label>

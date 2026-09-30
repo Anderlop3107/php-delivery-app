@@ -16,6 +16,35 @@ function protected_file_url(?string $path): string
     return delivery_app_url('secure_file.php?path=' . rawurlencode($path));
 }
 
+function validated_image_extension(array $file, int $maxBytes = 8388608): ?string
+{
+    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK ||
+        !isset($file['tmp_name'], $file['size']) ||
+        (int)$file['size'] <= 0 ||
+        (int)$file['size'] > $maxBytes ||
+        !is_uploaded_file($file['tmp_name'])) {
+        return null;
+    }
+
+    $mime = (new finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+    $extensions = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/webp' => 'webp',
+    ];
+
+    if (!isset($extensions[$mime])) {
+        return null;
+    }
+
+    $imageInfo = @getimagesize($file['tmp_name']);
+    if ($imageInfo === false || ($imageInfo['mime'] ?? '') !== $mime) {
+        return null;
+    }
+
+    return $extensions[$mime];
+}
+
 function gs(float|int|string|null $amount): string
 {
     return 'Gs. ' . number_format((float) ($amount ?? 0), 0, ',', '.');

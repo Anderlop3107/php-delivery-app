@@ -119,7 +119,12 @@ if ($action === 'approve_document' || $action === 'reject_document') {
     }
     
     if (!empty($_FILES['doc_ci_front']['name'])) {
-        $ext = pathinfo($_FILES['doc_ci_front']['name'], PATHINFO_EXTENSION);
+        $ext = validated_image_extension($_FILES['doc_ci_front']);
+        if ($ext === null) {
+            http_response_code(400);
+            echo json_encode(['error' => 'La imagen frontal no es válida o supera el límite permitido.']);
+            exit;
+        }
         $fileNameFront = 'doc_ci_front_' . $driverId . '_' . time() . '.' . $ext;
         if (move_uploaded_file($_FILES['doc_ci_front']['tmp_name'], $uploadDir . $fileNameFront)) {
             app_exec("UPDATE users SET doc_ci_path = ? WHERE id = ?", 'si', ['uploads/documents/' . $fileNameFront, $driverId]);
@@ -127,7 +132,12 @@ if ($action === 'approve_document' || $action === 'reject_document') {
     }
     
     if (!empty($_FILES['doc_ci_back']['name'])) {
-        $ext = pathinfo($_FILES['doc_ci_back']['name'], PATHINFO_EXTENSION);
+        $ext = validated_image_extension($_FILES['doc_ci_back']);
+        if ($ext === null) {
+            http_response_code(400);
+            echo json_encode(['error' => 'La imagen posterior no es válida o supera el límite permitido.']);
+            exit;
+        }
         $fileNameBack = 'doc_ci_back_' . $driverId . '_' . time() . '.' . $ext;
         if (move_uploaded_file($_FILES['doc_ci_back']['tmp_name'], $uploadDir . $fileNameBack)) {
             app_exec("UPDATE users SET doc_ci_back_path = ? WHERE id = ?", 'si', ['uploads/documents/' . $fileNameBack, $driverId]);
@@ -1195,7 +1205,12 @@ if ($action === 'upload_local_doc') {
     
     $uploadedAny = false;
     if (!empty($_FILES['doc_ci_front']['name'])) {
-        $ext = pathinfo($_FILES['doc_ci_front']['name'], PATHINFO_EXTENSION);
+        $ext = validated_image_extension($_FILES['doc_ci_front']);
+        if ($ext === null) {
+            http_response_code(400);
+            echo json_encode(['error' => 'La imagen frontal no es válida o supera el límite permitido.']);
+            exit;
+        }
         $fileNameFront = 'doc_ci_front_' . $driverId . '_' . time() . '.' . $ext;
         if (move_uploaded_file($_FILES['doc_ci_front']['tmp_name'], $uploadDir . $fileNameFront)) {
             app_exec("UPDATE users SET doc_ci_path = ? WHERE id = ?", 'si', ['uploads/documents/' . $fileNameFront, $driverId]);
@@ -1204,7 +1219,12 @@ if ($action === 'upload_local_doc') {
     }
     
     if (!empty($_FILES['doc_ci_back']['name'])) {
-        $ext = pathinfo($_FILES['doc_ci_back']['name'], PATHINFO_EXTENSION);
+        $ext = validated_image_extension($_FILES['doc_ci_back']);
+        if ($ext === null) {
+            http_response_code(400);
+            echo json_encode(['error' => 'La imagen posterior no es válida o supera el límite permitido.']);
+            exit;
+        }
         $fileNameBack = 'doc_ci_back_' . $driverId . '_' . time() . '.' . $ext;
         if (move_uploaded_file($_FILES['doc_ci_back']['tmp_name'], $uploadDir . $fileNameBack)) {
             app_exec("UPDATE users SET doc_ci_back_path = ? WHERE id = ?", 'si', ['uploads/documents/' . $fileNameBack, $driverId]);

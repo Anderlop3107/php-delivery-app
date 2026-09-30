@@ -14,16 +14,24 @@ $latestPayment = app_one("
 $errors = [];
 $ok = '';
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    csrf_require();
+}
+
 // Lógica de Subida de Logo
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_logo') {
     if (!empty($_FILES['logo']['name'])) {
         $uploadDir = __DIR__ . '/../uploads/logos/';
         if (!is_dir($uploadDir)) mkdir($uploadDir, 0777, true);
-        $ext = pathinfo($_FILES['logo']['name'], PATHINFO_EXTENSION);
+        $ext = validated_image_extension($_FILES['logo'], 5242880);
+        if ($ext === null) {
+            $errors[] = 'El logo debe ser una imagen JPG, PNG o WEBP de hasta 5 MB.';
+        } else {
         $fileName = 'logo_' . $user['id'] . '_' . time() . '.' . $ext;
         if (move_uploaded_file($_FILES['logo']['tmp_name'], $uploadDir . $fileName)) {
             app_exec("UPDATE users SET logo_path = ? WHERE id = ?", 'si', ['uploads/logos/' . $fileName, (int)$user['id']]);
             header('Location: profile.php?toast=logo'); exit;
+        }
         }
     }
 }
@@ -77,7 +85,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && !isset($_POST['action'])) {
             
             foreach ($docs as $fileKey => $colName) {
                 if (!empty($_FILES[$fileKey]['name'])) {
-                    $ext = pathinfo($_FILES[$fileKey]['name'], PATHINFO_EXTENSION);
+                    $ext = validated_image_extension($_FILES[$fileKey]);
+                    if ($ext === null) {
+                        continue;
+                    }
                     $fileName = 'doc_' . $fileKey . '_' . $user['id'] . '_' . time() . '.' . $ext;
                     if (move_uploaded_file($_FILES[$fileKey]['tmp_name'], $uploadDir . $fileName)) {
                         app_exec("UPDATE users SET {$colName} = ? WHERE id = ?", 'si', ['uploads/documents/' . $fileName, (int)$user['id']]);
@@ -539,6 +550,7 @@ require __DIR__ . '/_header.php';
 </div>
 
 <form method="post" enctype="multipart/form-data">
+    <?= csrf_field() ?>
     <input type="hidden" name="active_tab" id="active-tab-input" value="cuenta">
     <!-- Tab 1: Cuenta -->
     <div id="tab-cuenta" class="tab-content active">
