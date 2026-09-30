@@ -17,4 +17,5 @@ driver_cookie.txt
 *.pdf
 resize.php
 config.php
+mass_secure_apis.php
 
