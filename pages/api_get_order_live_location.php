@@ -26,7 +26,7 @@ if ($orderId <= 0) {
     exit;
 }
 
-$row = app_row(
+$row = app_one(
     "SELECT d.id, d.status, d.repartidor_user_id, r.latitude as driver_lat, r.longitude as driver_lng, r.ubicacion_actualizada_en
      FROM deliveries d
      LEFT JOIN users r ON r.id = d.repartidor_user_id
