@@ -956,6 +956,9 @@ require __DIR__ . '/_header.php';
                         }
                         if (sheet) setTimeout(() => sheet.scrollTo({ top: sheet.scrollHeight, behavior: 'smooth' }), 200);
                     }
+                    if (window.deliveryLocationTracker) {
+                        window.deliveryLocationTracker.pauseForOrder(order.id);
+                    }
                     floatingBtn.innerText = 'Entregado';
                     floatingBtn.style.background = 'linear-gradient(135deg, #10b981 0%, #059669 100%)';
                     floatingBtn.style.boxShadow = '0 12px 28px rgba(16,185,129,0.38), 0 4px 12px rgba(0,0,0,0.12)';

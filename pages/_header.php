@@ -606,6 +606,105 @@ $user = current_user();
     </script>
     <?php endif; ?>
 
+    <?php if ($user && $user['role'] === 'repartidor'): ?>
+    <script>
+        (function() {
+            if (window.location.pathname.endsWith('/driver_dashboard.php')) return;
+
+            const stateUrl = '<?= esc(delivery_app_url("pages/api_driver_tracking_state.php")) ?>';
+            const locationUrl = '<?= esc(delivery_app_url("pages/api_update_location.php")) ?>';
+            const pausedPrefix = 'delivery_location_paused_';
+            let watchId = null;
+            let locationInterval = null;
+            let stateInterval = null;
+            let activeOrderIds = [];
+
+            function isPaused(orderId) {
+                return localStorage.getItem(pausedPrefix + orderId) === '1';
+            }
+
+            function shouldTrack(orders) {
+                return orders.some(order => !isPaused(order.id));
+            }
+
+            async function sendLocation(position) {
+                const body = new FormData();
+                body.append('latitude', position.coords.latitude);
+                body.append('longitude', position.coords.longitude);
+                try {
+                    await fetch(locationUrl, { method: 'POST', body });
+                } catch (error) {
+                    console.warn('No se pudo actualizar la ubicación:', error);
+                }
+            }
+
+            function stopLocation() {
+                if (locationInterval) {
+                    clearInterval(locationInterval);
+                    locationInterval = null;
+                }
+                if (watchId !== null && navigator.geolocation) {
+                    navigator.geolocation.clearWatch(watchId);
+                    watchId = null;
+                }
+            }
+
+            function startLocation() {
+                if (!navigator.geolocation || watchId !== null) return;
+
+                const requestLocation = () => navigator.geolocation.getCurrentPosition(
+                    sendLocation,
+                    error => console.warn('GPS no disponible:', error.message),
+                    { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                );
+
+                requestLocation();
+                locationInterval = setInterval(requestLocation, 2000);
+                watchId = navigator.geolocation.watchPosition(sendLocation, () => {}, {
+                    enableHighAccuracy: true,
+                    timeout: 15000,
+                    maximumAge: 0
+                });
+            }
+
+            async function refreshTrackingState() {
+                try {
+                    const response = await fetch(stateUrl + '?_t=' + Date.now(), { cache: 'no-store' });
+                    const data = await response.json();
+                    if (!data.success) return;
+
+                    activeOrderIds = data.orders.map(order => String(order.id));
+                    if (shouldTrack(data.orders)) {
+                        startLocation();
+                    } else {
+                        stopLocation();
+                    }
+                } catch (error) {
+                    console.warn('No se pudo consultar el estado del seguimiento:', error);
+                }
+            }
+
+            window.deliveryLocationTracker = {
+                pauseForOrder(orderId) {
+                    localStorage.setItem(pausedPrefix + orderId, '1');
+                    if (!activeOrderIds.some(id => !isPaused(id))) stopLocation();
+                },
+                resumeForOrder(orderId) {
+                    localStorage.removeItem(pausedPrefix + orderId);
+                    refreshTrackingState();
+                }
+            };
+
+            refreshTrackingState();
+            stateInterval = setInterval(refreshTrackingState, 3000);
+            window.addEventListener('pagehide', () => {
+                if (stateInterval) clearInterval(stateInterval);
+                stopLocation();
+            });
+        })();
+    </script>
+    <?php endif; ?>
+
     <?php if ($user && $user['role'] === 'local'): ?>
     <script>
         (function() {
