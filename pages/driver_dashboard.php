@@ -1026,6 +1026,7 @@ function showToast(message) {
     let watchId = null;
 
     function startLocationUpdates() {
+        if (window.deliveryLocationTracker && window.deliveryLocationTracker.usesNative) return;
         sendCurrentLocation();
         if (locationInterval) clearInterval(locationInterval);
         locationInterval = setInterval(sendCurrentLocation, 2000);
@@ -1050,6 +1051,10 @@ function showToast(message) {
     }
 
     function stopLocationUpdates() {
+        if (window.deliveryLocationTracker && window.deliveryLocationTracker.usesNative) {
+            window.deliveryLocationTracker.stop();
+            return;
+        }
         if (locationInterval) {
             clearInterval(locationInterval);
             locationInterval = null;

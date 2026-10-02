@@ -609,12 +609,17 @@ $user = current_user();
     <?php if ($user && $user['role'] === 'repartidor'): ?>
     <script>
         (function() {
-            if (window.location.pathname.endsWith('/driver_dashboard.php')) return;
-
             const stateUrl = '<?= esc(delivery_app_url("pages/api_driver_tracking_state.php")) ?>';
             const locationUrl = '<?= esc(delivery_app_url("pages/api_update_location.php")) ?>';
+            const mobileTokenUrl = '<?= esc(delivery_app_url("pages/api_mobile_location_token.php")) ?>';
+            const mobileLocationUrl = '<?= esc(delivery_app_url("pages/api_mobile_update_location.php")) ?>';
             const pausedPrefix = 'delivery_location_paused_';
+            const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+            const BackgroundGeolocation = isNative ? window.Capacitor.registerPlugin('BackgroundGeolocation') : null;
+            const CapacitorHttp = isNative ? window.Capacitor.registerPlugin('CapacitorHttp') : null;
             let watchId = null;
+            let nativeWatcherId = null;
+            let mobileToken = null;
             let locationInterval = null;
             let stateInterval = null;
             let activeOrderIds = [];
@@ -628,6 +633,21 @@ $user = current_user();
             }
 
             async function sendLocation(position) {
+                if (isNative) {
+                    if (!mobileToken) return;
+                    const url = mobileLocationUrl + '?latitude=' + encodeURIComponent(position.latitude ?? position.coords.latitude) + '&longitude=' + encodeURIComponent(position.longitude ?? position.coords.longitude);
+                    try {
+                        await CapacitorHttp.request({
+                            url,
+                            method: 'GET',
+                            headers: { Authorization: 'Bearer ' + mobileToken }
+                        });
+                    } catch (error) {
+                        console.warn('No se pudo enviar la ubicación nativa:', error);
+                    }
+                    return;
+                }
+
                 const body = new FormData();
                 body.append('latitude', position.coords.latitude);
                 body.append('longitude', position.coords.longitude);
@@ -636,6 +656,15 @@ $user = current_user();
                 } catch (error) {
                     console.warn('No se pudo actualizar la ubicación:', error);
                 }
+            }
+
+            async function getMobileToken() {
+                if (mobileToken) return mobileToken;
+                const response = await fetch(mobileTokenUrl, { method: 'POST', body: new FormData() });
+                const data = await response.json();
+                if (!data.success) throw new Error(data.message || 'No se pudo autorizar el GPS nativo');
+                mobileToken = data.token;
+                return mobileToken;
             }
 
             function stopLocation() {
@@ -647,9 +676,36 @@ $user = current_user();
                     navigator.geolocation.clearWatch(watchId);
                     watchId = null;
                 }
+                if (nativeWatcherId !== null && BackgroundGeolocation) {
+                    BackgroundGeolocation.removeWatcher({ id: nativeWatcherId }).catch(() => {});
+                    nativeWatcherId = null;
+                }
             }
 
-            function startLocation() {
+            async function startLocation() {
+                if (isNative) {
+                    if (nativeWatcherId !== null || !BackgroundGeolocation || !CapacitorHttp) return;
+                    try {
+                        await getMobileToken();
+                        nativeWatcherId = await BackgroundGeolocation.addWatcher({
+                            backgroundTitle: 'Goo! Repartidor',
+                            backgroundMessage: 'Seguimiento activo hasta confirmar Entregado.',
+                            requestPermissions: true,
+                            stale: false,
+                            distanceFilter: 10
+                        }, (location, error) => {
+                            if (error) {
+                                console.warn('Error del GPS nativo:', error);
+                                return;
+                            }
+                            if (location) sendLocation(location);
+                        });
+                    } catch (error) {
+                        console.warn('No se pudo iniciar el GPS nativo:', error);
+                    }
+                    return;
+                }
+
                 if (!navigator.geolocation || watchId !== null) return;
 
                 const requestLocation = () => navigator.geolocation.getCurrentPosition(
@@ -685,6 +741,8 @@ $user = current_user();
             }
 
             window.deliveryLocationTracker = {
+                usesNative: isNative,
+                stop: stopLocation,
                 pauseForOrder(orderId) {
                     localStorage.setItem(pausedPrefix + orderId, '1');
                     if (!activeOrderIds.some(id => !isPaused(id))) stopLocation();
@@ -697,10 +755,6 @@ $user = current_user();
 
             refreshTrackingState();
             stateInterval = setInterval(refreshTrackingState, 3000);
-            window.addEventListener('pagehide', () => {
-                if (stateInterval) clearInterval(stateInterval);
-                stopLocation();
-            });
         })();
     </script>
     <?php endif; ?>

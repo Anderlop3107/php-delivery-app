@@ -1,0 +1,13 @@
+{
+  "appId": "com.gooenvios.driver",
+  "appName": "Goo! Repartidor",
+  "webDir": "www",
+  "server": {
+    "url": "https://gooenvíos.com/pages/driver_dashboard.php",
+    "cleartext": false
+  },
+  "android": {
+    "allowMixedContent": false,
+    "useLegacyBridge": true
+  }
+}
