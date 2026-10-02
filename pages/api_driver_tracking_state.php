@@ -24,7 +24,13 @@ $orders = app_all(
     'i',
     [(int)$user['id']]
 );
+$driverState = app_one("SELECT is_online FROM users WHERE id = ?", 'i', [(int)$user['id']]);
 
 ob_clean();
 header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 header('Content-Type: application/json');
+echo json_encode([
+    'success' => true,
+    'is_online' => (int)($driverState['is_online'] ?? 0),
+    'orders' => $orders
+]);

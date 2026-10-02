@@ -674,7 +674,7 @@ $user = current_user();
                     if (!data.success) return;
 
                     activeOrderIds = data.orders.map(order => String(order.id));
-                    if (shouldTrack(data.orders)) {
+                    if (Number(data.is_online) === 1 && shouldTrack(data.orders)) {
                         startLocation();
                     } else {
                         stopLocation();
